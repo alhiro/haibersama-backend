@@ -6,8 +6,8 @@ module.exports = {
   login: () => {
     const schema = {
       body: joi.object().keys({
-        storeid: joi.string().required(),
-        password: joi
+        email: joi.string().required(),
+        phone: joi
           .string()
           .required()
           .min(8)
