@@ -1,0 +1,66 @@
+var dbSeq = require('../config/sequelize')
+var Sequelize = require('sequelize')
+
+const PartnerPortfolio = dbSeq.define('partner_portfolio', {
+  id: {
+    type: Sequelize.INTEGER,
+    allowNull: false,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  partner_id: {
+    type: Sequelize.INTEGER,
+    allowNull: false,
+    primaryKey: true
+  },
+  name: {
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
+  portfolio_type: {
+    type: Sequelize.STRING(10),
+    allowNull: true
+  },
+  portfolio_date: {
+    type: Sequelize.DATE,
+    allowNull: true
+  },
+  description: {
+    type: Sequelize.STRING(200),
+    allowNull: true
+  },
+  location: {
+    type: Sequelize.STRING(200),
+    allowNull: true
+  },
+  image_url: {
+    type: Sequelize.STRING(200),
+    allowNull: true
+  },
+  created_at: {
+    type: Sequelize.DATE,
+    allowNull: true
+  },
+  created_by: {
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
+  updated_at: {
+    type: Sequelize.DATE,
+    allowNull: true
+  },
+  updated_by: {
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
+}, 
+{
+  tableName: 'partner_portfolio',
+  freezeTableName: true,
+  timestamps: true,
+  paranoid: false,
+  underscored: true
+});
+
+module.exports = PartnerPortfolio
+

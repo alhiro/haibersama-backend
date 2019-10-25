@@ -2,12 +2,18 @@ const express = require("express");
 const app = express()
 var config = require('./config/config');
 var authRouter = require('./routes/haiuser');
+var categoryRouter = require('./routes/category');
+var partnerRouter = require('./routes/partner');
+var commonRouter = require('./routes/common');
 
 // setup app with predefined configs
 config.init(app);
 
 // set the endpoint paths
 app.use(process.env.APP_API_PREFIX + '/auth', authRouter);
+app.use(process.env.APP_API_PREFIX + '/category', categoryRouter);
+app.use(process.env.APP_API_PREFIX + '/partner', partnerRouter);
+app.use(process.env.APP_API_PREFIX + '/common', commonRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

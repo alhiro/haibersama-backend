@@ -7,7 +7,7 @@ exports.login = async function (req, res, next) {
   console.log("controller login")
 
   const { body } = req;
-  const { email, phone_number } = body;
+  const { email, phone } = body;
 
   try {
     console.log("email : "+email)
