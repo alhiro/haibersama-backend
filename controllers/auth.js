@@ -2,6 +2,10 @@ const jwt = require("../lib/jwt");
 const auth = require("../services/haiuser");
 var nodemailer = require("nodemailer");
 const sequelizeTransaction = require("../config/sequelizeTransaction");
+const {
+  VERIFY_URL
+} = process.env;
+
 
 exports.login = async function(req, res, next) {
   console.log("controller login");
@@ -89,7 +93,7 @@ exports.register = async function(req, res, next) {
           "<h4><b>Verify Account</b></h4>" +
           "<p>To verify hai your account, click this link:</p>" +
           "<a href=" +
-          '"http://localhost:3000/' +
+          VERIFY_URL +
           "api/" +
           "auth/" +
           "verify?" +
@@ -99,7 +103,7 @@ exports.register = async function(req, res, next) {
           "token=" +
           register.data.token +
           '">' +
-          "http://localhost:3000/" +
+          VERIFY_URL +
           "api/" +
           "auth/" +
           "verify?" +
