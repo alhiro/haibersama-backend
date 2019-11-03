@@ -94,7 +94,7 @@ exports.register = async function(req, res, next) {
           "<p>To verify hai your account, click this link:</p>" +
           "<a href=" +
           VERIFY_URL +
-          "api/" +
+          "/api/" +
           "auth/" +
           "verify?" +
           "email=" +
@@ -104,7 +104,7 @@ exports.register = async function(req, res, next) {
           register.data.token +
           '">' +
           VERIFY_URL +
-          "api/" +
+          "/api/" +
           "auth/" +
           "verify?" +
           "email=" +
