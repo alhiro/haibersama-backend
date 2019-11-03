@@ -1,112 +1,210 @@
-const User = require('../models/haiuser');
+const User = require("../models/haiuser");
 //const Otp = require('../models/otp');
-const transformers = require('../lib/transformers');
-const jwt = require('../lib/jwt');
-const utils = require('../lib/utils');
-const dbSeq = require('../config/sequelize');
-const moment = require('moment');
-const { NODE_ENV, APP_ID, SMS_PROVIDER, SMS_SENDER_NUMBER, SMS_PRODUCER_NAME, EMAIL_PRODUCER_NAME, APP_LOCAL_DOMAIN } = process.env
-const now = moment().utcOffset(7).format("YYYY-MM-DD HH:mm:ss");
-const StoreHelper = require('../helpers/store')
+const transformers = require("../lib/transformers");
+const jwt = require("../lib/jwt");
+const utils = require("../lib/utils");
+const dbSeq = require("../config/sequelize");
+const moment = require("moment");
+const {
+  NODE_ENV,
+  APP_ID,
+  SMS_PROVIDER,
+  SMS_SENDER_NUMBER,
+  SMS_PRODUCER_NAME,
+  EMAIL_PRODUCER_NAME,
+  APP_LOCAL_DOMAIN
+} = process.env;
 
-module.exports =
-  {
-    login: async (users, revoke) => {
-      console.log("login service")
-      let user = {}
+const now = moment()
+  .utcOffset(7)
+  .format("YYYY-MM-DD HH:mm:ss");
+const StoreHelper = require("../helpers/store");
+const crypto = require("crypto-random-string");
 
-      user = await transformers.user(users);
+module.exports = {
+  login: async (users, revoke) => {
+    console.log("login service");
+    let user = {};
 
-      console.log(user)
-      const token = await jwt.sign(user);
-      const decoded = await jwt.verify(token);
-      const random = await utils.randomChar(8);
-      console.log("token", decoded)
-      //check if revoke refresh token is true. return null if true, or assign new refresh token if false
-      const refresh_token = (revoke) ? null : await jwt.sign({ random });
+    user = await transformers.user(users);
 
-      let data = {
-        last_login: now,
-        refresh_token: refresh_token
+    console.log(user);
+    const token = await jwt.sign(user);
+    const decoded = await jwt.verify(token);
+    const random = await utils.randomChar(8);
+    console.log("token", decoded);
+    //check if revoke refresh token is true. return null if true, or assign new refresh token if false
+    const refresh_token = revoke ? null : await jwt.sign({ random });
+
+    let data = {
+      last_login: now,
+      refresh_token: refresh_token
+    };
+
+    return User.update(data, { where: { email: users.email } })
+      .then(updated => {
+        return {
+          success: true,
+          message: "Login Successful",
+          data: {
+            type: "user",
+            token,
+            expiresIn: new Date(decoded.exp * 1000),
+            refresh_token
+          }
+        };
+      })
+      .catch(err => {
+        return { success: false, message: "Login Failed", data: err };
+      });
+  },
+
+  getAll: async () => {
+    try {
+      return await User.getAll();
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  findUser: async params => {
+    return await User.findOne({ where: params })
+      .then(users => {
+        //delete users.dataValues.password
+        return !users
+          ? { success: false, message: "User Not Found", data: {} }
+          : { success: true, message: "User Found", data: users };
+      })
+      .catch(err => {
+        return { success: false, message: "User Not Found", data: err };
+      });
+  },
+
+  findOrCreateUser: async (params, req) => {
+    try {
+      // 1. Insert new user
+      var currentDate = moment()
+        .utcOffset(7)
+        .format("YYMMDD");
+
+      const isExist = await User.findOne({ where: params });
+      console.log(currentDate);
+
+      const nowStoreId = await User.findOne({
+        where: { storeid: { $like: `${currentDate}%` } },
+        order: [["storeid", "DESC"]]
+      });
+      //const nowStoreId = await User.findOne({ where: {storeid: {$like: `%190712001` }}, order: [['storeid', 'DESC']] })
+
+      //create new storeid
+      if (!nowStoreId) {
+        newStoreId = currentDate + "001";
+      } else {
+        var strNewId =
+          Number(nowStoreId.dataValues.storeid.substring(6, 9)) + 1;
+        if (strNewId.toString().length < 3) {
+          newStoreId =
+            currentDate + "0".repeat(3 - strNewId.toString().length) + strNewId;
+        } else {
+          newStoreId = currentDate + strNewId;
+        }
+      }
+
+      console.log("storeid : " + newStoreId);
+
+      // check email / phone already registered or not
+      if (!isExist) {
+        const { body } = req;
+        const storeHelper = new StoreHelper();
+        const storeData = await storeHelper.generateUserData(body, newStoreId);
+        console.log(storeData);
+        const insertUser = await User.findOrCreate({
+          where: params,
+          defaults: storeData
+        });
+        if (!insertUser[1]) {
+          throw {
+            success: false,
+            message: "That Phone Number already exists",
+            data: {}
+          };
+        } else {
+          delete insertUser[0].dataValues.password;
+          return {
+            success: true,
+            message: "User Successfully Created",
+            data: insertUser[0].dataValues
+          };
+        }
+      } else {
+        return {
+          success: false,
+          message: "That Phone Number already exists",
+          data: {}
+        };
+      }
+
+      // all operation success
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  registerUser: async (params, transaction, res) => {
+    try {
+      console.log("service register user");
+
+      const { email, password, name, address, phone, nation, dob } = params;
+      const generateHashPassword = await jwt.hash(password, 10);
+
+      const token = crypto({ length: 16 });
+      console.log("generateHashPassword: " + generateHashPassword);
+      console.log("token: " + token);
+      var objHaiUser = {
+        email: email,
+        password: generateHashPassword,
+        phone_number: phone,
+        nation: nation,
+        dob: dob,
+        address: address,
+        name: name,
+        token: token,
+        active: 0
       };
 
-      return User.update(data, { where: { phone: users.phone } })
-        .then((updated) => { return { success: true, message: "Login Successful", data: { type: 'user', token, expiresIn: new Date(decoded.exp * 1000), refresh_token } } })
-        .catch((err) => { return { success: false, message: "Login Failed", data: err } });
-    },
+      const insertUser = await User.create(objHaiUser, {
+        transaction
+      });
+      console.log("returning : " + JSON.stringify(insertUser));
+      if (!insertUser) {
+        throw { success: false, message: "Failed to register user", data: {} };
+      } else {
+        transaction.commit();
+        delete insertUser.dataValues.password;
 
-    getAll: async () => {
-      try {
-        return await User.getAll();
-      } catch (error) {
-        throw error
+        return {
+          success: true,
+          message: "User Successfully Created",
+          data: insertUser.dataValues
+        };
       }
-    },
+    } catch (error) {
+      transaction.rollback();
+      throw error;
+    }
+  },
 
-    findUser: async (params) => {
-      return await User.findOne({ where: params })
-        .then((users) => {
-          //delete users.password
-          return (!users) ? { success: false, message: "User Not Found", data: {} } : { success: true, message: "User Found", data: users }
-        })
-        .catch((err) => { return { success: false, message: "User Not Found", data: err } });
-    },
+  verifyUser: async (email, token, transaction, res) => {
+    let objUser = {
+      active:1,
+    };
+    console.log("email :"+ email)
+    return await User.update(objUser, { where: {token: token, email:email} })
+    .then((updated) => { return { success: true, message: "User activation successfull", data: updated } })
+    .catch((err) => { return { success: false, message: err.message, data: err } });
+  },
 
-    findOrCreateUser: async (params, req) => {
-      try {
-        // 1. Insert new user
-        var currentDate = moment().utcOffset(7).format('YYMMDD');
-
-        const isExist = await User.findOne({ where: params })
-        console.log(currentDate)
-
-
-        const nowStoreId = await User.findOne({ where: {storeid: {$like: `${currentDate}%` }}, order: [['storeid', 'DESC']] })
-        //const nowStoreId = await User.findOne({ where: {storeid: {$like: `%190712001` }}, order: [['storeid', 'DESC']] })
-       
-        //create new storeid
-        if(!nowStoreId){
-          newStoreId = currentDate+'001'
-        }
-        else{
-          var strNewId = Number(nowStoreId.dataValues.storeid.substring(6,9))+1
-          if(strNewId.toString().length <3 ){
-            newStoreId = currentDate+'0'.repeat(3-strNewId.toString().length)+strNewId
-          }
-          else{
-            newStoreId = currentDate+strNewId
-          }
-        }
-
-        console.log('storeid : '+newStoreId)
-
-        // check email / phone already registered or not
-        if (!isExist) {
-          const { body } = req;
-          const storeHelper = new StoreHelper()
-          const storeData = await storeHelper.generateUserData(body, newStoreId)
-          console.log(storeData)
-          const insertUser = await User.findOrCreate({where: params, defaults: storeData })
-          if (!insertUser[1]) {
-            throw ({ success: false, message: "That Phone Number already exists", data: {} }) 
-          }
-          else{
-            delete insertUser[0].dataValues.password
-            return { success: true, message: "User Successfully Created", data: insertUser[0].dataValues }
-          }
-        }
-        else{
-          return { success: false, message: "That Phone Number already exists", data: {} }
-        }
-
-        // all operation success
-        
-      } catch (error) {
-        throw (error)
-      }
-    },
-
-    /*
+  /*
     forgotPassword: async (users) => {
       const user = await transformers.user(users);
       const new_password = await utils.randomChar(8);
@@ -281,4 +379,4 @@ module.exports =
     },
   
     */
-  }
+};
