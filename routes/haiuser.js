@@ -12,7 +12,7 @@ authRouter.post("/register", validator.register(), (req, res, next) => {
   authController.register(req, res);
 });
 
-authRouter.get("/verify", (req, res, next) => {
+authRouter.get("/verify" ,(req, res, next) => {
   authController.verify(req, res);
 });
 

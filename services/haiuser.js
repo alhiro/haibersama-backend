@@ -199,8 +199,16 @@ module.exports = {
       active:1,
     };
     console.log("email :"+ email)
-    return await User.update(objUser, { where: {token: token, email:email} })
-    .then((updated) => { return { success: true, message: "User activation successfull", data: updated } })
+    console.log("token 2 :"+ token.replace(/['"]+/g, '') )
+
+    return await User.update(objUser, { where: {token: token.replace(/['"]+/g, '') , email:email} })
+    .then((updated) => {  
+      console.log("updated : "+updated)
+      if (updated > 0) 
+        return { success: true, message: "User activation successfull", data: updated } 
+      else
+        return { success: false, message: "User activation failed", data: updated } 
+    })
     .catch((err) => { return { success: false, message: err.message, data: err } });
   },
 

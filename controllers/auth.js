@@ -58,7 +58,7 @@ exports.login = async function(req, res, next) {
 };
 
 exports.register = async function(req, res, next) {
-  console.log("controller register");
+  console.log("controller register 2");
 
   const { body } = req;
   const { email } = body;
@@ -73,7 +73,7 @@ exports.register = async function(req, res, next) {
       //create user by email n password
       //hash email
       var register = await auth.registerUser(body, transaction);
-      console.log("register" + register.data);
+      console.log("register test" + register.data);
 
       var smtpTransport = nodemailer.createTransport({
         host: "mail.haiorganizer.com",
@@ -102,7 +102,7 @@ exports.register = async function(req, res, next) {
           "&" +
           "token=" +
           register.data.token +
-          '">' +
+          '>' +
           VERIFY_URL +
           "/api/" +
           "auth/" +
@@ -189,7 +189,7 @@ exports.verify = async function(req, res, next) {
     }
     //console.log(users);
     var verifyUser = await auth.verifyUser(email, token);
-
+    
     return res.status(200).send(verifyUser);
   } catch (err) {
     return res
