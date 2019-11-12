@@ -32,12 +32,12 @@ authRouter.post("/updateProfile", headerAuth.isUserAuthenticated ,(req, res, nex
   authController.updateProfile(data, res);
 });
 
-authRouter.get("/google",passportConf.authenticate("google", { scope: ["profile", "email"] })
+authRouter.get("/google",passportConf.authenticate("google", { scope: ["profile", "email", "openid"] })
 );
 
 authRouter.get(
   "/google/callback",
-  passportConf.authenticate("google", { failureRedirect: "/login" }),
+  passportConf.authenticate("google", { failureRedirect: "api/auth/login" }),
   // response callback user, email, status verified, token
   // (req, res) => res.redirect('OAuthLogin://login?user=' + JSON.stringify(req.user)));
   async (req, res, next) => {
@@ -57,7 +57,7 @@ authRouter.get(
       
       if (checkUser.token) {
         console.log("sukses login");
-        return res.status(200).send({
+         return res.status(200).send({
           code: 200,
           success: true,
           message: "Login Successfull",
