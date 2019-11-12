@@ -56,6 +56,18 @@ const HaiUser = dbSeq.define('hai_user', {
     type: Sequelize.DATE,
     allowNull: true
   },
+  province: {
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
+  city: {
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
+  postalcode: {
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
   last_login: {
     type: Sequelize.DATE,
     allowNull: true

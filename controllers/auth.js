@@ -2,6 +2,8 @@ const jwt = require("../lib/jwt");
 const auth = require("../services/haiuser");
 var nodemailer = require("nodemailer");
 const sequelizeTransaction = require("../config/sequelizeTransaction");
+const axios = require("axios");
+const utils = require("../lib/utils");
 const {
   VERIFY_URL
 } = process.env;
@@ -158,6 +160,100 @@ exports.register = async function(req, res, next) {
   }
 };
 
+exports.registerGoogle = async function(req, res, next) {
+  console.log("controller register google");
+
+  const { body } = req;
+  const { token } = body;
+
+  const response = await axios({
+    url: 'https://oauth2.googleapis.com/tokeninfo?id_token='+token,
+    method: 'get'
+  })
+
+  console.log(response.data)
+  const { email,name,picture } = response.data;
+  const transaction = await sequelizeTransaction.transaction();
+
+  try {
+    console.log("email : " + email);
+    var users = await auth.findUser({ email });
+
+    if (!users.success) {
+      console.log(users);
+      //create user by email n password
+      //hash email
+      var register = await auth.registerGoogleUser({ email,name,picture }, transaction);
+      console.log("register test" + register.data);
+
+      var smtpTransport = nodemailer.createTransport({
+        host: "mail.haiorganizer.com",
+        port: 465,
+        secure: true,
+        auth: {
+          user: "notify@haiorganizer.com",
+          pass: "shasmeen11!"
+        }
+      });
+
+      let mailoptions = {
+        from: '"<notify>" notify@haiorganizer.com',
+        to: email,
+        subject: "verify your hai account",
+        html:
+          "<h4><b>Verify Account</b></h4>" +
+          "<p>To verify hai your account, click this link:</p>" +
+          "<a href=" +
+          VERIFY_URL +
+          "/api/" +
+          "auth/" +
+          "verify?" +
+          "email=" +
+          email +
+          "&" +
+          "token=" +
+          register.data.token +
+          '>' +
+          VERIFY_URL +
+          "/api/" +
+          "auth/" +
+          "verify?" +
+          "email=" +
+          email +
+          "&" +
+          "token=" +
+          register.data.token +
+          "</a>" +
+          "<br><br>" +
+          "<p>--Team</p>"
+      };
+      console.log("mailoptions :" + JSON.stringify(mailoptions));
+
+      smtpTransport.sendMail(mailoptions, function(error, res) {
+        if (error) {
+          console.log(error);
+        } else {
+          console.log("Message sent: " + res.response);
+        }
+        //smtpTransport.close();
+      });
+
+      return res.status(200).send(register);
+    } else {
+      return res.status(401).send({
+        code: 401,
+        success: false,
+        message: "That Email is already registered",
+        data: {}
+      });
+    }
+  } catch (err) {
+    return res
+      .status(500)
+      .send({ code: 500, success: false, message: err.message, data: {} });
+  }
+};
+
 exports.verify = async function(req, res, next) {
   console.log("controller verify");
 
@@ -195,5 +291,51 @@ exports.verify = async function(req, res, next) {
     return res
       .status(500)
       .send({ code: 500, success: false, message: err.message, data: { err } });
+  }
+};
+
+exports.updateProfile = async function(req, res, next) {
+  console.log("controller update profile");
+
+  try {
+      var response = await auth.updateProfile(req);
+
+      response.code = response.success ? 200 : 500;
+      return res.status(200).send(response);
+  } catch (err) {
+    return res
+      .status(500)
+      .send({ code: 500, success: false, message: err.message, data: {} });
+  }
+};
+
+exports.googleLoginCallBack = async function(email, res, next) {
+  try {
+    let users = await auth.findUser({
+      email: email
+    });
+    
+    let data = {
+      id: users.data.id,
+      email: email,
+      refresh_token: null,
+      phone_number: users.data.phone_number,
+      provider: "google"
+    };
+
+    console.log("data: "+JSON.stringify(data))
+
+    const token = await jwt.sign(data);
+    const decoded = await jwt.verify(token);
+    const random = await utils.randomChar(8);
+    
+    //check if revoke refresh token is true. return null if true, or assign new refresh token if false
+    const refresh_token = await jwt.sign({ random });
+
+    console.log("token: "+token)
+
+    return { users, token, decoded, refresh_token};
+  } catch (error) {
+    throw error;
   }
 };

@@ -3,6 +3,8 @@ var authRouter = express.Router();
 var headerAuth  =  require('../authMiddleware')
 var validator = require("../validator/auth");
 var authController = require("../controllers/auth");
+const passportConf = require("../lib/passport");
+const jwt = require("../lib/jwt");
 
 authRouter.post("/login", validator.login(), (req, res, next) => {
   authController.login(req, res);
@@ -12,8 +14,67 @@ authRouter.post("/register", validator.register(), (req, res, next) => {
   authController.register(req, res);
 });
 
+authRouter.post("/registerGoogle", (req, res, next) => {
+  authController.registerGoogle(req, res);
+});
+
 authRouter.get("/verify" ,(req, res, next) => {
   authController.verify(req, res);
 });
 
+authRouter.post("/updateProfile", headerAuth.isUserAuthenticated ,(req, res, next) => {
+  console.log("endpoint : update Profile")
+  const email = res.locals.auth.email
+  
+  const data = { name: req.body.name, address: req.body.address, phone: req.body.phone, 
+                  dob: req.body.dob, nation:req.body.nation, province: req.body.province, city: req.body.city, 
+                  postalcode: req.body.postalcode, email: email}
+  authController.updateProfile(data, res);
+});
+
+authRouter.get("/google",passportConf.authenticate("google", { scope: ["profile", "email"] })
+);
+
+authRouter.get(
+  "/google/callback",
+  passportConf.authenticate("google", { failureRedirect: "/login" }),
+  // response callback user, email, status verified, token
+  // (req, res) => res.redirect('OAuthLogin://login?user=' + JSON.stringify(req.user)));
+  async (req, res, next) => {
+    try {
+      console.log("request : "+ JSON.stringify(req.user) )
+      const checkUser = await authController.googleLoginCallBack(
+        req.user.email
+      );
+      let data = {};
+      console.log("checkUser :"+JSON.stringify(checkUser));
+
+      data.type = "user";
+      data.token = checkUser.token; // token from bizzytruckway
+      const decoded = await jwt.verify(checkUser.token);
+      data.expiresIn = new Date(decoded.exp * 1000),
+      data.refresh_token = checkUser.refresh_token
+      
+      if (checkUser.token) {
+        return res.status(200).send({
+          code: 200,
+          success: true,
+          message: "Login Successfull",
+          data: data
+        });
+      } else {
+        return res.status(500).send({
+          code: 500,
+          success: false,
+          message: "Login Failed",
+          data: data
+        });
+        //res.redirect("truckway://signup?user=" + JSON.stringify(data));
+        // res.send(JSON.stringify(data))
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 module.exports = authRouter;

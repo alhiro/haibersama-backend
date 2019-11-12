@@ -154,7 +154,7 @@ module.exports = {
     try {
       console.log("service register user");
 
-      const { email, password, name, address, phone, nation, dob } = params;
+      const { email, password, name, address, phone } = params;
       const generateHashPassword = await jwt.hash(password, 10);
 
       const token = crypto({ length: 16 });
@@ -164,13 +164,52 @@ module.exports = {
         email: email,
         password: generateHashPassword,
         phone_number: phone,
-        nation: nation,
-        dob: dob,
         address: address,
         name: name,
         token: token,
         active: 0
-      };
+      };  
+
+      const insertUser = await User.create(objHaiUser, {
+        transaction
+      });
+      console.log("returning : " + JSON.stringify(insertUser));
+      if (!insertUser) {
+        throw { success: false, message: "Failed to register user", data: {} };
+      } else {
+        transaction.commit();
+        delete insertUser.dataValues.password;
+
+        return {
+          success: true,
+          message: "User Successfully Created",
+          data: insertUser.dataValues
+        };
+      }
+    } catch (error) {
+      transaction.rollback();
+      throw error;
+    }
+  },
+
+  registerGoogleUser: async (params, transaction, res) => {
+    try {
+      console.log("service register google user");
+
+      const { email, picture, name} = params;
+      const generateHashPassword = await jwt.hash('12345678', 10);
+
+      const token = crypto({ length: 16 });
+      console.log("generateHashPassword: " + generateHashPassword);
+      console.log("token: " + token);
+      var objHaiUser = {
+        email: email,
+        name: name,
+        token: token,
+        password: generateHashPassword,
+        //picture: picture
+        active: 0
+      };  
 
       const insertUser = await User.create(objHaiUser, {
         transaction
@@ -212,6 +251,36 @@ module.exports = {
     .catch((err) => { return { success: false, message: err.message, data: err } });
   },
 
+  updateProfile: async (params) => {
+    console.log("Update profile service");
+
+    const { email, name, address, phone, dob, nation, province, city, postalcode } = params;
+    console.log("params :", params)
+    let data = {
+      name: name, 
+      address: address, 
+      phone: phone, 
+      dob: dob, 
+      nation: nation, 
+      province: province, 
+      city: city, 
+      postalcode: postalcode
+    };
+
+    return User.update(data, { where: { email: email }, returning: true, plain: true})
+      .then(updated => {
+        console.log(updated[1].dataValues);
+        delete updated[1].dataValues.password
+        return {
+          success: true,
+          message: "update Successful",
+            data: updated[1]
+        };
+      })
+      .catch(err => {
+        return { success: false, message: "Update profile Failed", data: err };
+      });
+  },
   /*
     forgotPassword: async (users) => {
       const user = await transformers.user(users);
