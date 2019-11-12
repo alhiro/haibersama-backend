@@ -89,7 +89,7 @@ module.exports = {
       google: {
         clientID: PASSPORT_GOOGLE_CLIENT_ID,
         clientSecret: PASSPORT_GOOGLE_CLIENT_SECRET,
-        callbackURL: `${VERIFY_URL}/api/auth/google/callback`
+        callbackURL: 'http://staging.haiorganizer.com/api/auth/google/callback'
       },
       facebook: {
         clientID: 'INSERT-CLIENT-ID-HERE',
