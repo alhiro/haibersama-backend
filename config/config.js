@@ -87,8 +87,8 @@ module.exports = {
     },
     oauth: {
       google: {
-        clientID: '41705855112-rou8kgu1s3cirv3rlssfe4r129dqqfjc.apps.googleusercontent.com',
-        clientSecret: 'b5IHYcbsGQpg31lZ9KZsRRa7',
+        clientID: "41705855112-rou8kgu1s3cirv3rlssfe4r129dqqfjc.apps.googleusercontent.com",
+        clientSecret: 'QMp0eT3SQCNERGyirx0l_btO',
         callbackURL: 'http://staging.haiorganizer.com/api/auth/google/callback'
       },
       facebook: {
