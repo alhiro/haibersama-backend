@@ -1,13 +1,18 @@
 const express = require("express");
 const app = express()
-var config = require('./config/config');
-var authRouter = require('./routes/haiuser');
-var categoryRouter = require('./routes/category');
-var partnerRouter = require('./routes/partner');
-var commonRouter = require('./routes/common');
+const config = require('./config/config');
+const authRouter = require('./routes/haiuser');
+const categoryRouter = require('./routes/category');
+const partnerRouter = require('./routes/partner');
+const commonRouter = require('./routes/common');
+const passport = require('passport');
+const cookieSession = require('cookie-session');
 
 // setup app with predefined configs
 config.init(app);
+
+app.use(passport.initialize()); // Used to initialize passport
+app.use(passport.session()); // Used to persist login sessions
 
 // set the endpoint paths
 app.use(process.env.APP_API_PREFIX + '/auth', authRouter);
