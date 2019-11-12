@@ -87,9 +87,9 @@ module.exports = {
     },
     oauth: {
       google: {
-        clientID: PASSPORT_GOOGLE_CLIENT_ID,
-        clientSecret: PASSPORT_GOOGLE_CLIENT_SECRET,
-        callbackURL: 'http://staging.haiorganizer.com/api/auth/google/callback'
+        clientID: '41705855112-rou8kgu1s3cirv3rlssfe4r129dqqfjc.apps.googleusercontent.com',
+        clientSecret: 'b5IHYcbsGQpg31lZ9KZsRRa7',
+        callbackURL: 'https://staging.haiorganizer.com/api/auth/google/callback'
       },
       facebook: {
         clientID: 'INSERT-CLIENT-ID-HERE',
