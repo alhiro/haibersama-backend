@@ -309,12 +309,79 @@ exports.updateProfile = async function(req, res, next) {
   }
 };
 
-exports.googleLoginCallBack = async function(email, res, next) {
+exports.googleLoginCallBack = async function(req, res, next) {
   try {
+    const { email,name,picture } = req;
+    console.log("email2 : " + email);
+    console.log("name2 : " + name);
+    console.log("picture2: " + picture);
+
     let users = await auth.findUser({
       email: email
     });
-    
+
+    if (!users.success) {
+      console.log(users);
+      //create user by email n password
+      //hash email
+      var register = await auth.registerGoogleUser({ email,name,picture }, transaction);
+      console.log("register test" + register.data);
+
+      var smtpTransport = nodemailer.createTransport({
+        host: "mail.haiorganizer.com",
+        port: 465,
+        secure: true,
+        auth: {
+          user: "notify@haiorganizer.com",
+          pass: "shasmeen11!"
+        }
+      });
+
+      let mailoptions = {
+        from: '"<notify>" notify@haiorganizer.com',
+        to: email,
+        subject: "verify your hai account",
+        html:
+          "<h4><b>Verify Account</b></h4>" +
+          "<p>To verify hai your account, click this link:</p>" +
+          "<a href=" +
+          VERIFY_URL +
+          "/api/" +
+          "auth/" +
+          "verify?" +
+          "email=" +
+          email +
+          "&" +
+          "token=" +
+          register.data.token +
+          '>' +
+          VERIFY_URL +
+          "/api/" +
+          "auth/" +
+          "verify?" +
+          "email=" +
+          email +
+          "&" +
+          "token=" +
+          register.data.token +
+          "</a>" +
+          "<br><br>" +
+          "<p>--Team</p>"
+      };
+      console.log("mailoptions :" + JSON.stringify(mailoptions));
+
+      smtpTransport.sendMail(mailoptions, function(error, res) {
+        if (error) {
+          console.log(error);
+        } else {
+          console.log("Message sent: " + res.response);
+        }
+        //smtpTransport.close();
+      });
+
+      //return res.status(200).send(register);
+    } 
+
     let data = {
       id: users.data.id,
       email: email,
@@ -339,3 +406,4 @@ exports.googleLoginCallBack = async function(email, res, next) {
     throw error;
   }
 };
+
