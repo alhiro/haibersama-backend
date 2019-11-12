@@ -44,7 +44,7 @@ authRouter.get(
     try {
       console.log("request : "+ JSON.stringify(req.user) )
       const checkUser = await authController.googleLoginCallBack(
-        req.user.email
+        req.user
       );
       let data = {};
       console.log("checkUser :"+JSON.stringify(checkUser));
@@ -56,6 +56,7 @@ authRouter.get(
       data.refresh_token = checkUser.refresh_token
       
       if (checkUser.token) {
+        console.log("sukses login");
         return res.status(200).send({
           code: 200,
           success: true,
@@ -63,6 +64,7 @@ authRouter.get(
           data: data
         });
       } else {
+        console.log("gagal login");
         return res.status(500).send({
           code: 500,
           success: false,
