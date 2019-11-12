@@ -31,6 +31,9 @@ const {
   VERIFY_URL
 } = process.env
 
+
+console.log("process.env : "+JSON.stringify(process.env))
+
 module.exports = {
   conf: {
     db: {
@@ -86,7 +89,7 @@ module.exports = {
       google: {
         clientID: PASSPORT_GOOGLE_CLIENT_ID,
         clientSecret: PASSPORT_GOOGLE_CLIENT_SECRET,
-        callbackURL: VERIFY_URL+"/api/auth/google/callback",
+        callbackURL: `${VERIFY_URL}/api/auth/google/callback`
       },
       facebook: {
         clientID: 'INSERT-CLIENT-ID-HERE',
