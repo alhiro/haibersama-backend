@@ -4,7 +4,7 @@ var config = require('./config/config');
 var authRouter = require('./routes/haiuser');
 var categoryRouter = require('./routes/category');
 var partnerRouter = require('./routes/partner');
-var commonRouter = require('./routes/common');
+var dashboardRouter = require('./routes/dashboard');
 
 // setup app with predefined configs
 config.init(app);
@@ -13,7 +13,7 @@ config.init(app);
 app.use(process.env.APP_API_PREFIX + '/auth', authRouter);
 app.use(process.env.APP_API_PREFIX + '/category', categoryRouter);
 app.use(process.env.APP_API_PREFIX + '/partner', partnerRouter);
-app.use(process.env.APP_API_PREFIX + '/common', commonRouter);
+app.use(process.env.APP_API_PREFIX + '/dashboard', dashboardRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
