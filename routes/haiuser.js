@@ -46,7 +46,6 @@ authRouter.get("/google", passportConf.authenticate("google", { scope: ["profile
 authRouter.get("/googlePartner", passportConf.authenticate("google", { scope: ["profile", "email", "openid"], state: 'partner' })
 );
 
-
 authRouter.get(
   "/google/callback",
   passportConf.authenticate("google", { failureRedirect: "api/auth/login" }),

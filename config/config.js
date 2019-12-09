@@ -89,12 +89,12 @@ module.exports = {
       google: {
         clientID: '41705855112-rou8kgu1s3cirv3rlssfe4r129dqqfjc.apps.googleusercontent.com',
         clientSecret: 'QMp0eT3SQCNERGyirx0l_btO',
-        callbackURL: 'http://localhost:3000/api/auth/google/callback'
+        callbackURL: `${VERIFY_URL}/api/auth/google/callback`
       },
       facebook: {
         clientID: 'INSERT-CLIENT-ID-HERE',
         clientSecret: 'INSERT-CLIENT-SECRET-HERE',
-        callbackURL: 'http://localhost:3000/auth/facebook/callback',
+        callbackURL: `${VERIFY_URL}/auth/facebook/callback`,
         profileFields: ['id', 'name', 'displayName', 'picture', 'email'],
       }
     }
