@@ -6,12 +6,20 @@ var authController = require("../controllers/auth");
 const passportConf = require("../lib/passport");
 const jwt = require("../lib/jwt");
 
+authRouter.get("/getAll",(req, res, next) => {
+  authController.getAll(req, res);
+});
+
 authRouter.post("/login", validator.login(), (req, res, next) => {
   authController.login(req, res);
 });
 
 authRouter.post("/register", validator.register(), (req, res, next) => {
-  authController.register(req, res);
+  authController.registerUser(req, res);
+});
+
+authRouter.post("/registerPartner", (req, res, next) => {
+  authController.registerPartner(req, res);
 });
 
 authRouter.post("/registerGoogle", (req, res, next) => {
@@ -32,7 +40,10 @@ authRouter.post("/updateProfile", headerAuth.isUserAuthenticated ,(req, res, nex
   authController.updateProfile(data, res);
 });
 
-authRouter.get("/google",passportConf.authenticate("google", { scope: ["profile", "email", "openid"] })
+authRouter.get("/google", passportConf.authenticate("google", { scope: ["profile", "email", "openid"], state: 'client' })
+ );
+
+authRouter.get("/googlePartner", passportConf.authenticate("google", { scope: ["profile", "email", "openid"], state: 'partner' })
 );
 
 authRouter.get(
@@ -42,14 +53,19 @@ authRouter.get(
   // (req, res) => res.redirect('OAuthLogin://login?user=' + JSON.stringify(req.user)));
   async (req, res, next) => {
     try {
+      console.log("state : "+ JSON.stringify(req.query.state) );
+
       console.log("request : "+ JSON.stringify(req.user) )
+      
+      const reqUser = { email: req.user.email , name: req.user.name , picture: req.user.picture, userType: req.query.state}
+      console.log("data : "+ JSON.stringify(reqUser) )
       const checkUser = await authController.googleLoginCallBack(
-        req.user
+        reqUser
       );
+
       let data = {};
       console.log("checkUser :"+JSON.stringify(checkUser));
 
-      data.type = "user";
       data.token = checkUser.token; // token from bizzytruckway
       const decoded = await jwt.verify(checkUser.token);
       data.expiresIn = new Date(decoded.exp * 1000),
@@ -79,4 +95,5 @@ authRouter.get(
     }
   }
 );
+
 module.exports = authRouter;
