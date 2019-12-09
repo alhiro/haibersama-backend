@@ -15,7 +15,7 @@ let configSequelize = {
   port: Config.port,
   host: Config.host,
   pool: {
-    max: 5,
+    max: 15,
     min: 0,
     idle: 60000,
     acquire: 60000,

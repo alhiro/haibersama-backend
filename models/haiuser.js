@@ -1,5 +1,6 @@
 var dbSeq = require('../config/sequelize')
 var Sequelize = require('sequelize')
+var PartnerCategory = require('./partnerCategory')
 
 const HaiUser = dbSeq.define('hai_user', {
   id: {
@@ -68,6 +69,31 @@ const HaiUser = dbSeq.define('hai_user', {
     type: Sequelize.STRING(50),
     allowNull: true
   },
+  type: {
+    type: Sequelize.INTEGER,
+    allowNull: true,
+    defaultValue: '1'
+  },
+  title: {
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
+  description: {
+    type: Sequelize.STRING(200),
+    allowNull: true
+  },
+  longitude: {
+    type: Sequelize.DECIMAL(11,8),
+    allowNull: true
+  },
+  latitude: {
+    type: Sequelize.DECIMAL(11,8),
+    allowNull: true
+  },  
+  whatsapp_number: {
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
   last_login: {
     type: Sequelize.DATE,
     allowNull: true
@@ -101,6 +127,9 @@ const HaiUser = dbSeq.define('hai_user', {
   underscored: true,
   //defaultScope: { attributes: { exclude: ['password'] },},
 });
+
+HaiUser.hasMany(PartnerCategory, {foreignKey: 'partner_id'})
+PartnerCategory.belongsTo(HaiUser, {foreignKey: 'partner_id'});
 
 module.exports = HaiUser
 

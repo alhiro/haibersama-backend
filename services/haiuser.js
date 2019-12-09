@@ -1,4 +1,5 @@
 const User = require("../models/haiuser");
+const PartnerCategory = require("../models/partnerCategory");
 //const Otp = require('../models/otp');
 const transformers = require("../lib/transformers");
 const jwt = require("../lib/jwt");
@@ -61,7 +62,12 @@ module.exports = {
 
   getAll: async () => {
     try {
-      return await User.getAll();
+      console.log("user get all")
+      return await User.findAll({ include: [
+        {
+          model: PartnerCategory
+        }
+      ]});
     } catch (error) {
       throw error;
     }
@@ -167,8 +173,9 @@ module.exports = {
         address: address,
         name: name,
         token: token,
-        active: 0
-      };  
+        active: 0,
+        type: 1
+      };
 
       const insertUser = await User.create(objHaiUser, {
         transaction
@@ -196,8 +203,8 @@ module.exports = {
     try {
       console.log("service register google user");
 
-      const { email, picture, name} = params;
-      const generateHashPassword = await jwt.hash('12345678', 10);
+      const { email, picture, name, userType } = params;
+      const generateHashPassword = await jwt.hash("12345678", 10);
 
       const token = crypto({ length: 16 });
       console.log("generateHashPassword: " + generateHashPassword);
@@ -208,12 +215,14 @@ module.exports = {
         token: token,
         password: generateHashPassword,
         //picture: picture
-        active: 0
-      };  
+        active: 0,
+        type: userType == "client" ? 1 : 2
+      };
 
       const insertUser = await User.create(objHaiUser, {
         transaction
       });
+
       console.log("returning : " + JSON.stringify(insertUser));
       if (!insertUser) {
         throw { success: false, message: "Failed to register user", data: {} };
@@ -235,52 +244,150 @@ module.exports = {
 
   verifyUser: async (email, token, transaction, res) => {
     let objUser = {
-      active:1,
+      active: 1
     };
-    console.log("email :"+ email)
-    console.log("token 2 :"+ token.replace(/['"]+/g, '') )
+    console.log("email :" + email);
+    console.log("token 2 :" + token.replace(/['"]+/g, ""));
 
-    return await User.update(objUser, { where: {token: token.replace(/['"]+/g, '') , email:email} })
-    .then((updated) => {  
-      console.log("updated : "+updated)
-      if (updated > 0) 
-        return { success: true, message: "User activation successfull", data: updated } 
-      else
-        return { success: false, message: "User activation failed", data: updated } 
+    return await User.update(objUser, {
+      where: { token: token.replace(/['"]+/g, ""), email: email }
     })
-    .catch((err) => { return { success: false, message: err.message, data: err } });
+      .then(updated => {
+        console.log("updated : " + updated);
+        if (updated > 0)
+          return {
+            success: true,
+            message: "User activation successfull",
+            data: updated
+          };
+        else
+          return {
+            success: false,
+            message: "User activation failed",
+            data: updated
+          };
+      })
+      .catch(err => {
+        return { success: false, message: err.message, data: err };
+      });
   },
 
-  updateProfile: async (params) => {
+  updateProfile: async params => {
     console.log("Update profile service");
 
-    const { email, name, address, phone, dob, nation, province, city, postalcode } = params;
-    console.log("params :", params)
+    const {
+      email,
+      name,
+      address,
+      phone,
+      dob,
+      nation,
+      province,
+      city,
+      postalcode
+    } = params;
+    console.log("params :", params);
     let data = {
-      name: name, 
-      address: address, 
-      phone: phone, 
-      dob: dob, 
-      nation: nation, 
-      province: province, 
-      city: city, 
+      name: name,
+      address: address,
+      phone: phone,
+      dob: dob,
+      nation: nation,
+      province: province,
+      city: city,
       postalcode: postalcode
     };
 
-    return User.update(data, { where: { email: email }, returning: true, plain: true})
+    return User.update(data, {
+      where: { email: email },
+      returning: true,
+      plain: true
+    })
       .then(updated => {
         console.log(updated[1].dataValues);
-        delete updated[1].dataValues.password
+        delete updated[1].dataValues.password;
         return {
           success: true,
           message: "update Successful",
-            data: updated[1]
+          data: updated[1]
         };
       })
       .catch(err => {
         return { success: false, message: "Update profile Failed", data: err };
       });
   },
+
+  registerPartner: async (params, transaction, res) => {
+    try {
+      console.log("service register partner");
+
+      const {
+        email,
+        password,
+        name,
+        address,
+        phone,
+        whatsapp,
+        categoryid
+      } = params;
+      const generateHashPassword = await jwt.hash(password, 10);
+
+      const token = crypto({ length: 16 });
+      console.log("generateHashPassword: " + generateHashPassword);
+      console.log("token: " + token);
+
+      var objHaiUser = {
+        email: email,
+        password: generateHashPassword,
+        phone_number: phone,
+        address: address,
+        name: name,
+        token: token,
+        whatsapp_number: whatsapp,
+        active: 0,
+        type: 2
+      };
+
+      const insertUser = await User.create(objHaiUser,
+      transaction
+      );
+
+      console.log("returning : " + JSON.stringify(insertUser));
+      if (!insertUser) {
+        throw { success: false, message: "Failed to register user", data: {} };
+      } else {
+
+        transaction.commit();
+        delete insertUser.dataValues.password;
+
+        //mapping partner and category
+        var arrPartnerCategories = [];
+
+        categoryid.forEach(element => {
+          var objPartnerCategory = {
+            partner_id: insertUser.dataValues.id,
+            category_id: element
+          };
+          arrPartnerCategories.push(objPartnerCategory);
+        });
+        console.log(
+          "arrPartnerCategories: " + JSON.stringify(arrPartnerCategories)
+        );
+
+        const insertPartnerCategory = await PartnerCategory.bulkCreate(arrPartnerCategories
+          );
+
+        return {
+          success: true,
+          message: "User Successfully Created",
+          data: insertUser.dataValues
+        };
+      }
+    } catch (error) {
+      transaction.rollback();
+      throw error;
+    }
+  }
   /*
     forgotPassword: async (users) => {
       const user = await transformers.user(users);

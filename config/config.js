@@ -47,7 +47,7 @@ module.exports = {
       write: {
         host: AUTH_DB_HOST_MASTER,
         pool: {
-          max: 5,
+          max: 15,
           min: 0,
           idle: 60000,
           acquire: 60000,
@@ -88,8 +88,8 @@ module.exports = {
     oauth: {
       google: {
         clientID: '41705855112-rou8kgu1s3cirv3rlssfe4r129dqqfjc.apps.googleusercontent.com',
-        clientSecret: 'b5IHYcbsGQpg31lZ9KZsRRa7',
-        callbackURL: 'https://staging.haiorganizer.com/api/auth/google/callback'
+        clientSecret: 'QMp0eT3SQCNERGyirx0l_btO',
+        callbackURL: 'http://localhost:3000/api/auth/google/callback'
       },
       facebook: {
         clientID: 'INSERT-CLIENT-ID-HERE',
