@@ -20,10 +20,11 @@ module.exports  =
             // ------------------------------------
             // HI I'M THE UPDATED CODE BLOCK, LOOK AT ME
             // ------------------------------------
-              const {storeid,id} = decodedStore
+            console.log("decodedStore : "+JSON.stringify(decodedStore))
+              const {email,id} = decodedStore
               
               res.locals.auth = {
-                storeid,
+                email,
                 id
               }
               next()
