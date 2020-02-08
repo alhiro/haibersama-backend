@@ -31,9 +31,6 @@ const {
   VERIFY_URL
 } = process.env
 
-
-console.log("process.env : "+JSON.stringify(process.env))
-
 module.exports = {
   conf: {
     db: {

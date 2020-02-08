@@ -6,7 +6,6 @@ partnerRouter.post("/getdetail", (req, res, next) => {
   partnerController.getDetail(req, res);
 });
 
-
 partnerRouter.post("/getpartner", (req, res, next) => {
   partnerController.getPartner(req, res);
 });

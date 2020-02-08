@@ -6,7 +6,7 @@ var authController = require("../controllers/auth");
 const passportConf = require("../lib/passport");
 const jwt = require("../lib/jwt");
 
-authRouter.get("/getAll",(req, res, next) => {
+authRouter.get("/getAll", headerAuth.isUserAuthenticated,(req, res, next) => {
   authController.getAll(req, res);
 });
 
