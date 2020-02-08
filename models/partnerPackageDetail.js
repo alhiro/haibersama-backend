@@ -1,0 +1,72 @@
+var dbSeq = require('../config/sequelize')
+var Sequelize = require('sequelize')
+var PartnerPackageHeader = require('./partnerPackageHeader')
+var SubService = require('./subservice')
+
+const PartnerPackageDetail = dbSeq.define('partner_package_detail', {
+  id: {
+    type: Sequelize.INTEGER,
+    allowNull: false,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  package_header_id: {
+    type: Sequelize.INTEGER,
+    allowNull: false,
+    primaryKey: true,
+    references: {
+      model: 'partner_package_header',
+      key: 'Id'
+    }
+  },
+  category_id: {
+    type: Sequelize.INTEGER,
+    allowNull: false,
+    primaryKey: true,
+    references: {
+      model: 'category',
+      key: 'Id'
+    }
+  },
+  subservice_id: {
+    type: Sequelize.INTEGER,
+    allowNull: false,
+    primaryKey: true,
+    references: {
+      model: 'subservice',
+      key: 'Id'
+    }
+  },
+  price: {
+    type: Sequelize.DECIMAL,
+    allowNull: true
+  },
+  created_at: {
+    type: Sequelize.DATE,
+    allowNull: true
+  },
+  created_by: {
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
+  updated_at: {
+    type: Sequelize.DATE,
+    allowNull: true
+  },
+  updated_by: {
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
+}, 
+{
+  tableName: 'partner_package_header',
+  freezeTableName: true,
+  timestamps: true,
+  paranoid: false,
+  underscored: true,
+});
+
+PartnerPackageDetail.belongsTo(PartnerPackageHeader, {foreignKey: 'package_header_id'})
+
+module.exports = PartnerPackageDetail
+
