@@ -62,18 +62,22 @@ module.exports = {
 
   getAll: async () => {
     try {
-      console.log("user get all")
-      return await User.findAll({ include: [
-        {
-          model: PartnerCategory
-        }
-      ]});
+      console.log("user get all");
+      return await User.findAll({
+        include: [
+          {
+            model: PartnerCategory
+          }
+        ]
+      });
     } catch (error) {
       throw error;
     }
   },
 
   findUser: async params => {
+    console.log("servive findUser")
+    console.log("params : "+ params)
     return await User.findOne({ where: params })
       .then(users => {
         //delete users.dataValues.password
@@ -284,7 +288,8 @@ module.exports = {
       nation,
       province,
       city,
-      postalcode
+      postalcode,
+      type 
     } = params;
     console.log("params :", params);
     let data = {
@@ -295,7 +300,8 @@ module.exports = {
       nation: nation,
       province: province,
       city: city,
-      postalcode: postalcode
+      postalcode: postalcode,
+      type: type
     };
 
     return User.update(data, {
@@ -348,15 +354,12 @@ module.exports = {
         type: 2
       };
 
-      const insertUser = await User.create(objHaiUser,
-      transaction
-      );
+      const insertUser = await User.create(objHaiUser, transaction);
 
       console.log("returning : " + JSON.stringify(insertUser));
       if (!insertUser) {
         throw { success: false, message: "Failed to register user", data: {} };
       } else {
-
         transaction.commit();
         delete insertUser.dataValues.password;
 
@@ -374,8 +377,9 @@ module.exports = {
           "arrPartnerCategories: " + JSON.stringify(arrPartnerCategories)
         );
 
-        const insertPartnerCategory = await PartnerCategory.bulkCreate(arrPartnerCategories
-          );
+        const insertPartnerCategory = await PartnerCategory.bulkCreate(
+          arrPartnerCategories
+        );
 
         return {
           success: true,
@@ -389,6 +393,61 @@ module.exports = {
     }
   }
   /*
+
+  insertProfile: async params => {
+    try {
+      console.log("insert profile service");
+
+      const {
+        email,
+        name,
+        address,
+        phone,
+        dob,
+        nation,
+        province,
+        city,
+        postalcode
+      } = params;
+
+      console.log(JSON.stringify(params));
+
+      var objInvent = {
+        name: name,
+        address: address,
+        phone: phone,
+        dob: dob,
+        nation: nation,
+        province: province,
+        city: city,
+        postalcode: postalcode
+      };
+
+      const insertInvent = await User.create(objInvent, {
+        transaction
+      });
+      transaction.commit();
+      console.log(insertInvent);
+      if (!insertInvent) {
+        return {
+          success: false,
+          message: "Insert User Profile Failed",
+          data: insertInvent
+        };
+      } else {
+        return {
+          success: true,
+          message: "Insert User Profile Successful",
+          data: insertInvent
+        };
+      }
+    } catch (error) {
+      transaction.rollback();
+      throw error;
+    }
+  },
+
+
     forgotPassword: async (users) => {
       const user = await transformers.user(users);
       const new_password = await utils.randomChar(8);
