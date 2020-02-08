@@ -1,55 +1,63 @@
-var jwt = require("./lib/jwt")
+var jwt = require("./lib/jwt");
 
-module.exports  =
-{
-  isUserAuthenticated : async (req, res, next) => {
-    const authHeader = req.headers.authorization
+module.exports = {
+  isUserAuthenticated: async (req, res, next) => {
+    const authHeader = req.headers.authorization;
 
     if (!authHeader) {
       return res.status(403).json({
         status: 403,
-        message: 'FORBIDDEN'
-      })
+        message: "FORBIDDEN"
+      });
     } else {
-      const token = authHeader
+      const token = authHeader;
 
       if (token) {
-        if (jwt.verify(token)){
-          return jwt.decode(token)
-            .then((decodedStore) => {
-            // ------------------------------------
-            // HI I'M THE UPDATED CODE BLOCK, LOOK AT ME
-            // ------------------------------------
-            console.log("decodedStore : "+JSON.stringify(decodedStore))
-              const {email,id} = decodedStore
-              
-              res.locals.auth = {
-                email,
-                id
-              }
-              next()
-            })
-            .catch((err) => {
-              console.log(err)
+        jwt
+          .verify(token)
+          .then(() => {
+            return jwt
+              .decode(token)
+              .then(decodedStore => {
+                // ------------------------------------
+                // HI I'M THE UPDATED CODE BLOCK, LOOK AT ME
+                // ------------------------------------
+                console.log("decodedStore : " + JSON.stringify(decodedStore));
+                const { email, id } = decodedStore;
 
-              return res.status(401).json({
-                status: 401,
-                message: 'UNAUTHORIZED'
+                res.locals.auth = {
+                  email,
+                  id
+                };
+                next();
               })
-            })
-          }
-          else {
+              .catch(err => {
+                console.log(err);
+
+                return res.status(401).json({
+                  status: 401,
+                  message: "UNAUTHORIZED"
+                });
+              });
+          })
+          .catch(err => {
             return res.status(401).json({
               status: 401,
-              message: 'UNAUTHORIZED'
-            })
-          }
+              message: "UNAUTHORIZED"
+            });
+          });
+        // else {
+        //   return res.status(401).json({
+        //     status: 401,
+        //     message: 'UNAUTHORIZED'
+        //   })
+        // }
       } else {
         return res.status(403).json({
           status: 403,
-          message: 'FORBIDDEN'
-        })
+          message: "FORBIDDEN"
+        });
       }
     }
   }
-}
+};
