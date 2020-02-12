@@ -1,0 +1,97 @@
+var dbSeq = require('../config/sequelize')
+var Sequelize = require('sequelize')
+
+var ReservationContact = require('./reservationcontact')
+var ReservationService = require('./reservationservice')
+var ReservationStatusHistory = require('./reservationstatushistory')
+
+const Reservation = dbSeq.define('reservation', {
+  id: {
+    type: Sequelize.BIGINT,
+    allowNull: false,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  reservation_no: {
+    type: Sequelize.STRING(20),
+    allowNull: false
+  },
+  reservation_date:{
+    type: Sequelize.DATE,
+    allowNull: false
+  },
+  user_id: {
+    type: Sequelize.INTEGER,
+    allowNull: false
+  },
+  category_id: {
+    type: Sequelize.INTEGER,
+    allowNull: false
+  },
+  service_id: {
+    type: Sequelize.INTEGER,
+    allowNull: false
+  },
+  event_date:{
+    type: Sequelize.DATE,
+    allowNull: false
+  },
+  event_time:{
+    type: Sequelize.TIME,
+    allowNull: false
+  },
+  event_address: {
+    type: Sequelize.STRING(500),
+    allowNull: false
+  },
+  total_price: {
+    type: Sequelize.DECIMAL(18, 2),
+    allowNull: false
+  },
+  total_discount: {
+    type: Sequelize.DECIMAL(18, 2),
+    allowNull: true
+  },
+  total_payment: {
+    type: Sequelize.DECIMAL(18, 2),
+    allowNull: true
+  },
+  status_code: {
+    type: Sequelize.STRING(10),
+    allowNull: true
+  },
+  created_at: {
+    type: Sequelize.DATE,
+    allowNull: true
+  },
+  created_by: {
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
+  updated_at: {
+    type: Sequelize.DATE,
+    allowNull: true
+  },
+  updated_by: {
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
+}, 
+{
+  tableName: 'reservation',
+  freezeTableName: true,
+  timestamps: true,
+  paranoid: false,
+  underscored: true
+});
+
+Reservation.hasOne(ReservationContact, {foreignKey: 'reservation_no', as: 'reservation_contact'});
+Reservation.hasMany(ReservationService, {foreignKey: 'reservation_no', as: 'reservation_services'});
+Reservation.hasMany(ReservationStatusHistory, {foreignKey: 'reservation_no', as: 'reservation_status_histories'});
+
+ReservationContact.belongsTo(Reservation, {foreignKey: 'reservation_no'});
+ReservationService.belongsTo(Reservation, {foreignKey: 'reservation_no'});
+ReservationStatusHistory.belongsTo(Reservation, {foreignKey: 'reservation_no'});
+
+module.exports = Reservation
+
