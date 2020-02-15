@@ -6,7 +6,7 @@ var authController = require("../controllers/auth");
 const passportConf = require("../lib/passport");
 const jwt = require("../lib/jwt");
 
-authRouter.get("/getAll",(req, res, next) => {
+authRouter.get("/getAll", headerAuth.isUserAuthenticated,(req, res, next) => {
   authController.getAll(req, res);
 });
 
@@ -33,10 +33,10 @@ authRouter.get("/verify" ,(req, res, next) => {
 authRouter.post("/updateProfile", headerAuth.isUserAuthenticated ,(req, res, next) => {
   console.log("endpoint : update Profile")
   const email = res.locals.auth.email
-  
+  console.log("email :", email)
   const data = { name: req.body.name, address: req.body.address, phone: req.body.phone, 
                   dob: req.body.dob, nation:req.body.nation, province: req.body.province, city: req.body.city, 
-                  postalcode: req.body.postalcode, email: email}
+                  postalcode: req.body.postalcode, email: email, type: req.body.usertype}
   authController.updateProfile(data, res);
 });
 
@@ -95,5 +95,13 @@ authRouter.get(
     }
   }
 );
+
+authRouter.get("/me", headerAuth.isUserAuthenticated , (req, res, next) => {
+  console.log("endpoint : get Profile")
+  const email = res.locals.auth.email
+  console.log("email :", email)
+
+  authController.getProfile(email, res);
+});
 
 module.exports = authRouter;

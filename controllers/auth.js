@@ -530,3 +530,17 @@ exports.googleLoginCallBack = async function(req, res, next) {
     throw error;
   }
 };
+
+exports.getProfile =  async function(req, res, next) {
+  try {
+    const params = { email: req }
+    let response = await auth.findUser(params);
+
+    response.code = response.success ? 200 : 500;
+    return res.status(response.code).send(response);
+  } catch (err) {
+    return res
+      .status(500)
+      .send({ code: 500, success: false, message: "Error", data: { err } });
+  }
+}
