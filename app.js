@@ -4,7 +4,6 @@ const config = require('./config/config');
 const authRouter = require('./routes/haiuser');
 const categoryRouter = require('./routes/category');
 const partnerRouter = require('./routes/partner');
-const commonRouter = require('./routes/common');
 const reservationRouter = require('./routes/reservation');
 //const commonRouter = require('./routes/common');
 const passport = require('passport');

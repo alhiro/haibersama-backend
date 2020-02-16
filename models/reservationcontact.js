@@ -1,5 +1,6 @@
 var dbSeq = require('../config/sequelize')
 var Sequelize = require('sequelize')
+var Reservation = require('./reservation')
 
 const ReservationContact = dbSeq.define('reservation_contact', {
   id: {
@@ -66,7 +67,17 @@ const ReservationContact = dbSeq.define('reservation_contact', {
   freezeTableName: true,
   timestamps: true,
   paranoid: false,
-  underscored: true
+  underscored: true,
+  classMethods: {
+    associate: function (models) {
+      ReservationContact.belongsTo(models.Reservation, {
+        foreignKey: {
+          allowNull: false
+        }
+      }
+      )
+    },
+  },
 });
 
 module.exports = ReservationContact

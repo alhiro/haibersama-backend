@@ -16,32 +16,8 @@ const ReservationStatusHistory = dbSeq.define('reservation_status_history', {
       key: 'id'
     }
   },
-  name: {
-    type: Sequelize.STRING(50),
-    allowNull: false
-  },
-  address: {
-    type: Sequelize.STRING(500),
-    allowNull: false
-  },
-  phone_no: {
-    type: Sequelize.STRING(20),
-    allowNull: false
-  },
-  wa_no: {
-    type: Sequelize.STRING(20),
-    allowNull: false
-  },
-  email: {
-    type: Sequelize.STRING(100),
-    allowNull: false
-  },
-  social_media: {
-    type: Sequelize.STRING(50),
-    allowNull: false
-  },
-  other_description: {
-    type: Sequelize.STRING(500),
+  status_code: {
+    type: Sequelize.STRING(10),
     allowNull: false
   },
   created_at: {
@@ -66,8 +42,18 @@ const ReservationStatusHistory = dbSeq.define('reservation_status_history', {
   freezeTableName: true,
   timestamps: true,
   paranoid: false,
-  underscored: true
+  underscored: true,
+  classMethods: {
+    associate: function (models) {
+      ReservationStatusHistory.belongsTo(models.Reservation, {
+        foreignKey: {
+          allowNull: false
+        }
+      }
+      )
+    },
+  },
 });
 
-module.exports = Reservationstatushistory
+module.exports = ReservationStatusHistory
 

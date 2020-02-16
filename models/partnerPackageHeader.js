@@ -1,6 +1,6 @@
 var dbSeq = require('../config/sequelize')
 var Sequelize = require('sequelize')
-var category = require('./category')
+var Category = require('./category')
 var Service = require('./service')
 
 const PartnerPackageHeader = dbSeq.define('partner_package_header', {
@@ -49,7 +49,7 @@ const PartnerPackageHeader = dbSeq.define('partner_package_header', {
     type: Sequelize.INTEGER,
     allowNull: false
   },
-  additonal_services: {
+  additional_services: {
     type: Sequelize.STRING(50),
     allowNull: true
   },

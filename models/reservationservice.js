@@ -54,7 +54,17 @@ const ReservationService = dbSeq.define('reservation_service', {
   freezeTableName: true,
   timestamps: true,
   paranoid: false,
-  underscored: true
+  underscored: true,
+  classMethods: {
+    associate: function (models) {
+      ReservationService.belongsTo(models.Reservation, {
+        foreignKey: {
+          allowNull: false
+        }
+      }
+      )
+    },
+  },
 });
 
 module.exports = ReservationService

@@ -24,6 +24,10 @@ const Reservation = dbSeq.define('reservation', {
     type: Sequelize.INTEGER,
     allowNull: false
   },
+  partner_id: {
+    type: Sequelize.INTEGER,
+    allowNull: false
+  },
   category_id: {
     type: Sequelize.INTEGER,
     allowNull: false
@@ -82,7 +86,14 @@ const Reservation = dbSeq.define('reservation', {
   freezeTableName: true,
   timestamps: true,
   paranoid: false,
-  underscored: true
+  underscored: true,
+  classMethods: {
+    associate: function (models) {
+      Reservation.hasOne(models.ReservationContact, {foreignKey: 'reservation_id', as: 'reservation_contact'}),
+      Reservation.hasMany(models.ReservationService, {foreignKey: 'reservation_id', as: 'reservation_services'}),
+      Reservation.hasMany(models.ReservationStatusHistory, {foreignKey: 'reservation_id', as: 'reservation_status_histories'})
+    },
+  },
 });
 
 Reservation.hasOne(ReservationContact, {foreignKey: 'reservation_id', as: 'reservation_contact'});

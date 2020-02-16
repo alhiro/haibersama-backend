@@ -1,15 +1,17 @@
 const Reservation = require('../models/reservation');
-const ReservationHistory = require('../models/reservationstatushistory');
+const ReservationStatusHistory = require('../models/reservationstatushistory');
+const ReservationContact = require('../models/reservationcontact');
+const ReservationService = require('../models/reservationservice');
 const PackageHeader = require('../models/partnerPackageHeader');
 const PackageDetail = require('../models/partnerPackageDetail');
+const moment = require("moment");
 
 module.exports =
   {        
     
     findOrCreateReservation: async (data) => {
       try {
-        
-        const { userId, packageId, eventDate, eventTime, eventAddress, name, address, phoneNo, waNo, email, socialMedia, otherDescription } = data.body;
+        const { userId, packageId, eventDate, eventTime, eventAddress, name, address, phoneNo, waNo, email, socialMedia, otherDescription } = data;
 
         // get services from package partner
         var package = await PackageHeader.findOne({
@@ -28,45 +30,53 @@ module.exports =
           user_id: userId,
           partner_id: package.partner_id,
           event_date: eventDate,
-          event_time: event_time,
+          event_time: eventTime,
           event_address: eventAddress
         };
 
         const isDuplicate = await Reservation.findOne({ where: params });
+        
+        if(isDuplicate != null){
+          console.log("masuk duplikate");
+          return {
+            success: false,
+            message: "Sudah ada order dengan user, partner, tanggal event, jam even dan alamat even yang sama",
+            data: {}
+          };
+        }
 
         //check available partner with event date, event time, partner id 
         const params2 = {
           partner_id: package.partner_id,
           event_date: eventDate,
-          event_time: event_time,
+          event_time: eventTime,
           status_code: "102105"
         };
 
         const isPartnerIsBooked = await Reservation.findOne({ where: params2 });
-
         
         if(isPartnerIsBooked){
           return {
             success: false,
-            message: "Partner is not available."
+            message: "Partner is not available.",
+            data: {}
           };
         }
 
         if (!isDuplicate) {
-          const { body } = req;
           var currentDate = moment().utcOffset(7).format("YYMMDD");
 
           const lastReservation = await Reservation.findOne({
             where: { reservation_no: { $like: `${currentDate}%` } },
             order: [["reservation_no", "DESC"]]
           });
-
+          
           var reservationNo = "";
           //create new storeid
           if (!lastReservation) {
             reservationNo = currentDate + "00001";
           } else {
-            var strNewId = Number(lastReservationNo.dataValues.reservation_no.substring(6, 11)) + 1;
+            var strNewId = Number(lastReservation.reservation_no.substring(6, 11)) + 1;
             if (strNewId.toString().length < 5) {
               reservationNo = currentDate + "0".repeat(5 - strNewId.toString().length) + strNewId;
             } else {
@@ -90,9 +100,9 @@ module.exports =
 
           packageDetails.forEach(detail => {
             service = {
-              service_id: detail.service_id,
+              service_id: package.service_id,
               sub_service_id: detail.subservice_id,
-              description: detail.description,
+              description: "",
               price: detail.price,
               created_at: moment().utcOffset(7),
               created_by: 'system'
@@ -100,7 +110,7 @@ module.exports =
             services.push(service);
           });
 
-          histories.push(new {
+          histories.push({
             status_code: "102101",
             created_at: moment().utcOffset(7),
             created_by: 'system'
@@ -110,8 +120,8 @@ module.exports =
               reservation_no: reservationNo,
               reservation_date: moment().utcOffset(7),
               user_id: userId,
-              partner_id: partnerId,
-              reservation_id: package.reservation_id,
+              partner_id: package.partner_id,
+              category_id: package.category_id,
               service_id: package.service_id,
               event_date: eventDate,
               event_time: eventTime,
@@ -133,11 +143,36 @@ module.exports =
                 other_description: otherDescription
               },
               reservation_services: services,
-              reservation_histories: histories
+              reservation_status_histories: histories
           };
 
+          const insertparams = {
+            reservation_no: reservationNo,
+            user_id: userId,
+            partner_id: package.partner_id,
+            event_date: eventDate,
+            event_time: eventTime,
+            event_address: eventAddress
+          };
+          console.log("resv data");
+          console.log(reservationData);
+
           const insertReservation = await Reservation.findOrCreate({
-            where: params,
+            where: insertparams,
+            include: [
+              {
+                model: ReservationContact,
+                as: 'reservation_contact'
+              },
+              {
+                model: ReservationService,
+                as: 'reservation_services'
+              },
+              {
+                model: ReservationStatusHistory,
+                as: 'reservation_status_histories'
+              }
+            ],
             defaults: reservationData
           });
 
@@ -162,6 +197,7 @@ module.exports =
           };
         }
       } catch (error) {
+        console.log(error);
         throw error
       }
     },
@@ -174,24 +210,27 @@ module.exports =
         .catch((err) => { return { success: false, message: "Reservation Not Found", data: err } });
     },
     
-    findReservations: async (params, paging) => {
-      // const {limit, offset} = paging;
-
+    findReservations: async (params) => {
+      // const {limit, offset} = paging;      
       return await Reservation.findAll({ 
         where: params,
         // limit: limit, 
         // offset: offset,
-        order: '"reservation_no" DESC' })
+        order: [["reservation_no", "DESC"]]
+       })
         .then((reservations) => {
-          return (!reservations) ? { success: false, message: "Reservation Not Found", data: {} } : { success: true, message: "Reservation Found", data: categories }
+          return (!reservations) ? { success: false, message: "Reservation Not Found", data: {} } : { success: true, message: "Reservation Found", data: reservations }
         })
-        .catch((err) => { return { success: false, message: "Reservation Not Found", data: err } });
+        .catch((err) => { 
+          console.log(err);
+          return { success: false, message: "Reservation Not Found", data: err } 
+        });
     },
 
     
     updateStatusReservation: async (req) => {
       try {
-        const { reservationNo, statusCode, userId } = req.body
+        const { reservationNo, statusCode, userId } = req;
 
         var objReservation = {
           status_code: statusCode, 
@@ -207,7 +246,7 @@ module.exports =
             console.log(JSON.stringify(upReserv), "upReserv")
 
             const history = {status_code: statusCode, reservation_id: upReserv.id, updatedcreated_at: moment().utcOffset(7), created_by: userId };
-            const upHistory = await ReservationHistory.create(history);
+            const upHistory = await ReservationStatusHistory.create(history);
 
             return { success: true, message: "Reservation Successfully Updated", data: upReserv } })
         .catch((err) => { return { success: false, message: "Update Reservation Failed", data: err } });

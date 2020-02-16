@@ -17,12 +17,14 @@ reservationRouter.post("/getlist", headerAuth.isUserAuthenticated, (req, res, ne
     userId: id, 
     type: type
   };
-
+  
   reservationController.getReservations(data, res);
 });
 
 
 reservationRouter.post("/create", headerAuth.isUserAuthenticated , (req, res, next) => {  
+  const id = res.locals.auth.id;
+
   const data = { 
     userId: id,
     packageId: req.body.packageId, 
