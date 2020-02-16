@@ -9,6 +9,7 @@ const passport = require('passport');
 const serviceRouter = require('./routes/service');
 const subServiceRouter = require('./routes/subservice');
 const cookieSession = require('cookie-session');
+const dashboardRouter = require('./routes/dashboard');
 
 // setup app with predefined configs
 config.init(app);
@@ -23,6 +24,7 @@ app.use(process.env.APP_API_PREFIX + '/partner', partnerRouter);
 app.use(process.env.APP_API_PREFIX + '/common', commonRouter);
 app.use(process.env.APP_API_PREFIX + '/service', serviceRouter);
 app.use(process.env.APP_API_PREFIX + '/subservice', subServiceRouter);
+app.use(process.env.APP_API_PREFIX + '/dashboard', dashboardRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

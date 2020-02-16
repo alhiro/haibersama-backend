@@ -1,32 +1,24 @@
 var dbSeq = require('../config/sequelize')
 var Sequelize = require('sequelize')
 
-const Banner = dbSeq.define('banner', {
+const PartnerFollower = dbSeq.define('partner_follower', {
   id: {
     type: Sequelize.INTEGER,
     allowNull: false,
     primaryKey: true,
     autoIncrement: true
   },
-  title: {
-    type: Sequelize.STRING(100),
-    allowNull: false
-  },
-  description: {
-    type: Sequelize.STRING(500),
-    allowNull: false
-  },
-  image_url: {
-    type: Sequelize.STRING(500),
-    allowNull: false
-  },
-  order_no: {
+  partner_id: {
     type: Sequelize.INTEGER,
     allowNull: false
   },
-  active: {
-    type: Sequelize.BOOLEAN,
+  user_id: {
+    type: Sequelize.INTEGER,
     allowNull: false
+  },
+  is_delete: {
+    type: Sequelize.BOOLEAN,
+    allowNull: true
   },
   created_at: {
     type: Sequelize.DATE,
@@ -46,12 +38,12 @@ const Banner = dbSeq.define('banner', {
   },
 }, 
 {
-  tableName: 'banner',
+  tableName: 'partner_follower',
   freezeTableName: true,
   timestamps: true,
   paranoid: false,
   underscored: true
 });
 
-module.exports = Banner
+module.exports = PartnerFollower
 
