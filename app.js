@@ -4,7 +4,7 @@ const config = require('./config/config');
 const authRouter = require('./routes/haiuser');
 const categoryRouter = require('./routes/category');
 const partnerRouter = require('./routes/partner');
-const commonRouter = require('./routes/common');
+//const commonRouter = require('./routes/common');
 const passport = require('passport');
 const serviceRouter = require('./routes/service');
 const subServiceRouter = require('./routes/subservice');
@@ -21,7 +21,7 @@ app.use(passport.session()); // Used to persist login sessions
 app.use(process.env.APP_API_PREFIX + '/auth', authRouter);
 app.use(process.env.APP_API_PREFIX + '/category', categoryRouter);
 app.use(process.env.APP_API_PREFIX + '/partner', partnerRouter);
-app.use(process.env.APP_API_PREFIX + '/common', commonRouter);
+//app.use(process.env.APP_API_PREFIX + '/common', commonRouter);
 app.use(process.env.APP_API_PREFIX + '/service', serviceRouter);
 app.use(process.env.APP_API_PREFIX + '/subservice', subServiceRouter);
 app.use(process.env.APP_API_PREFIX + '/dashboard', dashboardRouter);
