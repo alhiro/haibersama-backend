@@ -8,7 +8,7 @@ const ReservationContact = dbSeq.define('reservation_contact', {
     primaryKey: true,
     autoIncrement: true
   },
-  reservation_no: {
+  reservation_id: {
     type: Sequelize.STRING(20),
     allowNull: false,
     references: {

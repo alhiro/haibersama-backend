@@ -85,13 +85,17 @@ const Reservation = dbSeq.define('reservation', {
   underscored: true
 });
 
-Reservation.hasOne(ReservationContact, {foreignKey: 'reservation_no', as: 'reservation_contact'});
-Reservation.hasMany(ReservationService, {foreignKey: 'reservation_no', as: 'reservation_services'});
-Reservation.hasMany(ReservationStatusHistory, {foreignKey: 'reservation_no', as: 'reservation_status_histories'});
+Reservation.hasOne(ReservationContact, {foreignKey: 'reservation_id', as: 'reservation_contact'});
+Reservation.hasMany(ReservationService, {foreignKey: 'reservation_id', as: 'reservation_services'});
+Reservation.hasMany(ReservationStatusHistory, {foreignKey: 'reservation_id', as: 'reservation_status_histories'});
 
-ReservationContact.belongsTo(Reservation, {foreignKey: 'reservation_no'});
-ReservationService.belongsTo(Reservation, {foreignKey: 'reservation_no'});
-ReservationStatusHistory.belongsTo(Reservation, {foreignKey: 'reservation_no'});
+// ReservationContact.belongsTo(Reservation, {foreignKey: 'reservation_id'});
+// ReservationService.belongsTo(Reservation, {foreignKey: 'reservation_id'});
+// ReservationStatusHistory.belongsTo(Reservation, {foreignKey: 'reservation_id'});
+
+ReservationContact.belongsTo(Reservation);
+ReservationService.belongsTo(Reservation);
+ReservationStatusHistory.belongsTo(Reservation);
 
 module.exports = Reservation
 

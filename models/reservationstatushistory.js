@@ -8,7 +8,7 @@ const ReservationStatusHistory = dbSeq.define('reservation_status_history', {
     primaryKey: true,
     autoIncrement: true
   },
-  reservation_no: {
+  reservation_id: {
     type: Sequelize.STRING(20),
     allowNull: false,
     references: {

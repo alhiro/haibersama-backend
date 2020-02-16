@@ -5,6 +5,7 @@ const authRouter = require('./routes/haiuser');
 const categoryRouter = require('./routes/category');
 const partnerRouter = require('./routes/partner');
 const commonRouter = require('./routes/common');
+const reservationRouter = require('./routes/reservation');
 const passport = require('passport');
 const serviceRouter = require('./routes/service');
 const subServiceRouter = require('./routes/subservice');
@@ -23,6 +24,7 @@ app.use(process.env.APP_API_PREFIX + '/partner', partnerRouter);
 app.use(process.env.APP_API_PREFIX + '/common', commonRouter);
 app.use(process.env.APP_API_PREFIX + '/service', serviceRouter);
 app.use(process.env.APP_API_PREFIX + '/subservice', subServiceRouter);
+app.use(process.env.APP_API_PREFIX + '/reservation', reservationRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
