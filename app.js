@@ -9,6 +9,7 @@ const reservationRouter = require('./routes/reservation');
 const passport = require('passport');
 const serviceRouter = require('./routes/service');
 const subServiceRouter = require('./routes/subservice');
+const packageRouter = require('./routes/partnerpackage');
 const cookieSession = require('cookie-session');
 const dashboardRouter = require('./routes/dashboard');
 
@@ -25,6 +26,7 @@ app.use(process.env.APP_API_PREFIX + '/partner', partnerRouter);
 //app.use(process.env.APP_API_PREFIX + '/common', commonRouter);
 app.use(process.env.APP_API_PREFIX + '/service', serviceRouter);
 app.use(process.env.APP_API_PREFIX + '/subservice', subServiceRouter);
+app.use(process.env.APP_API_PREFIX + '/package', packageRouter);
 app.use(process.env.APP_API_PREFIX + '/reservation', reservationRouter);
 app.use(process.env.APP_API_PREFIX + '/dashboard', dashboardRouter);
 

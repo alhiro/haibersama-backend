@@ -1,6 +1,5 @@
 var dbSeq = require('../config/sequelize')
 var Sequelize = require('sequelize')
-var PartnerPackageHeader = require('./partnerPackageHeader')
 var SubService = require('./subservice')
 
 const PartnerPackageDetail = dbSeq.define('partner_package_detail', {
@@ -67,7 +66,7 @@ const PartnerPackageDetail = dbSeq.define('partner_package_detail', {
   underscored: true,
 });
 
-PartnerPackageDetail.belongsTo(PartnerPackageHeader, {foreignKey: 'package_header_id'})
+PartnerPackageDetail.belongsTo(SubService, { foreignKey: "subservice_id" });
 
 module.exports = PartnerPackageDetail
 

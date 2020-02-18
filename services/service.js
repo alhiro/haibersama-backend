@@ -5,6 +5,17 @@ module.exports =
     getAll: async () => {
       try {
         return await Service.findAll({
+          attributes: ['id',
+          'name',
+          'description',
+          'created_at',
+          'updated_at',
+          'created_by',
+          'updated_by'
+          ],
+          order:[
+            ["created_at", "ASC"]
+          ]
         });
       } catch (error) {
         throw error

@@ -41,4 +41,6 @@ const Service = dbSeq.define('service', {
   underscored: true,
 });
 
+//Service.belongsTo(PartnerPackageHeader, { foreignKey: 'uomid' })
+
 module.exports = Service
