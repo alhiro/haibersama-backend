@@ -9,7 +9,6 @@ exports.getAllCategories = async function (req, res, next) {
   try {
 
         var categories = await cat.getAll();
-        console.log("controller test test");
         return res.status(200).json({ status: 200, data: categories, message: "Succesfully Categories Retrieved" });
     
         //return res.status(400).json({ status: 400, message: e.message });

@@ -1,6 +1,7 @@
 var dbSeq = require('../config/sequelize')
 var Sequelize = require('sequelize')
-var category = require('./category')
+var Category = require('./category')
+var PartnerPackageDetail = require('./partnerPackageDetail')
 var Service = require('./service')
 
 const PartnerPackageHeader = dbSeq.define('partner_package_header', {
@@ -49,7 +50,7 @@ const PartnerPackageHeader = dbSeq.define('partner_package_header', {
     type: Sequelize.INTEGER,
     allowNull: false
   },
-  additonal_services: {
+  additional_services: {
     type: Sequelize.STRING(50),
     allowNull: true
   },
@@ -84,7 +85,7 @@ const PartnerPackageHeader = dbSeq.define('partner_package_header', {
 
 PartnerPackageHeader.hasMany(Category, {foreignKey: 'category_id'})
 PartnerPackageHeader.hasMany(Service, {foreignKey: 'service_id'});
-//Inventory.belongsTo(Uom, {foreignKey: 'uomid'})
+PartnerPackageHeader.hasMany(PartnerPackageDetail, { foreignKey: "package_header_id" });
 
 module.exports = PartnerPackageHeader
 
