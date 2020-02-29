@@ -17,9 +17,9 @@ const PartnerPortfolio = dbSeq.define('partner_portfolio', {
     type: Sequelize.STRING(50),
     allowNull: true
   },
-  portfolio_type: {
-    type: Sequelize.STRING(10),
-    allowNull: true
+  category_id: {
+    type: Sequelize.INTEGER,
+    allowNull: false
   },
   portfolio_date: {
     type: Sequelize.DATE,

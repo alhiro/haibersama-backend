@@ -17,11 +17,11 @@ const PartnerCertificate = dbSeq.define('partner_certificate', {
     type: Sequelize.STRING(50),
     allowNull: true
   },
-  issuer_organization: {
+  organizer: {
     type: Sequelize.STRING(50),
     allowNull: true
   },
-  issuer_date: {
+  certificate_date: {
     type: Sequelize.DATE,
     allowNull: true
   },

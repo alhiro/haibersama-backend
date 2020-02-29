@@ -5,13 +5,16 @@ const authRouter = require('./routes/haiuser');
 const categoryRouter = require('./routes/category');
 const partnerRouter = require('./routes/partner');
 const reservationRouter = require('./routes/reservation');
-//const commonRouter = require('./routes/common');
 const passport = require('passport');
 const serviceRouter = require('./routes/service');
 const subServiceRouter = require('./routes/subservice');
 const packageRouter = require('./routes/partnerpackage');
 const cookieSession = require('cookie-session');
 const dashboardRouter = require('./routes/dashboard');
+const awardsRouter = require('./routes/partnerawards');
+const portfolioRouter = require('./routes/partnerportfolio');
+const certificateRouter = require('./routes/partnercertificate');
+const experienceRouter = require('./routes/partnerexperience');
 
 // setup app with predefined configs
 config.init(app);
@@ -23,12 +26,15 @@ app.use(passport.session()); // Used to persist login sessions
 app.use(process.env.APP_API_PREFIX + '/auth', authRouter);
 app.use(process.env.APP_API_PREFIX + '/category', categoryRouter);
 app.use(process.env.APP_API_PREFIX + '/partner', partnerRouter);
-//app.use(process.env.APP_API_PREFIX + '/common', commonRouter);
 app.use(process.env.APP_API_PREFIX + '/service', serviceRouter);
 app.use(process.env.APP_API_PREFIX + '/subservice', subServiceRouter);
 app.use(process.env.APP_API_PREFIX + '/package', packageRouter);
 app.use(process.env.APP_API_PREFIX + '/reservation', reservationRouter);
 app.use(process.env.APP_API_PREFIX + '/dashboard', dashboardRouter);
+app.use(process.env.APP_API_PREFIX + '/award', awardsRouter);
+app.use(process.env.APP_API_PREFIX + '/certificate', certificateRouter);
+app.use(process.env.APP_API_PREFIX + '/portfolio', portfolioRouter);
+app.use(process.env.APP_API_PREFIX + '/experience', experienceRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

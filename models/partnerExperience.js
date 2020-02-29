@@ -13,7 +13,7 @@ const PartnerExperience = dbSeq.define('partner_experience', {
     allowNull: false,
     primaryKey: true
   },
-  name: {
+  position: {
     type: Sequelize.STRING(50),
     allowNull: true
   },

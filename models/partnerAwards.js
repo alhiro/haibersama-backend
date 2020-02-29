@@ -16,11 +16,11 @@ const PartnerAwards = dbSeq.define('partner_awards', {
     type: Sequelize.STRING(50),
     allowNull: true
   },
-  issuer_name: {
+  organizer: {
     type: Sequelize.STRING(50),
     allowNull: true
   },
-  issuer_date: {
+  awards_date: {
     type: Sequelize.DATE,
     allowNull: true
   },
