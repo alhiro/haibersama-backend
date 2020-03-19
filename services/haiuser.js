@@ -69,7 +69,16 @@ module.exports = {
             model: PartnerCategory
           }
         ]
+      }).then(users => {
+        //delete users.dataValues.password
+        return !users
+          ? { success: false, message: "User Not Found", data: {} }
+          : { success: true, message: "User Found", data: users };
+      })
+      .catch(err => {
+        return { success: false, message: "User Not Found", data: err };
       });
+      ;
     } catch (error) {
       throw error;
     }
