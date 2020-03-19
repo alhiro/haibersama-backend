@@ -11,6 +11,8 @@ exports.getAll =  async function(req, res, next) {
     let response = await auth.getAll();
 
     response.code = response.success ? 200 : 500;
+    
+    console.log( response.code, "error")
     return res.status(response.code).send(response);
   } catch (err) {
     return res
