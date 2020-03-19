@@ -23,11 +23,12 @@ module.exports = {
                 // HI I'M THE UPDATED CODE BLOCK, LOOK AT ME
                 // ------------------------------------
                 console.log("decodedStore : " + JSON.stringify(decodedStore));
-                const { email, id } = decodedStore;
+                const { email, id, type } = decodedStore;
 
                 res.locals.auth = {
                   email,
-                  id
+                  id,
+                  type
                 };
                 next();
               })

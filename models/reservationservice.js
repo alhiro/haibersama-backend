@@ -1,31 +1,35 @@
 var dbSeq = require('../config/sequelize')
 var Sequelize = require('sequelize')
 
-const Banner = dbSeq.define('banner', {
+const ReservationService = dbSeq.define('reservation_service', {
   id: {
     type: Sequelize.INTEGER,
     allowNull: false,
     primaryKey: true,
     autoIncrement: true
   },
-  title: {
-    type: Sequelize.STRING(100),
+  reservation_id: {
+    type: Sequelize.STRING(20),
+    allowNull: false,
+    references: {
+      model: 'Reservation',
+      key: 'id'
+    }
+  },
+  service_id: {
+    type: Sequelize.INTEGER,
+    allowNull: false
+  },
+  sub_service_id: {
+    type: Sequelize.INTEGER,
     allowNull: false
   },
   description: {
     type: Sequelize.STRING(500),
     allowNull: false
   },
-  image_url: {
-    type: Sequelize.STRING(500),
-    allowNull: false
-  },
-  order_no: {
-    type: Sequelize.INTEGER,
-    allowNull: false
-  },
-  active: {
-    type: Sequelize.BOOLEAN,
+  price: {
+    type: Sequelize.DECIMAL(18,2),
     allowNull: false
   },
   created_at: {
@@ -46,12 +50,22 @@ const Banner = dbSeq.define('banner', {
   },
 }, 
 {
-  tableName: 'banner',
+  tableName: 'reservation_service',
   freezeTableName: true,
   timestamps: true,
   paranoid: false,
-  underscored: true
+  underscored: true,
+  classMethods: {
+    associate: function (models) {
+      ReservationService.belongsTo(models.Reservation, {
+        foreignKey: {
+          allowNull: false
+        }
+      }
+      )
+    },
+  },
 });
 
-module.exports = Banner
+module.exports = ReservationService
 

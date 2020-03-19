@@ -18,6 +18,16 @@ const PartnerPackageDetail = dbSeq.define('partner_package_detail', {
       key: 'Id'
     }
   },
+  // di remark sementara karna d table gad fieldnya
+  // category_id: {
+  //   type: Sequelize.INTEGER,
+  //   allowNull: false,
+  //   primaryKey: true,
+  //   references: {
+  //     model: 'category',
+  //     key: 'Id'
+  //   }
+  // },
   subservice_id: {
     type: Sequelize.INTEGER,
     allowNull: false,
