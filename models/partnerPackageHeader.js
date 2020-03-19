@@ -84,7 +84,7 @@ const PartnerPackageHeader = dbSeq.define('partner_package_header', {
 });
 
 PartnerPackageHeader.hasMany(Category, {foreignKey: 'category_id'})
-PartnerPackageHeader.hasMany(Service, {foreignKey: 'service_id'});
+PartnerPackageHeader.belongsTo(Service, {foreignKey: 'service_id'});
 PartnerPackageHeader.hasMany(PartnerPackageDetail, { foreignKey: "package_header_id" });
 
 module.exports = PartnerPackageHeader
