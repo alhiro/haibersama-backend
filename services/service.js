@@ -32,6 +32,7 @@ module.exports =
 
     findOrCreateService: async (params, serviceData) => {
         try {
+          console.log("service add service")
           const { name, description } = serviceData.body
           var objService = {
             name: name,
