@@ -11,7 +11,7 @@ module.exports =
     
     findOrCreateReservation: async (data) => {
       try {
-        const { userId, packageId, eventDate, eventTime, eventAddress, name, address, phoneNo, waNo, email, socialMedia, otherDescription } = data;
+        const { reservationType, reservationDate, partnerId, userId, packageId, eventDate, eventTime, eventAddress, name, address, phoneNo, waNo, email, socialMedia, otherDescription } = data;
 
         // get services from package partner
         var package = await PackageHeader.findOne({
@@ -31,16 +31,16 @@ module.exports =
           partner_id: package.partner_id,
           event_date: eventDate,
           event_time: eventTime,
-          event_address: eventAddress
+          event_address: eventAddress,
+          reservation_type: reservationType
         };
 
         const isDuplicate = await Reservation.findOne({ where: params });
         
         if(isDuplicate != null){
-          console.log("masuk duplikate");
           return {
             success: false,
-            message: "Sudah ada order dengan user, partner, tanggal event, jam even dan alamat even yang sama",
+            message: "Sudah ada order dengan user, partner, tanggal event, jam event dan alamat event yang sama",
             data: {}
           };
         }
@@ -50,7 +50,7 @@ module.exports =
           partner_id: package.partner_id,
           event_date: eventDate,
           event_time: eventTime,
-          status_code: "102105"
+          status_code: ["102105", "102106", "102109"]
         };
 
         const isPartnerIsBooked = await Reservation.findOne({ where: params2 });
@@ -116,20 +116,30 @@ module.exports =
             created_by: 'system'
           });
 
+          var statusCode = "102101";
+          var resvDate = moment().utcOffset(7);
+
+          if(reservationType == "103102"){
+            statusCode = "102106";
+            resvDate = reservationDate
+          }
+
           var reservationData = {
               reservation_no: reservationNo,
-              reservation_date: moment().utcOffset(7),
+              reservation_date: resvDate,
+              reservation_type: reservationType,
               user_id: userId,
               partner_id: package.partner_id,
               category_id: package.category_id,
               service_id: package.service_id,
               event_date: eventDate,
               event_time: eventTime,
+              duration: package.duration,
               event_address: eventAddress,
               total_price: package.totalprice,
               total_discount: 0,
               total_payment: package.totalprice,
-              status_code: "102101",
+              status_code: statusCode,
               created_at: moment().utcOffset(7),
               created_by: "system",
               reservation_contact: {

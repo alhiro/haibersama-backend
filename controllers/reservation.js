@@ -3,7 +3,15 @@ const sequelizeTransaction = require("../config/sequelizeTransaction");
 const { VERIFY_URL } = process.env;
 
 exports.createReservation = async function(req, res, next) {
-    try {    
+    try {  
+      if(req.reservationType === "103102")
+      {
+        if(req.reservationDate === null)
+        {
+          return res.status(400).send({ code: 400, success: false, message: "Please input reservation date.", data: {} });
+        }
+      }  
+
         if(!req.packageId || req.packageId == 0)
         {
           return res.status(400).send({ code: 400, success: false, message: "Please select package.", data: {} });

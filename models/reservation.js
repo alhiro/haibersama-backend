@@ -20,9 +20,13 @@ const Reservation = dbSeq.define('reservation', {
     type: Sequelize.DATE,
     allowNull: false
   },
+  reservation_type:{
+    type: Sequelize.STRING(20),
+    allowNull: false
+  },
   user_id: {
     type: Sequelize.INTEGER,
-    allowNull: false
+    allowNull: true
   },
   partner_id: {
     type: Sequelize.INTEGER,
@@ -42,6 +46,10 @@ const Reservation = dbSeq.define('reservation', {
   },
   event_time:{
     type: Sequelize.TIME,
+    allowNull: false
+  },
+  duration:{
+    type: Sequelize.INTEGER,
     allowNull: false
   },
   event_address: {
