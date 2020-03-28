@@ -25,6 +25,14 @@ module.exports =
           };
         }
 
+        if(package.partner_id != partnerId){
+          return {
+            success: false,
+            message: "Partner tidak bisa menggunakan package yang dipilih.",
+            data: {}
+          };
+        }
+
         //check duplicate reservation user with event date, event time, partner id 
         const params = {
           user_id: userId,
