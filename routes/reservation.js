@@ -26,6 +26,7 @@ reservationRouter.post("/create", headerAuth.isUserAuthenticated , (req, res, ne
   const id = res.locals.auth.id;
 
   const data = { 
+    reservationType: "103101", 
     userId: id,
     packageId: req.body.packageId, 
     eventDate: req.body.eventDate, 
@@ -43,6 +44,30 @@ reservationRouter.post("/create", headerAuth.isUserAuthenticated , (req, res, ne
   reservationController.createReservation(data, res);
 });
 
+
+reservationRouter.post("/manual", headerAuth.isPartnerAuthenticated , (req, res, next) => {  
+  const id = res.locals.auth.id;
+
+  const data = { 
+    userId: null,
+    partnerId: id,
+    reservationDate: req.body.reservationDate, 
+    reservationType: "103102", 
+    packageId: req.body.packageId, 
+    eventDate: req.body.eventDate, 
+    eventTime: req.body.eventTime, 
+    eventAddress: req.body.eventAddress, 
+    name: req.body.name, 
+    address: req.body.address, 
+    phoneNo: req.body.phoneNo, 
+    waNo: req.body.waNo, 
+    email: req.body.email, 
+    socialMedia: req.body.socialMedia, 
+    otherDescription: req.body.otherDescription
+  };
+
+  reservationController.createReservation(data, res);
+});
 
 reservationRouter.post("/updatestatus", headerAuth.isUserAuthenticated ,(req, res, next) => {
   const id = res.locals.auth.id;
