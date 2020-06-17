@@ -3,12 +3,12 @@ var partnerCertificateRouter = express.Router();
 var partnerCertificateController = require("../controllers/partnercertificate");
 var headerAuth  =  require('../authMiddleware')
 
-partnerCertificateRouter.get("/getall", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+partnerCertificateRouter.get("/getall", headerAuth.isUserAuthenticated, (req, res, next) => {
     const partner_id = res.locals.auth.id;
     partnerCertificateController.getAllCertificate(partner_id, res);
 });
 
-partnerCertificateRouter.get("/get", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+partnerCertificateRouter.get("/get", headerAuth.isUserAuthenticated, (req, res, next) => {
   partnerCertificateController.getDetail(req, res);
 });
 

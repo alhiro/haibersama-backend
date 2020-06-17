@@ -10,4 +10,9 @@ partnerRouter.post("/getpartner", (req, res, next) => {
   partnerController.getPartner(req, res);
 });
 
+
+partnerRouter.post("/search", (req, res, next) => {
+  partnerController.searchPartner(req, res);
+});
+
 module.exports = partnerRouter;

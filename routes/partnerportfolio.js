@@ -3,12 +3,12 @@ var partnerPortfolioRouter = express.Router();
 var partnerPortfolioController = require("../controllers/partnerportfolio");
 var headerAuth  =  require('../authMiddleware')
 
-partnerPortfolioRouter.get("/getall", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+partnerPortfolioRouter.get("/getall", headerAuth.isUserAuthenticated, (req, res, next) => {
   const partner_id = res.locals.auth.id;
   partnerPortfolioController.getAllPortfolio(partner_id, res);
 });
 
-partnerPortfolioRouter.get("/get", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+partnerPortfolioRouter.get("/get", headerAuth.isUserAuthenticated, (req, res, next) => {
   partnerPortfolioController.getDetail(req, res);
 });
 

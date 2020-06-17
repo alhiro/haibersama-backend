@@ -3,12 +3,12 @@ var partnerExperienceRouter = express.Router();
 var partnerExperienceController = require("../controllers/partnerexperience");
 var headerAuth  =  require('../authMiddleware')
 
-partnerExperienceRouter.get("/getall", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+partnerExperienceRouter.get("/getall", headerAuth.isUserAuthenticated, (req, res, next) => {
     const partner_id = res.locals.auth.id;
     partnerExperienceController.getAllExperience(partner_id, res);
 });
 
-partnerExperienceRouter.get("/get", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+partnerExperienceRouter.get("/get", headerAuth.isUserAuthenticated, (req, res, next) => {
   partnerExperienceController.getDetail(req, res);
 });
 

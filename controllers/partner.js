@@ -32,3 +32,16 @@ exports.getPartner = async function (req, res, next) {
       .send({ code: 500, success: false, message: err.message, data: { err } });
   }
 };
+
+exports.searchPartner = async function (req, res, next) {
+  const { body } = req;
+  try {
+        var partners = await partner.getSearchPartner(body);
+        console.log("controller search");
+        return res.status(200).json({ status: 200, data: partners, message: "Succesfully Partner Retrieved" });
+  } catch (err) {
+    return res
+      .status(500)
+      .send({ code: 500, success: false, message: err.message, data: { err } });
+  }
+};

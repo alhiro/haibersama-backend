@@ -9,8 +9,39 @@ Partner.hasMany(PartnerExperience, {as: 'Experiences'})
 Partner.hasMany(PartnerAwards, {as: 'Awards'})
 Partner.hasMany(PartnerPortfolio, {as: 'Portfolios'})
 
+const sequelize = require("../config/sequelize");
+
 module.exports =
   {  
+    getSearchPartner: async (param) => {
+      try {
+          const { start, pageSize, orderBy, categoryID, latitude, longitude, address, serviceID, availableDate, rating, minPrice, maxPrice} = param;
+
+          // var query = "CALL someprocedure(:userId,:status)";
+          var query = "select * from sp_partner_search_get_list_paging(:p_start,:p_page_size,:p_order_by,:p_category_id,:p_latitude,:p_longitude,:p_address,:p_service_id,:p_available_date,:p_rating,:p_min_price,:p_max_price)";
+          return sequelize.query(query,{ replacements : { 
+              p_start: start,
+              p_page_size: pageSize,
+              p_order_by: orderBy,
+              p_category_id: categoryID,
+              p_latitude: latitude,
+              p_longitude: longitude,
+              p_address: address,
+              p_service_id: serviceID,
+              p_available_date: availableDate,
+              p_rating: rating,
+              p_min_price: minPrice,
+              p_max_price: maxPrice
+            }, type : sequelize.QueryTypes.SELECT}).then(results => {
+              return results;
+          });
+
+      } catch (error) {
+        console.log(error);
+        throw error
+      }
+    },
+
     getPartner: async (partnerID) => {
         try {
           return await Partner.findOne({

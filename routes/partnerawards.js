@@ -3,12 +3,12 @@ var partnerAwardsRouter = express.Router();
 var partnerAwardsController = require("../controllers/partnerawards");
 var headerAuth  =  require('../authMiddleware')
 
-partnerAwardsRouter.get("/getall", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+partnerAwardsRouter.get("/getall", headerAuth.isUserAuthenticated, (req, res, next) => {
     const partner_id = res.locals.auth.id;
     partnerAwardsController.getAllAwards(partner_id, res);
 });
 
-partnerAwardsRouter.get("/get", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+partnerAwardsRouter.get("/get", headerAuth.isUserAuthenticated, (req, res, next) => {
   partnerAwardsController.getDetail(req, res);
 });
 
