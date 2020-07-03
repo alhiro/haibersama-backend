@@ -42,13 +42,16 @@ module.exports = {
       refresh_token: refresh_token
     };
 
-    return User.update(data, { where: { email: users.email } })
+    return User.update(data, { where: { email: users.email }, 
+      returning: true,
+      plain: true })
       .then(updated => {
+        console.log("updated : ", updated[1].dataValues)
         return {
           success: true,
           message: "Login Successful",
           data: {
-            type: "user",
+            type: updated[1].dataValues.type == 1 ? "user" : "partner",
             token,
             expiresIn: new Date(decoded.exp * 1000),
             refresh_token
