@@ -12,60 +12,29 @@ paymentRouter.post("/getchannellist", headerAuth.isUserAuthenticated, (req, res,
   paymentChannelController.getActiveList(data, res);
 });
 
-
 paymentRouter.post("/create", headerAuth.isUserAuthenticated , (req, res, next) => {  
   const id = res.locals.auth.id;
 
   const data = { 
-    paymentType: "103101", 
     userId: id,
-    packageId: req.body.packageId, 
-    eventDate: req.body.eventDate, 
-    eventTime: req.body.eventTime, 
-    eventAddress: req.body.eventAddress, 
-    name: req.body.name, 
-    address: req.body.address, 
-    phoneNo: req.body.phoneNo, 
-    waNo: req.body.waNo, 
-    email: req.body.email, 
-    socialMedia: req.body.socialMedia, 
-    otherDescription: req.body.otherDescription
+    reservationNo: req.body.reservationNo, 
+    totalPrice: req.body.totalPrice, 
+    totalDiscount: req.body.totalDiscount, 
+    totalPayment: req.body.totalPayment, 
+    paymentChannelCode: req.body.paymentChannelCode, 
+    paymentTimeLimit: req.body.paymentTimeLimit
   };
 
   paymentController.createPayment(data, res);
 });
 
-
-paymentRouter.post("/manual", headerAuth.isPartnerAuthenticated , (req, res, next) => {  
-  const id = res.locals.auth.id;
-
-  const data = { 
-    userId: null,
-    partnerId: id,
-    paymentDate: req.body.paymentDate, 
-    paymentType: "103102", 
-    packageId: req.body.packageId, 
-    eventDate: req.body.eventDate, 
-    eventTime: req.body.eventTime, 
-    eventAddress: req.body.eventAddress, 
-    name: req.body.name, 
-    address: req.body.address, 
-    phoneNo: req.body.phoneNo, 
-    waNo: req.body.waNo, 
-    email: req.body.email, 
-    socialMedia: req.body.socialMedia, 
-    otherDescription: req.body.otherDescription
-  };
-
-  paymentController.createPayment(data, res);
-});
 
 paymentRouter.post("/updatestatus", headerAuth.isUserAuthenticated ,(req, res, next) => {
   const id = res.locals.auth.id;
   const type = res.locals.auth.type;
 
   const data = { 
-    paymentNo: req.body.paymentNo, 
+    reservationNo: req.body.reservationNo, 
     statusCode: req.body.statusCode, 
     userId: id, 
     type: type

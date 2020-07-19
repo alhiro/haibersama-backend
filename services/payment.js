@@ -101,7 +101,7 @@ module.exports =
       }
     },
     
-    findPayment: async (reservationNo) => {
+    findPaymentInfo: async (reservationNo) => {
       try{
           return Sequelize.query(
               `select 
