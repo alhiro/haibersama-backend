@@ -125,7 +125,7 @@ module.exports =
           });
 
           var statusCode = "102101";
-          var resvDate = moment().utcOffset(7);
+          var resvDate = moment().utcOffset(0);
 
           if(reservationType == "103102"){
             statusCode = "102106";

@@ -1,20 +1,13 @@
 const PaymentChannel = require('../models/paymentchannel');
 
 module.exports =
-  {        
+{        
     getAllActive: async () => {
       try {
         return await PaymentChannel.findAll({
             where:{
                 active : true
-            }//,
-            // attributes: ['id',
-            //             'name',
-            //             'description'
-            // ],
-            // order:[
-            //     ["order_no", "ASC"]
-            // ]
+            }
         });
       } catch (error) {
         throw error

@@ -9,7 +9,7 @@ const PaymentChannel = dbSeq.define('payment_channel', {
     autoIncrement: true
   },
   payment_channel_code: {
-    type: Sequelize.STRING(10),
+    type: Sequelize.STRING(50),
     allowNull: false
   },
   description: {
@@ -18,7 +18,7 @@ const PaymentChannel = dbSeq.define('payment_channel', {
   },
   pg_code: {
     type: Sequelize.STRING(10),
-    allowNull: false
+    allowNull: true
   },
   method_code: {
     type: Sequelize.STRING(10),
