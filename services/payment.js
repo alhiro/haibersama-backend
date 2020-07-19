@@ -15,7 +15,7 @@ module.exports =
           payment_channel_code: paymentChannelCode,
         };
 
-        const channel = await Payment.findOne({ where: paramChannel });        
+        const channel = await PaymentChannel.findOne({ where: paramChannel });        
 
         var statusCode = "104101";
         var details = [];
@@ -102,12 +102,31 @@ module.exports =
     },
     
     findPayment: async (reservationNo) => {
-      return await Payment.findOne({ where: {reservation_no: reservationNo }})
-        .then((payments) => {
-          return (!payments) ? { success: false, message: "Payment Not Found", data: {} } : { success: true, message: "Payment Found", data: payments }
-        })
-        .catch((err) => { return { success: false, message: "Payment Not Found", data: err } });
-    },
+      try{
+          return Sequelize.query(
+              `select 
+                  reservation_no,
+                  total_payment,
+                  payment_time_limit,
+                  pm.description payment_method,
+                  pc.bank_name,
+                  pc.account_no,
+                  pc.account_name
+                from payment p
+                inner join payment_channel pc on pc.payment_channel_code = p.payment_channel_code
+                inner join code_info pm on pm.code = pc.method_code
+                where reservation_no = '`+reservationNo+`';`,
+              { 
+                  raw: true,
+                  type: Sequelize.QueryTypes.SELECT
+              }
+          ).then(payment => {
+              return payment;
+          })
+      } catch (error) {
+      throw error
+      }
+  },
         
     updateStatusPayment: async (req) => {
       try {
