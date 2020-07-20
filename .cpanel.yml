@@ -1,0 +1,10 @@
+---
+ 
+    deployment:
+     
+     tasks:
+     
+     - export DEPLOYPATH=/home/websites/staging.haiorganizer.com
+     
+     - /usr/bin/rsync -Paz * $DEPLOYPATH --delete
+    
