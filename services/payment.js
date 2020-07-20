@@ -1,7 +1,6 @@
 const Payment = require('../models/payment');
 const PaymentDetail = require('../models/paymentdetail');
 const PaymentChannel = require('../models/paymentchannel');
-// const PaymentStatusHistory = require('../models/paymentstatushistory');
 const moment = require("moment");
 
 module.exports =
@@ -37,14 +36,14 @@ module.exports =
 
         const isPaymentExist = await Payment.findOne({ where: existPayment });
         
-        if (!isDuplicate) {
+        if (!isPaymentExist) {
 
           var paymentData = {
               reservation_no: reservationNo,
               total_price: totalPrice,
               total_discount: totalDiscount,
               total_payment: totalPayment,
-              payment_channel_code: payment_channel_code,
+              payment_channel_code: paymentChannelCode,
               payment_time_limit: paymentTimeLimit,
               status_code: statusCode,
               created_at: moment().utcOffset(0),
@@ -81,6 +80,9 @@ module.exports =
             };
           }
         } else {
+
+          detail.payment_id = existPayment.id;
+          
           var objPayment = {
             payment_channel_code: paymentChannelCode, 
             updated_at: moment().utcOffset(0),
@@ -142,8 +144,7 @@ module.exports =
         .then(async (updated) => { 
             const updatePayment = await Payment.findOne({ where: { reservation_no: reservationNo } })
 
-            const history = {status_code: statusCode, payment_id: updatePayment.id, updatedcreated_at: moment().utcOffset(0), created_by: userId };
-            const updateDetail = await PaymentStatusHistory.create(history);
+            const updateDetail = await PaymentDetail.create(detail);
 
             return { success: true, message: "Payment Successfully Updated", data: updatePayment } })
         .catch((err) => { return { success: false, message: "Update Payment Failed", data: err } });

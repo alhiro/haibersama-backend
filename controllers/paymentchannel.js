@@ -14,12 +14,12 @@ exports.getAll = async function (req, res, next) {
 
 exports.getActiveList = async function (req, res, next) {
   try {
-        var channels = await cat.getAllActive();
-        return res.status(200).json({ status: 200, data: channels, message: "Succesfully Channels Retrieved" });
+    var channels = await cat.getAllActive();
+    return res.status(200).json({ status: 200, data: channels, message: "Succesfully Payment Channel Retrieved" });
   } catch (err) {
-    return res
-      .status(500)
-      .send({ code: 500, success: false, message: err.message, data: { err } });
+  return res
+    .status(500)
+    .send({ code: 500, success: false, message: err.message, data: { err } });
   }
 };
 

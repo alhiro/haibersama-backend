@@ -23,7 +23,7 @@ const PaymentDetail = dbSeq.define('payment_detail', {
   },
   pg_code: {
     type: Sequelize.STRING(10),
-    allowNull: false
+    allowNull: true
   },
   method_code: {
     type: Sequelize.STRING(10),

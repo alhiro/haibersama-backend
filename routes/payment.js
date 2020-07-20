@@ -4,12 +4,18 @@ var paymentController = require("../controllers/payment");
 var paymentChannelController = require("../controllers/paymentchannel");
 var headerAuth  =  require('../authMiddleware');
 
-paymentRouter.post("/getpaymentinfo", headerAuth.isUserAuthenticated, (req, res, next) => {
-  paymentController.getPaymentInfo(req, res);
+paymentRouter.get("/getpaymentinfo", headerAuth.isUserAuthenticated, (req, res, next) => {
+  const id = res.locals.auth.id;
+  const data = {
+    reservationNo :  req.query.reservationNo,
+    userId: id
+  };
+
+  paymentController.getPaymentInfo(data, res);
 });
 
-paymentRouter.post("/getchannellist", headerAuth.isUserAuthenticated, (req, res, next) => {    
-  paymentChannelController.getActiveList(data, res);
+paymentRouter.get("/getchannellist", headerAuth.isUserAuthenticated, (req, res, next) => {    
+  paymentChannelController.getActiveList(req, res);
 });
 
 paymentRouter.post("/create", headerAuth.isUserAuthenticated , (req, res, next) => {  

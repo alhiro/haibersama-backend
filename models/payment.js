@@ -2,7 +2,7 @@ var dbSeq = require('../config/sequelize')
 var Sequelize = require('sequelize')
 
 var PaymentDetail = require('./paymentdetail')
-var PaymentStatusHistory = require('./paymentstatushistory')
+// var PaymentStatusHistory = require('./paymentstatushistory')
 
 const Payment = dbSeq.define('payment', {
   id: {
@@ -67,17 +67,17 @@ const Payment = dbSeq.define('payment', {
   underscored: true,
   classMethods: {
     associate: function (models) {
-      Payment.hasMany(models.PaymentDetail, {foreignKey: 'payment_id', as: 'payment_detail'}),
-      Payment.hasMany(models.PaymentStatusHistory, {foreignKey: 'payment_id', as: 'payment_status_histories'})
+      Payment.hasMany(models.PaymentDetail, {foreignKey: 'payment_id', as: 'payment_detail'})//,
+      //Payment.hasMany(models.PaymentStatusHistory, {foreignKey: 'payment_id', as: 'payment_status_histories'})
     },
   },
 });
 
 Payment.hasMany(PaymentDetail, {foreignKey: 'payment_id', as: 'payment_detail'});
-Payment.hasMany(PaymentStatusHistory, {foreignKey: 'payment_id', as: 'payment_status_histories'});
+// Payment.hasMany(PaymentStatusHistory, {foreignKey: 'payment_id', as: 'payment_status_histories'});
 
 PaymentDetail.belongsTo(Payment);
-PaymentStatusHistory.belongsTo(Payment);
+// PaymentStatusHistory.belongsTo(Payment);
 
 module.exports = Payment
 
