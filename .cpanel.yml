@@ -1,0 +1,9 @@
+---
+ 
+    deployment:
+     
+     tasks:
+     
+     - export DEPLOYPATH=/home/websites/api.haiorganizer.com
+     
+     - /usr/bin/rsync -Paz * $DEPLOYPATH --delete
