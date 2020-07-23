@@ -25,12 +25,14 @@ module.exports =
           };
         }
 
-        if(package.partner_id != partnerId){
-          return {
-            success: false,
-            message: "Partner tidak bisa menggunakan package yang dipilih.",
-            data: {}
-          };
+        if(reservationType == "103102"){
+          if(package.partner_id != partnerId){
+            return {
+              success: false,
+              message: "Partner tidak bisa menggunakan package yang dipilih.",
+              data: {}
+            };
+          }
         }
 
         //check duplicate reservation user with event date, event time, partner id 
@@ -72,7 +74,7 @@ module.exports =
         }
 
         if (!isDuplicate) {
-          var currentDate = moment().utcOffset(7).format("YYMMDD");
+          var currentDate = moment().utcOffset(0).format("YYMMDD");
 
           const lastReservation = await Reservation.findOne({
             where: { reservation_no: { $like: `${currentDate}%` } },
@@ -112,7 +114,7 @@ module.exports =
               sub_service_id: detail.subservice_id,
               description: "",
               price: detail.price,
-              created_at: moment().utcOffset(7),
+              created_at: moment().utcOffset(0),
               created_by: 'system'
             };
             services.push(service);
@@ -120,12 +122,12 @@ module.exports =
 
           histories.push({
             status_code: "102101",
-            created_at: moment().utcOffset(7),
+            created_at: moment().utcOffset(0),
             created_by: 'system'
           });
 
           var statusCode = "102101";
-          var resvDate = moment().utcOffset(7);
+          var resvDate = moment().utcOffset(0);
 
           if(reservationType == "103102"){
             statusCode = "102106";
@@ -148,7 +150,7 @@ module.exports =
               total_discount: 0,
               total_payment: package.totalprice,
               status_code: statusCode,
-              created_at: moment().utcOffset(7),
+              created_at: moment().utcOffset(0),
               created_by: "system",
               reservation_contact: {
                 reservation_no: reservationNo,
@@ -252,7 +254,7 @@ module.exports =
 
         var objReservation = {
           status_code: statusCode, 
-          updated_at: moment().utcOffset(7),
+          updated_at: moment().utcOffset(0),
           updated_by: userId
         }
 
@@ -263,7 +265,7 @@ module.exports =
             const upReserv = await Reservation.findOne({ where: { reservation_no: reservationNo } })
             console.log(JSON.stringify(upReserv), "upReserv")
 
-            const history = {status_code: statusCode, reservation_id: upReserv.id, updatedcreated_at: moment().utcOffset(7), created_by: userId };
+            const history = {status_code: statusCode, reservation_id: upReserv.id, updatedcreated_at: moment().utcOffset(0), created_by: userId };
             const upHistory = await ReservationStatusHistory.create(history);
 
             return { success: true, message: "Reservation Successfully Updated", data: upReserv } })

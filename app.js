@@ -15,6 +15,7 @@ const awardsRouter = require('./routes/partnerawards');
 const portfolioRouter = require('./routes/partnerportfolio');
 const certificateRouter = require('./routes/partnercertificate');
 const experienceRouter = require('./routes/partnerexperience');
+const paymentRouter = require('./routes/payment');
 
 // setup app with predefined configs
 config.init(app);
@@ -35,6 +36,7 @@ app.use(process.env.APP_API_PREFIX + '/award', awardsRouter);
 app.use(process.env.APP_API_PREFIX + '/certificate', certificateRouter);
 app.use(process.env.APP_API_PREFIX + '/portfolio', portfolioRouter);
 app.use(process.env.APP_API_PREFIX + '/experience', experienceRouter);
+app.use(process.env.APP_API_PREFIX + '/payment', paymentRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
