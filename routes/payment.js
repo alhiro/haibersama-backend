@@ -18,6 +18,10 @@ paymentRouter.get("/getchannellist", headerAuth.isUserAuthenticated, (req, res, 
   paymentChannelController.getActiveList(req, res);
 });
 
+paymentRouter.get("/getchanneldetail", headerAuth.isUserAuthenticated, (req, res, next) => {    
+  paymentChannelController.getPaymentChannelDetail(req, res);
+});
+
 paymentRouter.post("/create", headerAuth.isUserAuthenticated , (req, res, next) => {  
   const id = res.locals.auth.id;
 

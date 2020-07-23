@@ -2,6 +2,7 @@ const Payment = require('../models/payment');
 const PaymentDetail = require('../models/paymentdetail');
 const PaymentChannel = require('../models/paymentchannel');
 const moment = require("moment");
+const Sequelize = require('../config/sequelize');
 
 module.exports =
   {        
@@ -23,7 +24,7 @@ module.exports =
           payment_channel_code: paymentChannelCode,
           pg_code: channel.pg_code,
           method_code: channel.method_code,
-          payment_amount: channel.payment_amount,
+          payment_amount: totalPayment,
           status_code: statusCode,
           created_at: moment().utcOffset(0),
           created_by: 'system'
@@ -116,14 +117,14 @@ module.exports =
                   pc.account_name
                 from payment p
                 inner join payment_channel pc on pc.payment_channel_code = p.payment_channel_code
-                inner join code_info pm on pm.code = pc.method_code
+                left join code_info pm on pm.code = pc.method_code
                 where reservation_no = '`+reservationNo+`';`,
               { 
                   raw: true,
                   type: Sequelize.QueryTypes.SELECT
               }
           ).then(payment => {
-              return payment;
+            return (!payment) ? { success: false, message: "Payment Info Not Found", data: {} } : { success: true, data: payment[0] }
           })
       } catch (error) {
       throw error

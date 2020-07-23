@@ -39,15 +39,16 @@ exports.getPaymentInfo = async function(req, res, next) {
     try {
         const { reservationNo, userId } = req;
         
-        var reservationData = reservation.findReservation(reservationNo);
+        let reservationData = await reservation.findReservation(reservationNo);
+        console.log(userId);
+        console.log(reservationData.data);
 
-        if(userId != reservationData.userId)
+        if(userId != reservationData.data.user_id)
         {
           return res.status(400).send({ code: 400, success: false, message: "Invalid User Id.", data: {} });
         }
             
-        console.log(params);
-        let data = await payment.findPaymentInfo(params);
+        let data = await payment.findPaymentInfo(reservationNo);
         data.code = data.success ? 200 : 500;
         return res.status(200).send(data);
     

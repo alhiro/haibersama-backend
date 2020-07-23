@@ -1,18 +1,37 @@
 const PaymentChannel = require('../models/paymentchannel');
+const Sequelize = require('../config/sequelize');
 
 module.exports =
-{        
+{  
     getAllActive: async () => {
-      try {
-        return await PaymentChannel.findAll({
-            where:{
-                active : true
-            }
-        });
+      try{
+          return Sequelize.query(
+              `select 
+                  payment_channel_code,
+                  pc.description payment_channel_desc,
+                  pm.description payment_method,
+                  pg.description payment_gateway,
+                  pc.bank_name,
+                  pc.account_no,
+                  pc.account_name,
+                  pc.icon_url
+                from payment_channel pc 
+                left join code_info pm on pm.code = pc.method_code
+                left join code_info pg on pg.code = pc.pg_code
+                where active = true;`,
+              { 
+                  raw: true,
+                  type: Sequelize.QueryTypes.SELECT
+              }
+          ).then(payment => {
+            //console.log(payment);
+              return payment;
+          })
       } catch (error) {
-        throw error
+        console.log(error);
+      throw error
       }
-    },
+  },
 
     getAll: async () => {
       try {
@@ -22,17 +41,35 @@ module.exports =
       }
     },
 
-    findPaymentChannel: async (params) => {
-      return await PaymentChannel.findOne({ where: params })
-        .then((categories) => {
-          return (!categories) ? { success: false, message: "Payment Channel Not Found", data: {} } : { success: true, message: "PaymentChannel Found", data: categories }
-        })
-        .catch((err) => { return { success: false, message: "Payment Channel Not Found", data: err } });
+    findPaymentChannelByCode: async (paymentChannelCode) => {
+      return Sequelize.query(
+        `select 
+            payment_channel_code,
+            pc.description payment_channel_desc,
+            pm.description payment_method,
+            pg.description payment_gateway,
+            pc.bank_name,
+            pc.account_no,
+            pc.account_name,
+            pc.icon_url
+          from payment_channel pc 
+          left join code_info pm on pm.code = pc.method_code
+          left join code_info pg on pg.code = pc.pg_code
+          where payment_channel_code = '`+paymentChannelCode+`';`,
+        { 
+            raw: true,
+            type: Sequelize.QueryTypes.SELECT
+        }
+      ).then(payment => {
+        //console.log(payment);
+          return (!payment) ? { success: false, message: "Payment Channel Not Found", data: {} } : { success: true, message: "PaymentChannel Found", data: payment }
+          
+      })
     },
 
     findOrCreatePaymentChannel: async (params, req) => {
       try {
-        const { paymentChannelCode, description, PGCode, methodCode, bankCode, bankName, accountNo, accountName, orderNo, active } = req.body
+        const { paymentChannelCode, description, PGCode, methodCode, bankCode, bankName, accountNo, accountName, orderNo, iconUrl, active } = req.body
         var objPaymentChannel = {
           payment_channel_code: paymentChannelCode,
           description: description,
@@ -43,6 +80,7 @@ module.exports =
           account_no: accountNo,
           account_name: accountName,
           order_no: orderNo,
+          icon_url: iconUrl,
           active: active == 1 ? true : false
         }
         const insertPaymentChannel = await PaymentChannel.findOrCreate({ where: params, defaults: objPaymentChannel })
@@ -60,7 +98,7 @@ module.exports =
 
     updatePaymentChannel: async (params, req) => {
         try {
-          const { paymentChannelCode, description, PGCode, methodCode, bankCode, bankName, accountNo, accountName, orderNo, active } = req.body
+          const { paymentChannelCode, description, PGCode, methodCode, bankCode, bankName, accountNo, accountName, orderNo, iconUrl, active } = req.body
 
           var objPaymentChannel = {
             payment_channel_code: paymentChannelCode,
@@ -72,6 +110,7 @@ module.exports =
             account_no: accountNo,
             account_name: accountName,
             order_no: orderNo,
+            icon_url: iconUrl,
             active: active == 1 ? true : false
           }
           console.log(JSON.stringify(objPaymentChannel), "objPaymentChannel")

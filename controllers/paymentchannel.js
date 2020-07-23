@@ -23,6 +23,19 @@ exports.getActiveList = async function (req, res, next) {
   }
 };
 
+exports.getPaymentChannelDetail = async function (req, res, next) {
+  try {    
+    let channelCode = req.query.channelCode;
+
+    var channels = await cat.findPaymentChannelByCode(channelCode);
+    return res.status(200).json({ status: 200, data: channels.data, message: "Succesfully Payment Channel Retrieved" });
+  } catch (err) {
+  return res
+    .status(500)
+    .send({ code: 500, success: false, message: err.message, data: { err } });
+  }
+};
+
 exports.addPaymentChannel = async function(req, res, next) {
   try {
     console.log("controller addPaymentChannel")
