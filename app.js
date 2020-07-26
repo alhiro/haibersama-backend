@@ -1,4 +1,7 @@
 const express = require("express");
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const morgan = require('morgan');
 const app = express()
 const config = require('./config/config');
 const authRouter = require('./routes/haiuser');
@@ -15,9 +18,23 @@ const awardsRouter = require('./routes/partnerawards');
 const portfolioRouter = require('./routes/partnerportfolio');
 const certificateRouter = require('./routes/partnercertificate');
 const experienceRouter = require('./routes/partnerexperience');
+const paymentRouter = require('./routes/payment');
+const bannerRouter = require('./routes/banner');
+const serveIndex = require('serve-index');
+
 
 // setup app with predefined configs
 config.init(app);
+
+app.use('/ftp', express.static('public'), serveIndex('public', {'icons': true}));
+
+// enable CORS
+app.use(cors());
+
+// add other middleware
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(morgan('dev'));
 
 app.use(passport.initialize()); // Used to initialize passport
 app.use(passport.session()); // Used to persist login sessions
@@ -35,6 +52,8 @@ app.use(process.env.APP_API_PREFIX + '/award', awardsRouter);
 app.use(process.env.APP_API_PREFIX + '/certificate', certificateRouter);
 app.use(process.env.APP_API_PREFIX + '/portfolio', portfolioRouter);
 app.use(process.env.APP_API_PREFIX + '/experience', experienceRouter);
+app.use(process.env.APP_API_PREFIX + '/payment', paymentRouter);
+app.use(process.env.APP_API_PREFIX + '/banner', bannerRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
