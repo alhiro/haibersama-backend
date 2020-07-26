@@ -1,4 +1,8 @@
 #Hai Organizer V1.1.0
 
 #Description
-App Manager System Hai
+App Manager System
+
+#Features
+- Find professional partner hai
+- Manager virtual
