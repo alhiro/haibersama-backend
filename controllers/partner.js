@@ -5,7 +5,7 @@ exports.getDetail = async function (req, res, next) {
   console.log("controller partner");
 
   const { body } = req;
-  const { token, partner_id } = body;
+  const partner_id = req.query.id;
   try {
         var partnerDetail = await partner.getDetail(partner_id);
         console.log("controller test test");

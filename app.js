@@ -1,5 +1,4 @@
 const express = require("express");
-const multer = require('multer');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
@@ -21,18 +20,13 @@ const certificateRouter = require('./routes/partnercertificate');
 const experienceRouter = require('./routes/partnerexperience');
 const paymentRouter = require('./routes/payment');
 const bannerRouter = require('./routes/banner');
-
-// upload file path
-const FILE_PATH = 'imagehai';
+const serveIndex = require('serve-index');
 
 
 // setup app with predefined configs
 config.init(app);
 
-// configure multer
-const upload = multer({
-  dest: `${FILE_PATH}/`
-});
+app.use('/ftp', express.static('public'), serveIndex('public', {'icons': true}));
 
 // enable CORS
 app.use(cors());

@@ -23,15 +23,15 @@ module.exports =
 
     findBanner: async (params) => {
       return await Banner.findOne({ where: params })
-        .then((categories) => {
-          return (!categories) ? { success: false, message: "Banner Not Found", data: {} } : { success: true, message: "Banner Found", data: categories }
+        .then((banners) => {
+          return (!banners) ? { success: false, message: "Banner Not Found", data: {} } : { success: true, message: "Banner Found", data: banners }
         })
         .catch((err) => { return { success: false, message: "Banner Not Found", data: err } });
     },
 
     findOrCreateBanner: async (params, req) => {
       try {
-        const { title, description, image_url, order_no, active } = req.body
+        const { title, description, image_url, order_no, active } = req
         var objBanner = {
           title: title,
           description: description,
@@ -48,13 +48,14 @@ module.exports =
         
         return { success: true, message: "Banner Successfully Created", data: insertBanner[0].dataValues }
       } catch (error) {
+        console.log(error);
         throw (error)
       }
     },
 
     updateBanner: async (params, req) => {
         try {
-          const { title, description, id, image_url, active, order_no } = req.body
+          const { title, description, id, image_url, active, order_no } = req
 
           var objBanner = {
             title: title,
