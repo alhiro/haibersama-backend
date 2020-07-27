@@ -1,4 +1,4 @@
-const PartnerPortfolio = require('../models/partnerportfolio');
+const PartnerPortfolio = require('../models/partnerPortfolio');
 
 module.exports =
   {  
