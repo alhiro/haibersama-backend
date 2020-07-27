@@ -1,4 +1,4 @@
-const PartnerAwards = require('../models/partnerawards');
+const PartnerAwards = require('../models/partnerAwards');
 
 module.exports =
   {  

@@ -1,8 +1,8 @@
 const Partner = require('../models/haiuser');
 const PartnerCertificate = require('../models/partnerCertificate');
-const PartnerAwards = require('../models/partnerawards');
-const PartnerExperience = require('../models/partnerexperience');
-const PartnerPortfolio = require('../models/partnerportfolio');
+const PartnerAwards = require('../models/partnerAwards');
+const PartnerExperience = require('../models/partnerExperience');
+const PartnerPortfolio = require('../models/partnerPortfolio');
 
 const PartnerAwardsService = require('../services/partnerawards');
 const PartnerExperienceService = require('../services/partnerexperience');
