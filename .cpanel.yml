@@ -6,4 +6,4 @@
      
      - export DEPLOYPATH=/home/haiorgan/api.haiorganizer.com
      
-     - /bin/cp * $DEPLOYPATH
+     - /bin/cp -r * $DEPLOYPATH

@@ -1,12 +1,12 @@
 const Partner = require('../models/haiuser');
-const PartnerCertificate = require('../models/partnerCertificate');
-const PartnerAwards = require('../models/partnerAwards');
-const PartnerExperience = require('../models/partnerExperience');
-const PartnerPortfolio = require('../models/partnerPortfolio');
+const PartnerCertificate = require('../models/partnercertificate');
+const PartnerAwards = require('../models/partnerawards');
+const PartnerExperience = require('../models/partnerexperience');
+const PartnerPortfolio = require('../models/partnerportfolio');
 
-const PartnerAwardsService = require('../services/partnerAwards');
-const PartnerExperienceService = require('../services/partnerExperience');
-const PartnerPortfolioService = require('../services/partnerPortfolio');
+const PartnerAwardsService = require('../services/partnerawards');
+const PartnerExperienceService = require('../services/partnerexperience');
+const PartnerPortfolioService = require('../services/partnerportfolio');
 
 Partner.hasMany(PartnerCertificate, {as: 'Certificates'})
 Partner.hasMany(PartnerExperience, {as: 'Experiences'})

@@ -1,4 +1,4 @@
-const PartnerExperience = require('../models/partnerExperience');
+const PartnerExperience = require('../models/partnerexperience');
 
 module.exports =
   {  
