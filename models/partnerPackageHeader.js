@@ -1,0 +1,91 @@
+var dbSeq = require('../config/sequelize')
+var Sequelize = require('sequelize')
+var Category = require('./category')
+var PartnerPackageDetail = require('./partnerPackageDetail')
+var Service = require('./service')
+
+const PartnerPackageHeader = dbSeq.define('partner_package_header', {
+  id: {
+    type: Sequelize.INTEGER,
+    allowNull: false,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  name: {
+    type: Sequelize.STRING(50),
+    allowNull: false
+  },
+  partner_id: {
+    type: Sequelize.INTEGER,
+    allowNull: false,
+    primaryKey: true
+  },
+  category_id: {
+    type: Sequelize.INTEGER,
+    allowNull: false,
+    primaryKey: true,
+    references: {
+      model: 'category',
+      key: 'Id'
+    }
+  },
+  service_id: {
+    type: Sequelize.INTEGER,
+    allowNull: false,
+    primaryKey: true,
+    references: {
+      model: 'service',
+      key: 'Id'
+    }
+  },
+  totalprice: {
+    type: Sequelize.DECIMAL,
+    allowNull: true
+  },
+  description: {
+    type: Sequelize.STRING(200),
+    allowNull: false
+  },
+  duration: {
+    type: Sequelize.INTEGER,
+    allowNull: false
+  },
+  additional_services: {
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
+  terms: {
+    type: Sequelize.STRING(300),
+    allowNull: false
+  },
+  created_at: {
+    type: Sequelize.DATE,
+    allowNull: true
+  },
+  created_by: {
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
+  updated_at: {
+    type: Sequelize.DATE,
+    allowNull: true
+  },
+  updated_by: {
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
+}, 
+{
+  tableName: 'partner_package_header',
+  freezeTableName: true,
+  timestamps: true,
+  paranoid: false,
+  underscored: true,
+});
+
+PartnerPackageHeader.belongsTo(Category, {foreignKey: 'category_id'})
+PartnerPackageHeader.belongsTo(Service, {foreignKey: 'service_id'});
+PartnerPackageHeader.hasMany(PartnerPackageDetail, { foreignKey: "package_header_id" });
+
+module.exports = PartnerPackageHeader
+

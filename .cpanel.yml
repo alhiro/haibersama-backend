@@ -1,0 +1,9 @@
+---
+ 
+    deployment:
+     
+     tasks:
+     
+     - export DEPLOYPATH=/home/haiorgan/api.haiorganizer.com
+     
+     - /bin/cp * $DEPLOYPATH
