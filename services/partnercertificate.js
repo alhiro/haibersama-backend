@@ -1,4 +1,4 @@
-const PartnerCertificate = require('../models/partnercertificate');
+const PartnerCertificate = require('../models/partnerCertificate');
 
 module.exports =
   {  
