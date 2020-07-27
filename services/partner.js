@@ -4,9 +4,9 @@ const PartnerAwards = require('../models/partnerAwards');
 const PartnerExperience = require('../models/partnerExperience');
 const PartnerPortfolio = require('../models/partnerPortfolio');
 
-const PartnerAwardsService = require('../services/partnerAwards');
-const PartnerExperienceService = require('../services/partnerExperience');
-const PartnerPortfolioService = require('../services/partnerPortfolio');
+const PartnerAwardsService = require('../services/partnerawards');
+const PartnerExperienceService = require('../services/partnerexperience');
+const PartnerPortfolioService = require('../services/partnerportfolio');
 
 Partner.hasMany(PartnerCertificate, {as: 'Certificates'})
 Partner.hasMany(PartnerExperience, {as: 'Experiences'})
