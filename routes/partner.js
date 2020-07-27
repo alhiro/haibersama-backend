@@ -2,7 +2,7 @@ var express = require("express");
 var partnerRouter = express.Router();
 var partnerController = require("../controllers/partner");
 
-partnerRouter.post("/getdetail", (req, res, next) => {
+partnerRouter.get("/getdetail", (req, res, next) => {
   partnerController.getDetail(req, res);
 });
 

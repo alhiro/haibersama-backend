@@ -14,6 +14,7 @@ Partner.hasMany(PartnerAwards, {as: 'Awards'})
 Partner.hasMany(PartnerPortfolio, {as: 'Portfolios'})
 
 const sequelize = require("../config/sequelize");
+const { count } = require('sequelize/lib/model');
 
 module.exports =
   {  
@@ -60,7 +61,7 @@ module.exports =
 
     getDetail: async (partnerID) => {
         try{
-          return Sequelize.query(
+          return sequelize.query(
             `SELECT
                 part.id partnerid, 
                 part.name partnername,
@@ -84,18 +85,23 @@ module.exports =
                   select count(reservation_no) successjob
                   from reservation rvv
                   where rvv.partner_id = part.id
-                  and rvv.status_code = ''102109''
+                  and rvv.status_code = '102109'
                 ) rv on true
               WHERE part.type = 2
-              and part.id = '`+partnerID+`';`,
+              and part.id = `+partnerID+`;`,
             {
                 raw: true,
-                type: Sequelize.QueryTypes.SELECT
+                type: sequelize.QueryTypes.SELECT
             }
         ).then(partners => {
-          if(!partners){
+          console.log(!partners);
+          console.log(partners);
+          console.log(partners.length);
+          if(partners.length > 0){
+            console.log("kesini");
             var params = { partner_id: partnerID };
             var partner = partners[0];
+            console.log(partner);
 
             var awardsData = PartnerAwardsService.getList(params);
             var awards = awardsData.success ? awardsData.data : [];
@@ -106,11 +112,13 @@ module.exports =
             var experienceData = PartnerExperienceService.getList(params);
             var experiences = experienceData.success ? experienceData.data : [];
 
-            partner.awards = awardsData;
+            partner.awards = awards;
             partner.portfolios = portfolios;
-            partners.experiences = experiences;
+            partner.experiences = experiences;
 
-            return (!partner) ? { success: false, message: "Partner Info Not Found", data: {} } : { success: true, data: partner }
+            console.log(partner);
+
+            return { success: true, data: partner }
           }else{
             return { success: false, message: "Partner Info Not Found", data: {} };
           }

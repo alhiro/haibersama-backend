@@ -378,7 +378,7 @@ module.exports = {
         //mapping partner and category
         var arrPartnerCategories = [];
 
-        if(!categoryid){
+        if(categoryid != undefined){
           categoryid.forEach(element => {
             var objPartnerCategory = {
               partner_id: insertUser.dataValues.id,
