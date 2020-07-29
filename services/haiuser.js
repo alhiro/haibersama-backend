@@ -1,5 +1,6 @@
 const User = require("../models/haiuser");
 const PartnerCategory = require("../models/partnerCategory");
+const PartnerService = require("../services/partner");
 //const Otp = require('../models/otp');
 const transformers = require("../lib/transformers");
 const jwt = require("../lib/jwt");
@@ -93,9 +94,27 @@ module.exports = {
     return await User.findOne({ where: params })
       .then(users => {
         //delete users.dataValues.password
-        return !users
-          ? { success: false, message: "User Not Found", data: {} }
-          : { success: true, message: "User Found", data: users };
+        if(!users)
+        {
+          return { success: false, message: "User Not Found", data: {} }
+        } else{
+          if(users.type == "2")
+          {
+            var params2 = { partner_id: users.id };
+            var partner = await PartnerService.getDetail(params2);
+            if(partner.success){ 
+              users.rating = partner.rating;   
+              users.follower = partner.follower;   
+              users.successjob = partner.successjob;           
+              users.awards = partner.awards;
+              users.portfolios = partner.portfolios;
+              users.experiences = partner.experiences;
+              users.certificates = partner.certificates;
+            }
+          }
+
+          return { success: true, message: "User Found", data: users };
+        }
       })
       .catch(err => {
         return { success: false, message: "User Not Found", data: err };
