@@ -8,7 +8,7 @@ exports.getAllPortfolio = async function(req, res, next) {
     var portfolio = await partnerportfolio.getList(params);
     return res
       .status(200)
-      .json({ status: 200, data: portfolio, message: "Succesfully Retrieved" });
+      .json({ status: 200, data: portfolio.data, message: "Succesfully Retrieved" });
   } catch (err) {
     return res
       .status(500)
