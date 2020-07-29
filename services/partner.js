@@ -7,6 +7,7 @@ const PartnerPortfolio = require('../models/partnerPortfolio');
 const PartnerAwardsService = require('../services/partnerawards');
 const PartnerExperienceService = require('../services/partnerexperience');
 const PartnerPortfolioService = require('../services/partnerportfolio');
+const PartnerCertificateService = require('../services/partnercertificate');
 
 Partner.hasMany(PartnerCertificate, {as: 'Certificates'})
 Partner.hasMany(PartnerExperience, {as: 'Experiences'})
@@ -67,6 +68,7 @@ module.exports =
                 part.name partnername,
                 part.address, 
                 part.nation, 
+                part.picture,
                 coalesce(rating, 0) rating,
                 coalesce(follower, 0) follower,
                 coalesce(successjob, 0) successjob
@@ -94,29 +96,30 @@ module.exports =
                 type: sequelize.QueryTypes.SELECT
             }
         ).then(partners => {
-          console.log(!partners);
-          console.log(partners);
-          console.log(partners.length);
           if(partners.length > 0){
             console.log("kesini");
             var params = { partner_id: partnerID };
             var partner = partners[0];
             console.log(partner);
 
-            var awardsData = PartnerAwardsService.getList(params);
+            var awardsData = await PartnerAwardsService.getList(params);
             var awards = awardsData.success ? awardsData.data : [];
             
-            var portfolioData = PartnerPortfolioService.getList(params);
+            var portfolioData = await PartnerPortfolioService.getList(params);
             var portfolios = portfolioData.success ? portfolioData.data : [];
 
-            var experienceData = PartnerExperienceService.getList(params);
+            var experienceData = await PartnerExperienceService.getList(params);
             var experiences = experienceData.success ? experienceData.data : [];
+            
+            var certificateData = await PartnerCertificateService.getList(params);
+            var certificates = certificateData.success ? certificateData.data : [];
 
             partner.awards = awards;
             partner.portfolios = portfolios;
             partner.experiences = experiences;
+            partner.certificates = certificates;
 
-            console.log(partner);
+            console.log(portfolioData);
 
             return { success: true, data: partner }
           }else{
