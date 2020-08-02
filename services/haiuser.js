@@ -1,9 +1,6 @@
 const User = require("../models/haiuser");
 const PartnerCategory = require("../models/partnerCategory");
-<<<<<<< HEAD
-=======
 const PartnerService = require("../services/partner");
->>>>>>> 9b4793e88594c73d9a696e8fcfc5b0c93240746d
 //const Otp = require('../models/otp');
 const transformers = require("../lib/transformers");
 const jwt = require("../lib/jwt");
@@ -97,11 +94,6 @@ module.exports = {
     return await User.findOne({ where: params })
       .then(users => {
         //delete users.dataValues.password
-<<<<<<< HEAD
-        return !users
-          ? { success: false, message: "User Not Found", data: {} }
-          : { success: true, message: "User Found", data: users };
-=======
         if(!users)
         {
           return { success: false, message: "User Not Found", data: {} }
@@ -123,7 +115,6 @@ module.exports = {
 
           return { success: true, message: "User Found", data: users };
         }
->>>>>>> 9b4793e88594c73d9a696e8fcfc5b0c93240746d
       })
       .catch(err => {
         return { success: false, message: "User Not Found", data: err };
