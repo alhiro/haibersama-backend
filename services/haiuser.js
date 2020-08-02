@@ -101,7 +101,7 @@ module.exports = {
           if(users.type == "2")
           {
             var params2 = { partner_id: users.id };
-            var partner = await PartnerService.getDetail(params2);
+            var partner = PartnerService.getDetail(params2);
             if(partner.success){ 
               users.rating = partner.rating;   
               users.follower = partner.follower;   
