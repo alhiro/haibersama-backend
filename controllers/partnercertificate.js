@@ -8,7 +8,7 @@ exports.getAllCertificate = async function(req, res, next) {
     var certificate = await partnercertificate.getList(params);
     return res
       .status(200)
-      .json({ status: 200, data: certificate, message: "Succesfully Retrieved" });
+      .json({ status: 200, data: certificate.data, message: "Succesfully Retrieved" });
   } catch (err) {
     return res
       .status(500)
