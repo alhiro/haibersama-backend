@@ -8,11 +8,7 @@ exports.getAllExperience = async function(req, res, next) {
     var experience = await partnerexperience.getList(params);
     return res
       .status(200)
-<<<<<<< HEAD
-      .json({ status: 200, data: experience, message: "Succesfully Retrieved" });
-=======
       .json({ status: 200, data: experience.data, message: "Succesfully Retrieved" });
->>>>>>> 9b4793e88594c73d9a696e8fcfc5b0c93240746d
   } catch (err) {
     return res
       .status(500)
