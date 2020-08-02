@@ -4,13 +4,7 @@
      
      tasks:
      
-<<<<<<< HEAD
      - export DEPLOYPATH=/home/haiorgan/api.haiorganizer.com
      - /bin/cp .htaccess $DEPLOYPATH
      - /bin/cp .env $DEPLOYPATH
      - /bin/cp -r * $DEPLOYPATH
-=======
-     - export DEPLOYPATH=/home/websites/api.haiorganizer.com
-     
-     - /usr/bin/rsync -Paz * $DEPLOYPATH --delete
->>>>>>> 9b4793e88594c73d9a696e8fcfc5b0c93240746d
