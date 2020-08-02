@@ -88,7 +88,7 @@ module.exports = {
     }
   },
 
-  findUser: async params => {
+  findUser: async (params) => {
     console.log("servive findUser")
     console.log("params : "+ params)
     return await User.findOne({ where: params })
