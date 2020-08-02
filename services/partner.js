@@ -94,7 +94,7 @@ module.exports =
                 raw: true,
                 type: sequelize.QueryTypes.SELECT
             }
-        ).then(partners => {
+        ).then(partners => async function() {
           if(partners.length > 0){
             console.log("kesini");
             var params = { partner_id: partnerID };
