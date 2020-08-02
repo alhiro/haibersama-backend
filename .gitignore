@@ -1,2 +1,6 @@
 # Dependency directories
+<<<<<<< HEAD
 /node_modules
+=======
+node_modules/
+>>>>>>> 9b4793e88594c73d9a696e8fcfc5b0c93240746d

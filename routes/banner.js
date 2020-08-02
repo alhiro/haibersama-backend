@@ -7,7 +7,11 @@ const multer = require('multer');
 // upload file path
 const FILE_PATH = 'imagehai';
 // const API_URL = process.env;
+<<<<<<< HEAD
 const API_URL ='http://development.haiorganizer.com';
+=======
+const API_URL ='http://staging.haiorganizer.com';
+>>>>>>> 9b4793e88594c73d9a696e8fcfc5b0c93240746d
 const now = Date.now();
 // configure multer
 

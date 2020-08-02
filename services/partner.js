@@ -7,6 +7,10 @@ const PartnerPortfolio = require('../models/partnerPortfolio');
 const PartnerAwardsService = require('../services/partnerawards');
 const PartnerExperienceService = require('../services/partnerexperience');
 const PartnerPortfolioService = require('../services/partnerportfolio');
+<<<<<<< HEAD
+=======
+const PartnerCertificateService = require('../services/partnercertificate');
+>>>>>>> 9b4793e88594c73d9a696e8fcfc5b0c93240746d
 
 Partner.hasMany(PartnerCertificate, {as: 'Certificates'})
 Partner.hasMany(PartnerExperience, {as: 'Experiences'})
@@ -67,6 +71,10 @@ module.exports =
                 part.name partnername,
                 part.address, 
                 part.nation, 
+<<<<<<< HEAD
+=======
+                part.picture,
+>>>>>>> 9b4793e88594c73d9a696e8fcfc5b0c93240746d
                 coalesce(rating, 0) rating,
                 coalesce(follower, 0) follower,
                 coalesce(successjob, 0) successjob
@@ -94,15 +102,19 @@ module.exports =
                 type: sequelize.QueryTypes.SELECT
             }
         ).then(partners => {
+<<<<<<< HEAD
           console.log(!partners);
           console.log(partners);
           console.log(partners.length);
+=======
+>>>>>>> 9b4793e88594c73d9a696e8fcfc5b0c93240746d
           if(partners.length > 0){
             console.log("kesini");
             var params = { partner_id: partnerID };
             var partner = partners[0];
             console.log(partner);
 
+<<<<<<< HEAD
             var awardsData = PartnerAwardsService.getList(params);
             var awards = awardsData.success ? awardsData.data : [];
             
@@ -111,12 +123,31 @@ module.exports =
 
             var experienceData = PartnerExperienceService.getList(params);
             var experiences = experienceData.success ? experienceData.data : [];
+=======
+            var awardsData = await PartnerAwardsService.getList(params);
+            var awards = awardsData.success ? awardsData.data : [];
+            
+            var portfolioData = await PartnerPortfolioService.getList(params);
+            var portfolios = portfolioData.success ? portfolioData.data : [];
+
+            var experienceData = await PartnerExperienceService.getList(params);
+            var experiences = experienceData.success ? experienceData.data : [];
+            
+            var certificateData = await PartnerCertificateService.getList(params);
+            var certificates = certificateData.success ? certificateData.data : [];
+>>>>>>> 9b4793e88594c73d9a696e8fcfc5b0c93240746d
 
             partner.awards = awards;
             partner.portfolios = portfolios;
             partner.experiences = experiences;
+<<<<<<< HEAD
 
             console.log(partner);
+=======
+            partner.certificates = certificates;
+
+            console.log(portfolioData);
+>>>>>>> 9b4793e88594c73d9a696e8fcfc5b0c93240746d
 
             return { success: true, data: partner }
           }else{
