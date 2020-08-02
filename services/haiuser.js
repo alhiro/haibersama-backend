@@ -92,7 +92,7 @@ module.exports = {
     console.log("servive findUser")
     console.log("params : "+ params)
     return await User.findOne({ where: params })
-      .then(users => {
+      .then(users => async function() {
         //delete users.dataValues.password
         if(!users)
         {
@@ -101,7 +101,7 @@ module.exports = {
           if(users.type == "2")
           {
             var params2 = { partner_id: users.id };
-            var partner = PartnerService.getDetail(params2);
+            var partner = await PartnerService.getDetail(params2);
             if(partner.success){ 
               users.rating = partner.rating;   
               users.follower = partner.follower;   
