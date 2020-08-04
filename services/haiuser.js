@@ -91,8 +91,11 @@ module.exports = {
   findUser: async (params) => {
     console.log("servive findUser")
     console.log("params : "+ params)
-    return await User.findOne({ where: params })
-      .then(users => async function() {
+    
+    
+      return await User.findOne({ 
+        where: params 
+      }).then(users => {
         //delete users.dataValues.password
         if(!users)
         {
@@ -100,17 +103,19 @@ module.exports = {
         } else{
           if(users.type == "2")
           {
-            var params2 = { partner_id: users.id };
-            var partner = await PartnerService.getDetail(params2);
-            if(partner.success){ 
-              users.rating = partner.rating;   
-              users.follower = partner.follower;   
-              users.successjob = partner.successjob;           
-              users.awards = partner.awards;
-              users.portfolios = partner.portfolios;
-              users.experiences = partner.experiences;
-              users.certificates = partner.certificates;
-            }
+            (async() => {
+              var params2 = { partner_id: users.id };
+              var partner = await PartnerService.getDetail(params2);
+              if(partner.success){ 
+                users.rating = partner.rating;   
+                users.follower = partner.follower;   
+                users.successjob = partner.successjob;           
+                users.awards = partner.awards;
+                users.portfolios = partner.portfolios;
+                users.experiences = partner.experiences;
+                users.certificates = partner.certificates;
+              }
+            });            
           }
 
           return { success: true, message: "User Found", data: users };

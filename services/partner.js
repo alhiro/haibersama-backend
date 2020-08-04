@@ -94,31 +94,33 @@ module.exports =
                 raw: true,
                 type: sequelize.QueryTypes.SELECT
             }
-        ).then(partners => async function() {
+        ).then(partners => {
           if(partners.length > 0){
-            console.log("kesini");
-            var params = { partner_id: partnerID };
-            var partner = partners[0];
-            console.log(partner);
+            (async() => {
+              console.log("kesini");
+              var params = { partner_id: partnerID };
+              var partner = partners[0];
+              console.log(partner);
 
-            var awardsData = await PartnerAwardsService.getList(params);
-            var awards = awardsData.success ? awardsData.data : [];
-            
-            var portfolioData = await PartnerPortfolioService.getList(params);
-            var portfolios = portfolioData.success ? portfolioData.data : [];
+              var awardsData = await PartnerAwardsService.getList(params);
+              var awards = awardsData.success ? awardsData.data : [];
+              
+              var portfolioData = await PartnerPortfolioService.getList(params);
+              var portfolios = portfolioData.success ? portfolioData.data : [];
 
-            var experienceData = await PartnerExperienceService.getList(params);
-            var experiences = experienceData.success ? experienceData.data : [];
-            
-            var certificateData = await PartnerCertificateService.getList(params);
-            var certificates = certificateData.success ? certificateData.data : [];
+              var experienceData = await PartnerExperienceService.getList(params);
+              var experiences = experienceData.success ? experienceData.data : [];
+              
+              var certificateData = await PartnerCertificateService.getList(params);
+              var certificates = certificateData.success ? certificateData.data : [];
 
-            partner.awards = awards;
-            partner.portfolios = portfolios;
-            partner.experiences = experiences;
-            partner.certificates = certificates;
+              partner.awards = awards;
+              partner.portfolios = portfolios;
+              partner.experiences = experiences;
+              partner.certificates = certificates;
 
-            console.log(portfolioData);
+              console.log(portfolioData);
+            });
 
             return { success: true, data: partner }
           }else{
