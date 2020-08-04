@@ -92,7 +92,7 @@ module.exports = {
     console.log("servive findUser")
     console.log("params : "+ params)
     
-    
+    try {
       return await User.findOne({ 
         where: params 
       }).then(users => {
@@ -124,6 +124,9 @@ module.exports = {
       .catch(err => {
         return { success: false, message: "User Not Found", data: err };
       });
+      } catch (error) {
+      throw error;
+    }
   },
 
   findOrCreateUser: async (params, req) => {
