@@ -1,9 +1,9 @@
-const PartnerPortfolio = require('../models/partnerPortfolio');
+const Portfolio = require('../models/partnerPortfolio');
 
 module.exports =
   {  
     getList: async (params) => {        
-      return await PartnerPortfolio.findAll({ 
+      return await Portfolio.findAll({ 
         where: params,
         attributes: ["id",
                     "name",
@@ -24,7 +24,7 @@ module.exports =
       },
 
     getDetail: async (id) => {
-        return await PartnerPortfolio.findOne({ 
+        return await Portfolio.findOne({ 
               where: {
                   id: id
               }, 
@@ -58,7 +58,7 @@ module.exports =
           image_url: image_url
         };
         
-        const portfolio = await PartnerPortfolio.findOrCreate({ where: params, defaults: objData })
+        const portfolio = await Portfolio.findOrCreate({ where: params, defaults: objData })
   
         // check name already registered or not
         if (!portfolio[1]) {
@@ -67,6 +67,7 @@ module.exports =
         
         return { success: true, message: "Partner Portfolio Successfully Created", data: portfolio[0].dataValues }
       } catch (error) {
+        console.log(error)
         throw (error)
       }
     },
@@ -81,16 +82,16 @@ module.exports =
           category_id: category_id,
           description: description,
           image_url: image_url
-        };
-        
+        };        
 
-        return PartnerPortfolio.update(objData, { where: { id:id }})
+        return Portfolio.update(objData, { where: { id:id }})
         .then(async (updated) => { 
-            const result = await PartnerPortfolio.findOne({ where: { id: id } })
+            const result = await Portfolio.findOne({ where: { id: id } })
             
             return { success: true, message: "Partner Portfolio Successfully Updated", data: result } })
         .catch((err) => { return { success: false, message: "Update Partner Portfolio Failed", data: err } });
       } catch (error) {
+        console.log(error)
         throw (error)
       }
     },

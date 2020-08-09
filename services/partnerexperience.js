@@ -1,9 +1,9 @@
-const PartnerExperience = require('../models/partnerExperience');
+const Experience = require('../models/partnerExperience');
 
 module.exports =
   {  
     getList: async (params) => {        
-      return await PartnerExperience.findAll({ 
+      return await Experience.findAll({ 
         where: params,
         attributes: ["id",
                     "position",
@@ -26,7 +26,7 @@ module.exports =
 
     getDetail: async (id) => {
         
-    return await PartnerExperience.findOne({ 
+    return await Experience.findOne({ 
             where: {
                 id: id
             }, 
@@ -62,7 +62,7 @@ module.exports =
           image_url: image_url
         };
         
-        const experience = await PartnerExperience.findOrCreate({ where: params, defaults: objData })
+        const experience = await Experience.findOrCreate({ where: params, defaults: objData })
   
         if (!experience[1]) {
           throw ({ success: false, message: "Partner experience already exists", data: {} })
@@ -70,6 +70,7 @@ module.exports =
         
         return { success: true, message: "Partner Experience Successfully Created", data: experience[0].dataValues }
       } catch (error) {
+        console.log(error)
         throw (error)
       }
     },
@@ -87,13 +88,14 @@ module.exports =
           image_url: image_url
         };
         
-        return PartnerExperience.update(objData, { where: { id:id }})
+        return Experience.update(objData, { where: { id:id }})
         .then(async (updated) => { 
-            const result = await PartnerExperience.findOne({ where: { id: id } })
+            const result = await Experience.findOne({ where: { id: id } })
             
             return { success: true, message: "Partner Experience Successfully Updated", data: result } })
         .catch((err) => { return { success: false, message: "Update Partner Experience Failed", data: err } });
       } catch (error) {
+        console.log(error)
         throw (error)
       }
     },

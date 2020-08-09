@@ -1,9 +1,9 @@
-const PartnerAwards = require('../models/partnerAwards');
+const Awards = require('../models/partnerAwards');
 
 module.exports =
   {  
     getList: async (params) => {        
-      return await PartnerAwards.findAll({ 
+      return await Awards.findAll({ 
         where: params,
         attributes: ["id",
                     "name",
@@ -24,7 +24,7 @@ module.exports =
       },
 
     getDetail: async (id) => {
-          return await PartnerAwards.findOne({ 
+          return await Awards.findOne({ 
               where: {
                   id: id
               }, 
@@ -59,7 +59,7 @@ module.exports =
           image_url: image_url
         };
         
-        const awards = await PartnerAwards.findOrCreate({ where: params, defaults: objData })
+        const awards = await Awards.findOrCreate({ where: params, defaults: objData })
   
         // check name already registered or not
         if (!awards[1]) {
@@ -86,9 +86,9 @@ module.exports =
           image_url: image_url
         };
         
-        return PartnerAwards.update(objData, { where: { id:id }})
+        return Awards.update(objData, { where: { id:id }})
         .then(async (updated) => { 
-            const result = await PartnerAwards.findOne({ where: { id: id } })
+            const result = await Awards.findOne({ where: { id: id } })
             
             return { success: true, message: "Partner Awards Successfully Updated", data: result.dataValues[1] } })
         .catch((err) => { return { success: false, message: "Update Partner Awards Failed", data: err } });

@@ -1,5 +1,6 @@
 var dbSeq = require('../config/sequelize')
 var Sequelize = require('sequelize')
+var HaiUser = require('./haiuser')
 
 const PartnerCertificate = dbSeq.define('partner_certificate', {
   id: {
@@ -11,7 +12,10 @@ const PartnerCertificate = dbSeq.define('partner_certificate', {
   partner_id: {
     type: Sequelize.INTEGER,
     allowNull: false,
-    primaryKey: true
+    references: {
+      model: 'HaiUser',
+      key: 'id'
+    }
   },
   name: {
     type: Sequelize.STRING(50),
@@ -52,7 +56,7 @@ const PartnerCertificate = dbSeq.define('partner_certificate', {
   updated_by: {
     type: Sequelize.STRING(50),
     allowNull: true
-  },
+  }
 }, 
 {
   tableName: 'partner_certificate',
@@ -64,3 +68,4 @@ const PartnerCertificate = dbSeq.define('partner_certificate', {
 
 module.exports = PartnerCertificate
 
+PartnerCertificate.belongsTo(HaiUser, { foreignKey: "partner_id" });

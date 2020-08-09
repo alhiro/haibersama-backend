@@ -1,5 +1,6 @@
 var dbSeq = require('../config/sequelize')
 var Sequelize = require('sequelize')
+var HaiUser = require('./haiuser')
 
 const PartnerExperience = dbSeq.define('partner_experience', {
   id: {
@@ -11,7 +12,10 @@ const PartnerExperience = dbSeq.define('partner_experience', {
   partner_id: {
     type: Sequelize.INTEGER,
     allowNull: false,
-    primaryKey: true
+    references: {
+      model: 'HaiUser',
+      key: 'id'
+    }
   },
   position: {
     type: Sequelize.STRING(50),
@@ -56,7 +60,7 @@ const PartnerExperience = dbSeq.define('partner_experience', {
   updated_by: {
     type: Sequelize.STRING(50),
     allowNull: true
-  },
+  }
 }, 
 {
   tableName: 'partner_experience',
@@ -68,3 +72,4 @@ const PartnerExperience = dbSeq.define('partner_experience', {
 
 module.exports = PartnerExperience
 
+PartnerExperience.belongsTo(HaiUser, { foreignKey: "partner_id" });

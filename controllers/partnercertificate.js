@@ -32,7 +32,7 @@ exports.getDetail = async function(req, res, next) {
 
 exports.addCertificate = async function(req, res, next) {
   try {
-    const params = { name: req.name };
+    const params = { name: req.name, partner_id: req.partner_id };
 
     let result = await partnercertificate.findOrCreateCertificate(params, req);
     return res.status(200).send(result);

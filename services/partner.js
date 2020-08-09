@@ -7,6 +7,7 @@ const PartnerPortfolio = require('../models/partnerPortfolio');
 const PartnerAwardsService = require('../services/partnerawards');
 const PartnerExperienceService = require('../services/partnerexperience');
 const PartnerPortfolioService = require('../services/partnerportfolio');
+const PartnerCertificateService = require('../services/partnercertificate');
 
 Partner.hasMany(PartnerCertificate, {as: 'Certificates'})
 Partner.hasMany(PartnerExperience, {as: 'Experiences'})
@@ -61,7 +62,7 @@ module.exports =
 
     getDetail: async (partnerID) => {
         try{
-          return sequelize.query(
+          var partners = await sequelize.query(
             `SELECT
                 part.id partnerid, 
                 part.name partnername,
@@ -94,39 +95,79 @@ module.exports =
                 raw: true,
                 type: sequelize.QueryTypes.SELECT
             }
-        ).then(partners => {
-          if(partners.length > 0){
-            (async() => {
-              console.log("kesini");
-              var params = { partner_id: partnerID };
-              var partner = partners[0];
-              console.log(partner);
+        );
 
-              var awardsData = await PartnerAwardsService.getList(params);
-              var awards = awardsData.success ? awardsData.data : [];
-              
-              var portfolioData = await PartnerPortfolioService.getList(params);
-              var portfolios = portfolioData.success ? portfolioData.data : [];
+        if(partners.length > 0){
+            var params = { partner_id: partnerID };
+            var partner = partners[0];
+            console.log(partner);
 
-              var experienceData = await PartnerExperienceService.getList(params);
-              var experiences = experienceData.success ? experienceData.data : [];
-              
-              var certificateData = await PartnerCertificateService.getList(params);
-              var certificates = certificateData.success ? certificateData.data : [];
+            var awardsData = await PartnerAwardsService.getList(params);
+            var awards = awardsData.success ? awardsData.data : [];
+            
+            var portfolioData = await PartnerPortfolioService.getList(params);
+            var portfolios = portfolioData.success ? portfolioData.data : [];
 
-              partner.awards = awards;
-              partner.portfolios = portfolios;
-              partner.experiences = experiences;
-              partner.certificates = certificates;
+            var experienceData = await PartnerExperienceService.getList(params);
+            var experiences = experienceData.success ? experienceData.data : [];
+            
+            var certificateData = await PartnerCertificateService.getList(params);
+            var certificates = certificateData.success ? certificateData.data : [];
 
-              console.log(portfolioData);
-            });
-
+            partner.awards = awards;
+            partner.portfolios = portfolios;
+            partner.experiences = experiences;
+            partner.certificates = certificates;         
+  
             return { success: true, data: partner }
-          }else{
-            return { success: false, message: "Partner Info Not Found", data: {} };
-          }
-        });
+          
+        } else {
+          return { success: false, message: "Partner Info Not Found", data: {} };
+        }
+
+        // .then(partners => {
+        //   if(partners.length > 0){
+        //     (async() => {
+        //       console.log("kesini");
+        //       var params = { partner_id: partnerID };
+        //       var partner = partners[0];
+
+        //       var awardsData = await PartnerAwards.findAll({ 
+        //         where: params,
+        //         attributes: ["id",
+        //                     "name",
+        //                     "awards_date",
+        //                     "organizer",
+        //                     "description",
+        //                     "image_url"
+        //         ], 
+        //         order: [["awards_date", "DESC"]]
+        //        });
+        //        console.log(awardsData);
+        //       // var awards = awardsData.success ? awardsData.data : [];
+              
+        //       // var portfolioData = PartnerPortfolio.getList(params);
+        //       // var portfolios = portfolioData.success ? portfolioData.data : [];
+
+        //       // var experienceData = PartnerExperience.getList(params);
+        //       // var experiences = experienceData.success ? experienceData.data : [];
+              
+        //       // var certificateData = PartnerCertificate.getList(params);
+        //       // var certificates = certificateData.success ? certificateData.data : [];
+
+        //       // partner.awards = awards;
+        //       // partner.portfolios = portfolios;
+        //       // partner.experiences = experiences;
+        //       // partner.certificates = certificates;
+
+        //       console.log(portfolioData);             
+
+        //       return { success: true, data: partner }
+        //     });
+        //   }else{
+        //     return { success: false, message: "Partner Info Not Found", data: {} };
+        //   }
+        // });
             // return await Partner.findOne({ 
             //         where: {
             //             id: partnerID
@@ -199,6 +240,7 @@ module.exports =
             //         }] 
             //     });
         } catch (error) {
+          console.log(error);
         throw error
         }
     },

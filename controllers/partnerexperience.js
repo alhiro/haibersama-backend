@@ -32,7 +32,7 @@ exports.getDetail = async function(req, res, next) {
 
 exports.addExperience = async function(req, res, next) {
   try {
-    const params = { position: req.position, company_name: req.company_name };
+    const params = { position: req.position, company_name: req.company_name, partner_id: req.partner_id };
 
     let result = await partnerexperience.findOrCreateExperience(params, req);
     return res.status(200).send(result);

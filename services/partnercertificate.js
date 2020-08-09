@@ -1,9 +1,9 @@
-const PartnerCertificate = require('../models/partnerCertificate');
+const Certificate = require('../models/partnerCertificate');
 
 module.exports =
   {  
     getList: async (params) => {        
-      return await PartnerCertificate.findAll({ 
+      return await Certificate.findAll({ 
         where: params,
         attributes: ["id",
                     "name",
@@ -24,7 +24,7 @@ module.exports =
       },
 
     getDetail: async (id) => {
-        return await PartnerCertificate.findOne({ 
+        return await Certificate.findOne({ 
               where: {
                   id: id
               }, 
@@ -58,7 +58,7 @@ module.exports =
           image_url: image_url
         };
         
-        const certificate = await PartnerCertificate.findOrCreate({ where: params, defaults: objData })
+        const certificate = await Certificate.findOrCreate({ where: params, defaults: objData })
   
         if (!certificate[1]) {
           throw ({ success: false, message: "Partner certificate already exists", data: {} })
@@ -66,6 +66,7 @@ module.exports =
         
         return { success: true, message: "Partner Certificate Successfully Created", data: certificate[0].dataValues }
       } catch (error) {
+        console.log(error)
         throw (error)
       }
     },
@@ -80,17 +81,16 @@ module.exports =
           organizer: organizer,
           description: description,
           image_url: image_url
-        };
+        };    
         
-
-        
-        return PartnerCertificate.update(objData, { where: { id:id }})
+        return Certificate.update(objData, { where: { id:id }})
         .then(async (updated) => { 
-            const result = await PartnerCertificate.findOne({ where: { id: id } })
+            const result = await Certificate.findOne({ where: { id: id } })
             
             return { success: true, message: "Partner Certificate Successfully Updated", data: result } })
         .catch((err) => { return { success: false, message: "Update Partner Certificate Failed", data: err } });
       } catch (error) {
+        console.log(error)
         throw (error)
       }
     },
