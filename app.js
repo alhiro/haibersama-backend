@@ -48,10 +48,10 @@ app.use(process.env.APP_API_PREFIX + '/subservice', subServiceRouter);
 app.use(process.env.APP_API_PREFIX + '/package', packageRouter);
 app.use(process.env.APP_API_PREFIX + '/reservation', reservationRouter);
 app.use(process.env.APP_API_PREFIX + '/dashboard', dashboardRouter);
-app.use(process.env.APP_API_PREFIX + '/award', awardsRouter);
-app.use(process.env.APP_API_PREFIX + '/certificate', certificateRouter);
-app.use(process.env.APP_API_PREFIX + '/portfolio', portfolioRouter);
-app.use(process.env.APP_API_PREFIX + '/experience', experienceRouter);
+// app.use(process.env.APP_API_PREFIX + '/award', awardsRouter);
+// app.use(process.env.APP_API_PREFIX + '/certificate', certificateRouter);
+// app.use(process.env.APP_API_PREFIX + '/portfolio', portfolioRouter);
+// app.use(process.env.APP_API_PREFIX + '/experience', experienceRouter);
 app.use(process.env.APP_API_PREFIX + '/payment', paymentRouter);
 app.use(process.env.APP_API_PREFIX + '/banner', bannerRouter);
 
