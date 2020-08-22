@@ -2,7 +2,7 @@ var dbSeq = require('../config/sequelize')
 var Sequelize = require('sequelize')
 var HaiUser = require('./haiuser')
 
-const PartnerAwards = dbSeq.define('partner_awards', {
+const partnerAwards = dbSeq.define('partner_awards', {
   id: {
     type: Sequelize.INTEGER,
     allowNull: false,
@@ -70,6 +70,6 @@ const PartnerAwards = dbSeq.define('partner_awards', {
   underscored: true
 });
 
-module.exports = PartnerAwards
+module.exports = partnerAwards
 
-PartnerAwards.belongsTo(HaiUser, { foreignKey: "partner_id" });
+partnerAwards.belongsTo(HaiUser, { foreignKey: "partner_id" });
