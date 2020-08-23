@@ -1,17 +1,9 @@
 const Partner = require('../models/haiuser');
-const PartnerCertificate = require('../models/partnerCertificate');
-const PartnerAwards = require('../models/partnerAwards');
-const PartnerExperience = require('../models/partnerExperience');
-const PartnerPortfolio = require('../models/partnerPortfolio');
 
-const PartnerAwardsService = require('../services/partnerawards');
-const PartnerExperienceService = require('../services/partnerexperience');
-const PartnerPortfolioService = require('../services/partnerportfolio');
-
-Partner.hasMany(PartnerCertificate, {as: 'Certificates'})
-Partner.hasMany(PartnerExperience, {as: 'Experiences'})
-Partner.hasMany(PartnerAwards, {as: 'Awards'})
-Partner.hasMany(PartnerPortfolio, {as: 'Portfolios'})
+// const PartnerAwardsService = require('../services/partnerawards');
+// const PartnerExperienceService = require('../services/partnerexperience');
+// const PartnerPortfolioService = require('../services/partnerportfolio');
+// const PartnerCertificateService = require('../services/partnercertificate');
 
 const sequelize = require("../config/sequelize");
 const { count } = require('sequelize/lib/model');
@@ -61,7 +53,7 @@ module.exports =
 
     getDetail: async (partnerID) => {
         try{
-          return sequelize.query(
+          var partners = await sequelize.query(
             `SELECT
                 part.id partnerid, 
                 part.name partnername,
@@ -94,111 +86,37 @@ module.exports =
                 raw: true,
                 type: sequelize.QueryTypes.SELECT
             }
-        ).then(partners => {
-          if(partners.length > 0){
-            (async() => {
-              console.log("kesini");
-              var params = { partner_id: partnerID };
-              var partner = partners[0];
-              console.log(partner);
+        );
 
-              var awardsData = await PartnerAwardsService.getList(params);
-              var awards = awardsData.success ? awardsData.data : [];
-              
-              var portfolioData = await PartnerPortfolioService.getList(params);
-              var portfolios = portfolioData.success ? portfolioData.data : [];
+        if(partners.length > 0){
+            var params = { partner_id: partnerID };
+            var partner = partners[0];
+            console.log(partner);
 
-              var experienceData = await PartnerExperienceService.getList(params);
-              var experiences = experienceData.success ? experienceData.data : [];
-              
-              var certificateData = await PartnerCertificateService.getList(params);
-              var certificates = certificateData.success ? certificateData.data : [];
+            // var awardsData = await PartnerAwardsService.getList(params);
+            // var awards = awardsData.success ? awardsData.data : [];
+            
+            // var portfolioData = await PartnerPortfolioService.getList(params);
+            // var portfolios = portfolioData.success ? portfolioData.data : [];
 
-              partner.awards = awards;
-              partner.portfolios = portfolios;
-              partner.experiences = experiences;
-              partner.certificates = certificates;
+            // var experienceData = await PartnerExperienceService.getList(params);
+            // var experiences = experienceData.success ? experienceData.data : [];
+            
+            // var certificateData = await PartnerCertificateService.getList(params);
+            // var certificates = certificateData.success ? certificateData.data : [];
 
-              console.log(portfolioData);
-            });
-
+            // partner.awards = awards;
+            // partner.portfolios = portfolios;
+            // partner.experiences = experiences;
+            // partner.certificates = certificates;         
+  
             return { success: true, data: partner }
-          }else{
-            return { success: false, message: "Partner Info Not Found", data: {} };
-          }
-        });
-            // return await Partner.findOne({ 
-            //         where: {
-            //             id: partnerID
-            //         }, 
-            //         attributes: ["id",
-            //                     "name",
-            //                     "title",
-            //                     "description",
-            //                     "phone_no",
-            //                     "email",
-            //                     "address",
-            //                     "nation",
-            //                     "longitude",
-            //                     "latitude",
-            //                     "profile_image"
-            //         ],
-            //         include: [{
-            //             model: PartnerAwards,
-            //             as: 'Awards',
-            //             attributes: ['id',
-            //                         'name',
-            //                         'organizer',
-            //                         'awards_date',
-            //                         'description',
-            //                         'location',
-            //                         'occupation',
-            //                         'image_url'],
-            //             where: { partner_id: partnerID },
-            //             paranoid: false // query and loads the soft deleted records
-            //         },
-            //         {
-            //             model: PartnerCertificate,
-            //             as: 'Certificates',
-            //             attributes: ['id',
-            //                         'name',
-            //                         'organizer',
-            //                         'certificate_date',
-            //                         'description',
-            //                         'location',
-            //                         'image_url'],
-            //             where: { partner_id: partnerID },
-            //             paranoid: false // query and loads the soft deleted records
-            //         },
-            //         {
-            //             model: PartnerExperience,
-            //             as: 'Experiences',
-            //             attributes: ['id',
-            //                         'name',
-            //                         'company_name',
-            //                         'period_from',
-            //                         'period_to',
-            //                         'description',
-            //                         'location',
-            //                         'image_url'],
-            //             where: { partner_id: partnerID },
-            //             paranoid: false // query and loads the soft deleted records
-            //         },
-            //         {
-            //             model: PartnerPortfolio,
-            //             as: 'Portfolios',
-            //             attributes: ['id',
-            //                         'name',
-            //                         'portfolio_type',
-            //                         'portfolio_date',
-            //                         'description',
-            //                         'location',
-            //                         'image_url'],
-            //             where: { partner_id: partnerID },
-            //             paranoid: false // query and loads the soft deleted records
-            //         }] 
-            //     });
+          
+        } else {
+          return { success: false, message: "Partner Info Not Found", data: {} };
+        }
         } catch (error) {
+          console.log(error);
         throw error
         }
     },

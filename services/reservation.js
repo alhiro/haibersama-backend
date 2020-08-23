@@ -5,6 +5,7 @@ const ReservationService = require('../models/reservationservice');
 const PackageHeader = require('../models/partnerPackageHeader');
 const PackageDetail = require('../models/partnerPackageDetail');
 const moment = require("moment");
+const sequelize = require('../config/sequelize');
 
 module.exports =
   {        
@@ -230,21 +231,66 @@ module.exports =
         .catch((err) => { return { success: false, message: "Reservation Not Found", data: err } });
     },
     
-    findReservations: async (params) => {
+    findReservations: async (where) => {
+      var reservations = await sequelize.query(
+        `SELECT 
+            rv.id, 
+            reservation_no, 
+            reservation_date, 
+            user_id, 
+            usr.name user_name,
+            partner_id, 
+            prt.name partner_name,
+            prt.picture partner_picture,
+            category_id, 
+            cat.description category,
+            service_id, 
+            srv.description service,
+            event_date, 
+            event_time, 
+            event_address, 
+            total_price, 
+            total_discount, 
+            total_payment, 
+            status_code, 
+            ci.description status,
+            duration, 
+            reservation_type,
+            rt.description reservation_type_desc
+          FROM public.reservation rv
+          inner join hai_user prt on prt.id = rv.partner_id
+          left join hai_user usr on usr.id = rv.user_id
+          inner join category cat on cat.id = rv.category_id
+          inner join service srv on srv.id = rv.service_id
+          left join code_info ci on ci.code = rv.status_code
+          left join code_info rt on rt.code = rv.reservation_type
+          `+where+`
+          order by rv.id desc;`,
+        {
+            raw: true,
+            type: sequelize.QueryTypes.SELECT
+        }
+    );
+
+    if(reservations.length > 0){
+      return (!reservations) ? { success: false, message: "Reservation Not Found", data: {} } : { success: true, message: "Reservation Found", data: reservations }
+    } else {      
+      return { success: false, message: "Reservation Not Found", data: err } 
+    }
       // const {limit, offset} = paging;      
-      return await Reservation.findAll({ 
-        where: params,
-        // limit: limit, 
-        // offset: offset,
-        order: [["reservation_no", "DESC"]]
-       })
-        .then((reservations) => {
-          return (!reservations) ? { success: false, message: "Reservation Not Found", data: {} } : { success: true, message: "Reservation Found", data: reservations }
-        })
-        .catch((err) => { 
-          console.log(err);
-          return { success: false, message: "Reservation Not Found", data: err } 
-        });
+      // return await Reservation.findAll({ 
+      //   where: params,
+      //   // limit: limit, 
+      //   // offset: offset,
+      //   order: [["reservation_no", "DESC"]]
+      //  })
+      //   .then((reservations) => {
+      //     return (!reservations) ? { success: false, message: "Reservation Not Found", data: {} } : { success: true, message: "Reservation Found", data: reservations }
+      //   })
+      //   .catch((err) => { 
+      //     console.log(err);
+      //     return { success: false, message: "Reservation Not Found", data: err } 
+      //   });
     },
 
     

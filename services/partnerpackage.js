@@ -105,5 +105,26 @@ module.exports = {
       //await transaction.rollback();
       throw error;
     }
-  }
+  },
+  
+  getList: async (params) => {
+    try {
+      return await PartnerPackageHeader.findAll({
+        where: params,
+        order: [["created_at", "ASC"]],
+        include: [
+          {
+            model: PartnerPackageDetail,
+            include: [
+              {
+                model: SubService
+              }
+            ]
+          }
+        ]
+      });
+    } catch (error) {
+      throw error;
+    }
+  },
 };

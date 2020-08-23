@@ -33,7 +33,7 @@ exports.getDetail = async function(req, res, next) {
 
 exports.addAwards = async function(req, res, next) {
   try {
-    const params = { name: req.name };
+    const params = { name: req.name, partner_id: req.partner_id };
 
     let result = await partnerawards.findOrCreateAwards(params, req);
     return res.status(200).send(result);

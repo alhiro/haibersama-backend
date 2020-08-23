@@ -1,7 +1,8 @@
 var dbSeq = require('../config/sequelize')
 var Sequelize = require('sequelize')
+var HaiUser = require('./haiuser')
 
-const PartnerCertificate = dbSeq.define('partner_certificate', {
+const partnerAwards = dbSeq.define('partner_awards', {
   id: {
     type: Sequelize.INTEGER,
     allowNull: false,
@@ -11,7 +12,10 @@ const PartnerCertificate = dbSeq.define('partner_certificate', {
   partner_id: {
     type: Sequelize.INTEGER,
     allowNull: false,
-    primaryKey: true
+    references: {
+      model: 'HaiUser',
+      key: 'id'
+    }
   },
   name: {
     type: Sequelize.STRING(50),
@@ -21,7 +25,7 @@ const PartnerCertificate = dbSeq.define('partner_certificate', {
     type: Sequelize.STRING(50),
     allowNull: true
   },
-  certificate_date: {
+  awards_date: {
     type: Sequelize.DATE,
     allowNull: true
   },
@@ -30,6 +34,10 @@ const PartnerCertificate = dbSeq.define('partner_certificate', {
     allowNull: true
   },
   location: {
+    type: Sequelize.STRING(200),
+    allowNull: true
+  },
+  occupation: {
     type: Sequelize.STRING(200),
     allowNull: true
   },
@@ -52,15 +60,16 @@ const PartnerCertificate = dbSeq.define('partner_certificate', {
   updated_by: {
     type: Sequelize.STRING(50),
     allowNull: true
-  },
+  }
 }, 
 {
-  tableName: 'partner_certificate',
+  tableName: 'partner_awards',
   freezeTableName: true,
   timestamps: true,
   paranoid: false,
   underscored: true
 });
 
-module.exports = PartnerCertificate
+module.exports = partnerAwards
 
+partnerAwards.belongsTo(HaiUser, { foreignKey: "partner_id" });

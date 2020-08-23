@@ -88,43 +88,86 @@ module.exports = {
     }
   },
 
-  findUser: async (params) => {
+  findUser: async params => {
     console.log("servive findUser")
     console.log("params : "+ params)
-    
-    try {
-      return await User.findOne({ 
-        where: params 
-      }).then(users => {
+    return await User.findOne({ where: params })
+      .then(users => {
         //delete users.dataValues.password
-        if(!users)
-        {
-          return { success: false, message: "User Not Found", data: {} }
-        } else{
-          if(users.type == "2")
-          {
-            (async() => {
-              var params2 = { partner_id: users.id };
-              var partner = await PartnerService.getDetail(params2);
-              if(partner.success){ 
-                users.rating = partner.rating;   
-                users.follower = partner.follower;   
-                users.successjob = partner.successjob;           
-                users.awards = partner.awards;
-                users.portfolios = partner.portfolios;
-                users.experiences = partner.experiences;
-                users.certificates = partner.certificates;
-              }
-            });            
-          }
-
-          return { success: true, message: "User Found", data: users };
-        }
+        return !users
+          ? { success: false, message: "User Not Found", data: {} }
+          : { success: true, message: "User Found", data: users };
       })
       .catch(err => {
         return { success: false, message: "User Not Found", data: err };
       });
-      } catch (error) {
+  },
+
+  findUserProfile: async (params) => {    
+    try {
+      var users = await User.findOne({ 
+        where: params 
+      });
+        
+      if(!users)
+      {
+        return { success: false, message: "User Not Found", data: {} }
+      } 
+      else 
+      {
+        if(users.type == "2")
+        {
+          var partnerResult = await PartnerService.getDetail(users.id);
+          if(partnerResult.success){ 
+            var partner = partnerResult.data;
+            console.log(partner);
+            var user = {
+              id: users.id,
+              email: users.email,
+              name: users.name,
+              picture: users.picture,
+              given_name: users.given_name,
+              family_name: users.family_name,
+              phone_number: users.phone_number,
+              active: users.active,
+              password: users.password,
+              token: users.token,
+              address: users.address,
+              nation: users.nation,
+              dob: users.dob,
+              province: users.province,
+              city: users.city,
+              postalcode: users.postalcode,
+              type: users.type,
+              title: users.title,
+              description: users.description,
+              longitude: users.longitude,
+              latitude: users.latitude,
+              whatsapp_number: users.whatsapp_number,
+              last_login: users.last_login,
+              refresh_token: users.refresh_token,
+              rating: partner.rating,   
+              follower: partner.follower,   
+              successjob: partner.successjob,           
+              awards: partner.awards,
+              portfolios: partner.portfolios,
+              experiences: partner.experiences,
+              certificates: partner.certificates, 
+            }
+            
+            return { success: true, message: "User Found", data: user };              
+          } else {                
+            return { success: true, message: "User Found", data: users };   
+          }           
+        }
+        else
+        {
+          return { success: true, message: "User Found", data: users };
+        }
+      }
+    } 
+    catch (error) {
+      console.log(error);
       throw error;
     }
   },

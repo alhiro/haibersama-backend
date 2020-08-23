@@ -1,7 +1,8 @@
 var dbSeq = require('../config/sequelize')
 var Sequelize = require('sequelize')
+var HaiUser = require('./haiuser')
 
-const PartnerAwards = dbSeq.define('partner_awards', {
+const partnerPortfolio = dbSeq.define('partner_portfolio', {
   id: {
     type: Sequelize.INTEGER,
     allowNull: false,
@@ -10,17 +11,21 @@ const PartnerAwards = dbSeq.define('partner_awards', {
   },
   partner_id: {
     type: Sequelize.INTEGER,
-    allowNull: false
+    allowNull: false,
+    references: {
+      model: 'HaiUser',
+      key: 'id'
+    }
   },
   name: {
     type: Sequelize.STRING(50),
     allowNull: true
   },
-  organizer: {
-    type: Sequelize.STRING(50),
-    allowNull: true
+  category_id: {
+    type: Sequelize.INTEGER,
+    allowNull: false
   },
-  awards_date: {
+  portfolio_date: {
     type: Sequelize.DATE,
     allowNull: true
   },
@@ -29,10 +34,6 @@ const PartnerAwards = dbSeq.define('partner_awards', {
     allowNull: true
   },
   location: {
-    type: Sequelize.STRING(200),
-    allowNull: true
-  },
-  occupation: {
     type: Sequelize.STRING(200),
     allowNull: true
   },
@@ -58,12 +59,13 @@ const PartnerAwards = dbSeq.define('partner_awards', {
   },
 }, 
 {
-  tableName: 'partner_awards',
+  tableName: 'partner_portfolio',
   freezeTableName: true,
   timestamps: true,
   paranoid: false,
   underscored: true
 });
 
-module.exports = PartnerAwards
+module.exports = partnerPortfolio
 
+partnerPortfolio.belongsTo(HaiUser, { foreignKey: "partner_id" });

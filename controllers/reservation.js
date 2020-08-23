@@ -74,23 +74,28 @@ exports.getReservations = async function(req, res, next) {
         //const paging = { limit: pageSize, offset: (page - 1) *  pageSize};
 
         const params = { };
+        var where = " WHERE 1=1 "
 
         if(type == 2){
             params.partner_id = userId;
+            where += " AND partner_id = " + userId;
         }else{
             params.user_id = userId;
+            where += " AND user_id = " + userId;
         }        
 
         if(statusCode != ""){
           params.status_code = statusCode;
+          where += " AND status_code = '" + statusCode + "' ";
         }
         
         if(categoryId > 0){
           params.category_id = categoryId;
+          where += " AND category_id = " + categoryId + " ";
         }
             
-        console.log(params);
-        let data = await resv.findReservations(params);
+        console.log(where);
+        let data = await resv.findReservations(where);
         data.code = data.success ? 200 : 500;
         return res.status(200).send(data);
     

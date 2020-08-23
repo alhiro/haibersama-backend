@@ -536,7 +536,7 @@ exports.googleLoginCallBack = async function(req, res, next) {
 exports.getProfile =  async function(req, res, next) {
   try {
     const params = { email: req }
-    let response = await auth.findUser(params);
+    let response = await auth.findUserProfile(params);
 
     response.code = response.success ? 200 : 500;
     return res.status(response.code).send(response);
