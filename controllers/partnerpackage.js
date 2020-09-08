@@ -29,12 +29,36 @@ exports.addPackage = async function(req, res, next) {
     }
   };
 
+  exports.editPackage = async function(req, res, next) {
+    try {
+      console.log("controller editPackage")
+
+      let update = await package.updatePackage(req);
+      return res.status(200).send(update);
+    } catch (err) {
+      return res.status(500).send({ data: err });
+    }
+  };
+
   exports.getList = async function (req, res, next) {
     const { body } = req;
     const partner_id = parseInt(req.query.partnerid);
     try {
           var params = { partner_id: partner_id };
           var packages = await package.getList(params);
+          return res.status(200).json({ status: 200, data: packages, message: "Succesfully Partner Packages Retrieved" });
+    } catch (err) {
+      return res
+        .status(500)
+        .send({ code: 500, success: false, message: err.message, data: { err } });
+    }
+  };
+  
+  exports.get = async function (req, res, next) {
+    const { body } = req;
+    const id = parseInt(req.query.id);
+    try {
+          var packages = await package.getPackage(id);
           return res.status(200).json({ status: 200, data: packages, message: "Succesfully Partner Packages Retrieved" });
     } catch (err) {
       return res
