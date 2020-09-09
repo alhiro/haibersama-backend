@@ -15,8 +15,12 @@ packageRouter.post("/add", headerAuth.isUserAuthenticated, (req, res, next) => {
   packageController.addPackage(req, res);
 });
 
-// packageRouter.post("/update", headerAuth.isUserAuthenticated, (req, res, next) => {
-//   packageController.updateCategory(req, res);
-// });
+packageRouter.post("/update", headerAuth.isUserAuthenticated, (req, res, next) => {
+  packageController.editPackage(req, res);
+});
+
+packageRouter.get("/get", headerAuth.isUserAuthenticated, (req, res, next) => {
+  packageController.get(req, res);
+});
 
 module.exports = packageRouter;
