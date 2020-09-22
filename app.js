@@ -23,8 +23,8 @@ const bannerRouter = require('./routes/banner');
 const serveIndex = require('serve-index');
 
 // Seed model into table
-// const haiuser = require("./models/haiuser");
-// haiuser.sequelize.sync({alter: true})
+const haiuser = require("./models/haiuser");
+haiuser.sequelize.sync({alter: true})
 
 // setup app with predefined configs
 config.init(app);
