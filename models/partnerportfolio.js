@@ -13,7 +13,7 @@ const partnerPortfolio = dbSeq.define('partner_portfolio', {
     type: Sequelize.INTEGER,
     allowNull: false,
     references: {
-      model: 'users',
+      model: 'hai_user',
       key: 'id'
     }
   },

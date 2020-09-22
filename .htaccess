@@ -12,11 +12,11 @@ SetEnv APP_API_PREFIX /api
 SetEnv APP_ID haio
 SetEnv APP_LOCAL_DOMAIN haio=/
 SetEnv AUTH_DB_DIALECT postgres
-SetEnv AUTH_DB_HOST_MASTER 34.87.33.184
-SetEnv AUTH_DB_HOST_SLAVE 34.87.33.184
-SetEnv AUTH_DB_NAME hai_dev
+SetEnv AUTH_DB_HOST_MASTER 127.0.0.1
+SetEnv AUTH_DB_HOST_SLAVE 127.0.0.1
+SetEnv AUTH_DB_NAME haiorgan_staging
 SetEnv AUTH_DB_PORT 5432
-SetEnv AUTH_DB_USER hai_dev
+SetEnv AUTH_DB_USER haiorgan_rw_staging
 SetEnv NODE_ENV dev
 SetEnv PASSPORT_GOOGLE_CLIENT_ID 349696578282-qg1kmrgdcgdoqf3m3fn1e3oi57o9kpl6.apps.googleusercontent.com
 SetEnv PASSPORT_GOOGLE_CLIENT_SECRET TdV15lJI1-yJOQHVCoYr1lew

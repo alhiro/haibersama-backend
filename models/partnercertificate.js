@@ -13,7 +13,7 @@ const partnerCertificate = dbSeq.define('partner_certificate', {
     type: Sequelize.INTEGER,
     allowNull: false,
     references: {
-      model: 'users',
+      model: 'hai_user',
       key: 'id'
     }
   },

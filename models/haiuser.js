@@ -2,7 +2,7 @@ var dbSeq = require('../config/sequelize')
 var Sequelize = require('sequelize')
 var PartnerCategory = require('./partnerCategory')
 
-const HaiUser = dbSeq.define('users', {
+const HaiUser = dbSeq.define('hai_user', {
   id: {
     type: Sequelize.INTEGER,
     allowNull: false,
@@ -120,7 +120,7 @@ const HaiUser = dbSeq.define('users', {
   },
 }, 
 {
-  tableName: 'users',
+  tableName: 'hai_user',
   freezeTableName: true,
   timestamps: true,
   paranoid: false,
