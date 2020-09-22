@@ -13,7 +13,7 @@ const PaymentDetail = dbSeq.define('payment_detail', {
     type: Sequelize.BIGINT,
     allowNull: false,
     references: {
-      model: 'Payment',
+      model: 'payment',
       key: 'id'
     }
   },

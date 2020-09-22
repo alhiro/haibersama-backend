@@ -1,6 +1,6 @@
-var Sequelize = require('sequelize');
-var config = require('./config');
-var Config = config.conf.db
+const Sequelize = require('sequelize');
+const config = require('./config');
+const Config = config.conf.db
 const _ = require('lodash')
 
 const {
@@ -15,10 +15,10 @@ let configSequelize = {
   port: Config.port,
   host: Config.host,
   pool: {
-    max: 15,
+    max: 5,
     min: 0,
-    idle: 60000,
-    acquire: 60000,
+    idle: 10000,
+    acquire: 30000,
     handleDisconnects: true
   },
   dialectOptions: {
@@ -73,7 +73,12 @@ if (!_.isEmpty(Config.write) && !_.isEmpty(Config.write.host)) {
   delete configSequelize.host;
 }
 
-const dbSeq =  new Sequelize(Config.database, Config.user, Config.password, configSequelize);
+const dbSeq = new Sequelize(
+  Config.database, 
+  Config.user, 
+  Config.password, 
+  configSequelize
+);
 
 dbSeq.authenticate().then(() => {
     console.log('Connection has been established successfully.')

@@ -13,7 +13,7 @@ const PartnerFollower = dbSeq.define('partner_follower', {
     type: Sequelize.INTEGER,
     allowNull: false,
     references: {
-      model: 'HaiUser',
+      model: 'users',
       key: 'id'
     }
   },

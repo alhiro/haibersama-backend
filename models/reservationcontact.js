@@ -13,7 +13,7 @@ const ReservationContact = dbSeq.define('reservation_contact', {
     type: Sequelize.STRING(20),
     allowNull: false,
     references: {
-      model: 'Reservation',
+      model: 'reservation',
       key: 'id'
     }
   },

@@ -9,7 +9,8 @@ const PartnerPackageHeader = dbSeq.define('partner_package_header', {
     type: Sequelize.INTEGER,
     allowNull: false,
     primaryKey: true,
-    autoIncrement: true
+    autoIncrement: true,
+    unique: true
   },
   name: {
     type: Sequelize.STRING(50),
@@ -26,7 +27,7 @@ const PartnerPackageHeader = dbSeq.define('partner_package_header', {
     primaryKey: true,
     references: {
       model: 'category',
-      key: 'Id'
+      key: 'id'
     }
   },
   service_id: {
@@ -35,7 +36,7 @@ const PartnerPackageHeader = dbSeq.define('partner_package_header', {
     primaryKey: true,
     references: {
       model: 'service',
-      key: 'Id'
+      key: 'id'
     }
   },
   totalprice: {

@@ -14,7 +14,7 @@ const Payment = dbSeq.define('payment', {
   reservation_no: {
     type: Sequelize.STRING(20),allowNull: false,
     references: {
-      model: 'Reservation',
+      model: 'reservation',
       key: 'reservation_no'
     }
   },

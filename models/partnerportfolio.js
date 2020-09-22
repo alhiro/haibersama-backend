@@ -1,6 +1,6 @@
 var dbSeq = require('../config/sequelize')
 var Sequelize = require('sequelize')
-var HaiUser = require('./haiuser')
+var User = require('./haiuser')
 
 const partnerPortfolio = dbSeq.define('partner_portfolio', {
   id: {
@@ -13,7 +13,7 @@ const partnerPortfolio = dbSeq.define('partner_portfolio', {
     type: Sequelize.INTEGER,
     allowNull: false,
     references: {
-      model: 'HaiUser',
+      model: 'users',
       key: 'id'
     }
   },
@@ -68,4 +68,4 @@ const partnerPortfolio = dbSeq.define('partner_portfolio', {
 
 module.exports = partnerPortfolio
 
-partnerPortfolio.belongsTo(HaiUser, { foreignKey: "partner_id" });
+partnerPortfolio.belongsTo(User, { foreignKey: "partner_id" });

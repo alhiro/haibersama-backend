@@ -13,7 +13,7 @@ const partnerAwards = dbSeq.define('partner_awards', {
     type: Sequelize.INTEGER,
     allowNull: false,
     references: {
-      model: 'HaiUser',
+      model: 'users',
       key: 'id'
     }
   },

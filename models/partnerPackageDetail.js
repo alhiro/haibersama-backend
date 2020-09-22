@@ -15,7 +15,7 @@ const PartnerPackageDetail = dbSeq.define('partner_package_detail', {
     primaryKey: true,
     references: {
       model: 'partner_package_header',
-      key: 'Id'
+      key: 'id'
     }
   },
   // di remark sementara karna d table gad fieldnya
@@ -25,7 +25,7 @@ const PartnerPackageDetail = dbSeq.define('partner_package_detail', {
   //   primaryKey: true,
   //   references: {
   //     model: 'category',
-  //     key: 'Id'
+  //     key: 'id'
   //   }
   // },
   subservice_id: {
@@ -34,7 +34,7 @@ const PartnerPackageDetail = dbSeq.define('partner_package_detail', {
     primaryKey: true,
     references: {
       model: 'subservice',
-      key: 'Id'
+      key: 'id'
     }
   },
   price: {

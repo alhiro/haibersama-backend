@@ -13,7 +13,7 @@ const partnerExperience = dbSeq.define('partner_experience', {
     type: Sequelize.INTEGER,
     allowNull: false,
     references: {
-      model: 'HaiUser',
+      model: 'users',
       key: 'id'
     }
   },

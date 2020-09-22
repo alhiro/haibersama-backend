@@ -12,7 +12,7 @@ const ReservationStatusHistory = dbSeq.define('reservation_status_history', {
     type: Sequelize.STRING(20),
     allowNull: false,
     references: {
-      model: 'Reservation',
+      model: 'reservation',
       key: 'id'
     }
   },
