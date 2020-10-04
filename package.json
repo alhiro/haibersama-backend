@@ -9,14 +9,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://gitlab.com/haiteam/haio-backend.git"
+    "url": "git+https://gitlab.com/haiteam/hai-backend.git"
   },
   "author": "haio-team",
   "license": "ISC",
   "bugs": {
-    "url": "https://gitlab.com/haiteam/haio-backend/issues"
+    "url": "https://gitlab.com/haiteam/hai-backend/issues"
   },
-  "homepage": "https://gitlab.com/haiteam/haio-backend#readme",
+  "homepage": "https://gitlab.com/haiteam/hai-backend#readme",
   "dependencies": {
     "axios": "^0.19.2",
     "bcrypt-nodejs": "0.0.3",
