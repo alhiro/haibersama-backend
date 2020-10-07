@@ -90,7 +90,7 @@ exports.registerUser = async function(req, res, next) {
       console.log("register test" + register.data);
 
       var smtpTransport = nodemailer.createTransport({
-        host: "mail.haiorganizer.com",
+        host: "missandei.id.rapidplex.com",
         port: 465,
         secure: true,
         auth: {
