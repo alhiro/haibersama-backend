@@ -71,7 +71,7 @@ module.exports =
                 ) pr on true
                 left join lateral (
                   select count(user_id) follower
-                  from partner_rating pff
+                  from partner_follower pff
                   where pff.partner_id = part.id
                 ) pf on true
                 left join lateral (

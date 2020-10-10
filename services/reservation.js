@@ -6,6 +6,7 @@ const PackageHeader = require('../models/partnerPackageHeader');
 const PackageDetail = require('../models/partnerPackageDetail');
 const moment = require("moment");
 const sequelize = require('../config/sequelize');
+const Sequelize = require('sequelize');
 
 module.exports =
   {        
@@ -61,7 +62,7 @@ module.exports =
           partner_id: package.partner_id,
           event_date: eventDate,
           event_time: eventTime,
-          status_code: ["102105", "102106", "102109"]
+          status_code: ["102103", "102104", "102105", "102106"]
         };
 
         const isPartnerIsBooked = await Reservation.findOne({ where: params2 });
@@ -78,7 +79,7 @@ module.exports =
           var currentDate = moment().utcOffset(0).format("YYMMDD");
 
           const lastReservation = await Reservation.findOne({
-            where: { reservation_no: { $like: `${currentDate}%` } },
+            where: { reservation_no: { [Sequelize.Op.like]: `${currentDate}%` } },
             order: [["reservation_no", "DESC"]]
           });
           
@@ -131,7 +132,7 @@ module.exports =
           var resvDate = moment().utcOffset(0);
 
           if(reservationType == "103102"){
-            statusCode = "102106";
+            statusCode = "102105";
             resvDate = reservationDate
           }
 
@@ -142,6 +143,7 @@ module.exports =
               user_id: userId,
               partner_id: package.partner_id,
               category_id: package.category_id,
+              package_id: packageId,
               service_id: package.service_id,
               event_date: eventDate,
               event_time: eventTime,
@@ -320,5 +322,133 @@ module.exports =
         throw (error)
       }
     },
-  }
 
+    // getPartnerAgendaItems: async (param) => {
+    //   try {
+    //       const { partnerId, month, year } = param;
+    //       var agenda = {};
+
+    //       var query = `
+    //       select 
+    //         json_agg(
+    //           json_build_object(
+    //             to_char(a.event_date, 'YYYY-MM-DD'), items
+    //           )
+    //         ) items
+    //       FROM (select 
+    //               distinct date(event_date) event_date, 
+    //               partner_id	  
+    //             from reservation rr
+    //             where rr.partner_id = ` + partnerId + `
+    //             and extract(MONTH from rr.event_date) = ` + month + `
+    //             and extract(YEAR from rr.event_date) = ` + year + `
+    //             and rr.status_code in ('102104', '102105', '102106')
+    //          )  a
+    //       LEFT   JOIN LATERAL (
+    //          SELECT json_agg(x) AS items
+    //          FROM  (select 
+    //             (event_time::text || ' ' || ph.name || ' at ' || r.event_address) as name,
+    //             50 height
+    //             from reservation r
+    //             inner join partner_package_header ph
+    //             on r.package_id = ph.id
+    //               WHERE date(r.event_date) = date(a.event_date)
+    //               and r.partner_id = a.partner_id
+    //               and r.status_code in ('102104', '102105', '102106')
+    //            ) x
+    //          ) c ON true`;
+    //       return sequelize.query(query,{ type : sequelize.QueryTypes.SELECT}).then(results => {
+    //           return results;
+    //       });
+
+    //   } catch (error) {
+    //     console.log(error);
+    //     throw error
+    //   }
+    // },
+
+    getPartnerCalendarData: async (param) => {
+      try {
+          const { partnerId, month, year } = param;
+          var agenda = {};
+
+          var query = `
+        select 
+          json_agg(
+            json_build_object(
+              to_char(a.event_date, 'YYYY-MM-DD'), items
+            )
+          ) items,
+          json_agg(
+            json_build_object(
+              to_char(a.event_date, 'YYYY-MM-DD'),
+              to_json(
+                json_build_object(
+                  'dots', marked,
+                  'selectedDotColor', 'blue'
+                )
+              )
+            ) 
+          ) markeddates
+        FROM (select 
+            distinct date(event_date) event_date, 
+            partner_id	  
+          from reservation rr
+          where rr.partner_id = ` + partnerId + `
+          and extract(MONTH from rr.event_date) = ` + month + `
+          and extract(YEAR from rr.event_date) = ` + year + `
+          and rr.status_code in ('102104', '102105', '102106')
+         )  a
+         LEFT   JOIN LATERAL (
+            SELECT json_agg(y) AS items
+            FROM  (select 
+               (event_time::text || ' ' || ph.name || ' at ' || r.event_address) as name,
+               50 height
+               from reservation r
+               inner join partner_package_header ph
+               on r.package_id = ph.id
+                 WHERE date(r.event_date) = date(a.event_date)
+                 and r.partner_id = a.partner_id
+                 and r.status_code in ('102104', '102105', '102106')
+              ) y
+            ) d ON true
+        LEFT   JOIN LATERAL (
+         SELECT json_agg(x) AS marked
+         FROM  (select 
+          ph.name as key,
+          case ph.id 
+            when 1 then 'red'
+            when 2 then 'yellow'
+            when 3 then 'green'
+            when 4 then 'gray'
+            when 5 then '#5f9ea0'
+            when 6 then '#5fafa0'
+            when 7 then '#5f9e9e'
+            when 8 then '#5f5fa0'
+            when 9 then '#5f9e5f'
+            when 10 then '#5fafa0'
+          else 'blue' end as color,
+          'blue' as selectedDotColor
+          from reservation r
+          inner join category ph
+          on r.category_id = ph.id
+            WHERE date(r.event_date) = date(a.event_date)
+            and r.partner_id = a.partner_id
+            and r.status_code in ('102104', '102105', '102106')
+           ) x
+         ) c ON true`;
+          return sequelize.query(query,{ type : sequelize.QueryTypes.SELECT}).then(results => {
+              if(results === null){
+                return new {items:[], markeddates: []};
+              }
+              else{
+                return results[0];
+              }
+          });
+
+      } catch (error) {
+        console.log(error);
+        throw error
+      }
+    },
+  }

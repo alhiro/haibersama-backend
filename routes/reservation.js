@@ -83,4 +83,30 @@ reservationRouter.post("/updatestatus", headerAuth.isUserAuthenticated ,(req, re
   reservationController.updateStatus(data, res);
 });
 
+// reservationRouter.post("/agendaitems", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+//   const id = res.locals.auth.id;
+//   const type = res.locals.auth.type;
+
+//   const data = { 
+//     partnerId: id,
+//     month: req.body.month, 
+//     year: req.body.year
+//   };
+  
+//   reservationController.getAgendaItems(data, res);
+// });
+
+reservationRouter.post("/calendardata", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+  const id = res.locals.auth.id;
+  const type = res.locals.auth.type;
+
+  const data = { 
+    partnerId: id,
+    month: req.body.month, 
+    year: req.body.year
+  };
+  
+  reservationController.getCalendarData(data, res);
+});
+
 module.exports = reservationRouter;

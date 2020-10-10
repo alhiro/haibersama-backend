@@ -104,3 +104,23 @@ exports.getReservations = async function(req, res, next) {
         return res.status(500).send({ data: err });
       }    
 };
+
+// exports.getAgendaItems = async function(req, res, next) {
+//   try {            
+//       let data = await resv.getPartnerAgendaItems(req);
+//       return res.status(200).send(data);
+//     } catch (err) {
+//       console.log(err);
+//       return res.status(500).send({ data: err });
+//     }    
+// };
+
+exports.getCalendarData = async function(req, res, next) {
+  try {            
+      let data = await resv.getPartnerCalendarData(req);
+      return res.status(200).send(data);
+    } catch (err) {
+      console.log(err);
+      return res.status(500).send({ data: err });
+    }    
+};

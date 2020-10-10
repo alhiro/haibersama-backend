@@ -37,6 +37,10 @@ const Reservation = dbSeq.define('reservation', {
     type: Sequelize.INTEGER,
     allowNull: false
   },
+  package_id: {
+    type: Sequelize.INTEGER,
+    allowNull: false
+  },
   service_id: {
     type: Sequelize.INTEGER,
     allowNull: false
