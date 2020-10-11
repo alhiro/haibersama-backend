@@ -417,17 +417,23 @@ module.exports =
          FROM  (select 
           ph.name as key,
           case ph.id 
-            when 1 then 'red'
-            when 2 then 'yellow'
-            when 3 then 'green'
-            when 4 then 'gray'
-            when 5 then '#5f9ea0'
-            when 6 then '#5fafa0'
-            when 7 then '#5f9e9e'
-            when 8 then '#5f5fa0'
-            when 9 then '#5f9e5f'
-            when 10 then '#5fafa0'
-          else 'blue' end as color,
+            when 1 then '#D2691E'
+            when 2 then '#FF7F50'
+            when 3 then '#6495ED'
+            when 4 then '#20B2AA'
+            when 5 then '#32CD32'
+            when 6 then '#BA55D3'
+            when 7 then '#A9A9A9'
+            when 8 then '#BDB76B'
+            when 9 then '#D2691E'
+            when 10 then '#FF1493'
+            when 11 then '#FFDEAD'
+            when 12 then '#808000'
+            when 13 then '#DDA0DD'
+            when 14 then '#87CEEB'
+            when 15 then '#FFD700'
+            when 16 then '#9ACD32'
+          else '#D2691E' end as color,
           'blue' as selectedDotColor
           from reservation r
           inner join category ph
