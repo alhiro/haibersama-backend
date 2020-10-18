@@ -5,12 +5,13 @@ module.exports =
     getAll: async () => {
       try {
         return await Category.findAll({
-            where:{
-                active : true
-            },
+            // where:{
+            //     active : true
+            // },
             attributes: ['id',
                         'name',
-                        'description'
+                        'description',
+                        'active'
             ],
             order:[
                 ["order_no", "ASC"]
