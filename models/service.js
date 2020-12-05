@@ -1,12 +1,22 @@
 var dbSeq = require('../config/sequelize')
 var Sequelize = require('sequelize')
 
+var Category = require('./category')
+
 const Service = dbSeq.define('service', {
   id: {
     type: Sequelize.INTEGER,
     allowNull: false,
     primaryKey: true,
     autoIncrement: true
+  },
+  category_id: {
+    type: Sequelize.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'category',
+      key: 'id'
+    }
   },
   name: {
     type: Sequelize.STRING(50),
@@ -16,16 +26,8 @@ const Service = dbSeq.define('service', {
     type: Sequelize.STRING(200),
     allowNull: true
   },
-  created_at: {
-    type: Sequelize.DATE,
-    allowNull: true
-  },
   created_by: {
     type: Sequelize.STRING(50),
-    allowNull: true
-  },
-  updated_at: {
-    type: Sequelize.DATE,
     allowNull: true
   },
   updated_by: {
@@ -40,6 +42,9 @@ const Service = dbSeq.define('service', {
   paranoid: false,
   underscored: true,
 });
+
+Service.belongsTo(Category, { foreignKey: "category_id" });
+Category.hasMany(Service, { foreignKey: "category_id" });
 
 //Service.belongsTo(PartnerPackageHeader, { foreignKey: 'uomid' })
 

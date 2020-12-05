@@ -57,16 +57,8 @@ const PartnerPackageDetail = dbSeq.define('partner_package_detail', {
     type: Sequelize.STRING(300),
     allowNull: false
   },
-  created_at: {
-    type: Sequelize.DATE,
-    allowNull: true
-  },
   created_by: {
     type: Sequelize.STRING(50),
-    allowNull: true
-  },
-  updated_at: {
-    type: Sequelize.DATE,
     allowNull: true
   },
   updated_by: {

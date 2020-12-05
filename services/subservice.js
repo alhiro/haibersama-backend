@@ -1,10 +1,29 @@
 const SubService = require('../models/subservice');
+const Service = require('../models/service');
 
 module.exports =
   {        
     getAll: async () => {
       try {
         return await SubService.findAll({
+          attributes: [
+            'id',
+            'name',
+            'description',
+            'service_id',
+            'created_by',
+            'updated_by',
+            'createdAt',
+            'updatedAt'
+          ],
+          order:[
+            ["createdAt", "ASC"]
+          ],
+          include: [
+            {
+              model: Service
+            }
+          ]
         });
       } catch (error) {
         throw error
@@ -22,10 +41,11 @@ module.exports =
 
     findOrCreateService: async (params, serviceData) => {
         try {
-          const { name, description } = serviceData.body
+          const { name, description, service_id } = serviceData.body
           var objService = {
             name: name,
             description: description,
+            service_id: service_id
           }
           const insertService = await SubService.findOrCreate({ where: params, defaults: objService })
     
@@ -43,14 +63,16 @@ module.exports =
       updateService: async (params, serviceData) => {
           try {
             console.log("update sub service")
-            const { name, description, id } = serviceData.body
-            console.log(serviceData.body.name, "name")
-            console.log(description, "description")
+            const {  id, name, description, service_id } = serviceData.body
             console.log(id, "id")
+            console.log(name, "name")
+            console.log(description, "description")
+            console.log(service_id, "service id")
 
             var objService = {
               name: name,
               description: description,
+              service_id: service_id,
             }
             console.log(JSON.stringify(objService), "objService")
 

@@ -58,6 +58,10 @@ app.use(process.env.APP_API_PREFIX + '/experience', experienceRouter);
 app.use(process.env.APP_API_PREFIX + '/payment', paymentRouter);
 app.use(process.env.APP_API_PREFIX + '/banner', bannerRouter);
 
+app.get("/", (req, res) => {
+  res.json({ message: "Welcome to Hai organizer application." });
+});
+
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   var err = new Error('Not Found');

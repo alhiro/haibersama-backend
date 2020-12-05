@@ -24,16 +24,8 @@ const Category = dbSeq.define('category', {
     type: Sequelize.INTEGER,
     allowNull: true
   },
-  created_at: {
-    type: Sequelize.DATE,
-    allowNull: true
-  },
   created_by: {
     type: Sequelize.STRING(50),
-    allowNull: true
-  },
-  updated_at: {
-    type: Sequelize.DATE,
     allowNull: true
   },
   updated_by: {

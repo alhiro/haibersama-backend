@@ -76,10 +76,11 @@ module.exports = {
       console.log(objPackage, "objPackage");
 
       const insertPackage = await PartnerPackageHeader.findOrCreate({
-        where: { name: name, 
-        partner_id: partnerId,
-        category_id: CategoryId,
-        service_id: ServiceId
+        where: { 
+          name: name, 
+          partner_id: partnerId,
+          category_id: CategoryId,
+          service_id: ServiceId
         },
         include: [
           {

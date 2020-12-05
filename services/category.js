@@ -1,4 +1,5 @@
 const Category = require('../models/category');
+const Service = require('../models/service');
 
 module.exports =
   {        
@@ -8,13 +9,20 @@ module.exports =
             // where:{
             //     active : true
             // },
-            attributes: ['id',
-                        'name',
-                        'description',
-                        'active'
+            attributes: [
+              'id',
+              'name',
+              'description',
+              'order_no',
+              'active'
             ],
             order:[
-                ["order_no", "ASC"]
+              ["order_no", "ASC"]
+            ],
+            include: [
+              {
+                model: Service
+              }
             ]
         });
       } catch (error) {
