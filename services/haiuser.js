@@ -415,8 +415,8 @@ module.exports = {
         name,
         address,
         phone,
-        whatsapp,
-        categoryid
+        whatsapp// ,
+        // categoryid
       } = params;
       const generateHashPassword = await jwt.hash(password, 10);
 
@@ -446,24 +446,24 @@ module.exports = {
         delete insertUser.dataValues.password;
 
         //mapping partner and category
-        var arrPartnerCategories = [];
+        // var arrPartnerCategories = [];
 
-        if(categoryid != undefined){
-          categoryid.forEach(element => {
-            var objPartnerCategory = {
-              partner_id: insertUser.dataValues.id,
-              category_id: element
-            };
-            arrPartnerCategories.push(objPartnerCategory);
-          });
-          console.log(
-            "arrPartnerCategories: " + JSON.stringify(arrPartnerCategories)
-          );          
+        // if(categoryid != undefined){
+        //   categoryid.forEach(element => {
+        //     var objPartnerCategory = {
+        //       partner_id: insertUser.dataValues.id,
+        //       category_id: element
+        //     };
+        //     arrPartnerCategories.push(objPartnerCategory);
+        //   });
+        //   console.log(
+        //     "arrPartnerCategories: " + JSON.stringify(arrPartnerCategories)
+        //   );          
 
-          const insertPartnerCategory = await PartnerCategory.bulkCreate(
-            arrPartnerCategories
-          );
-        }
+        //   const insertPartnerCategory = await PartnerCategory.bulkCreate(
+        //     arrPartnerCategories
+        //   );
+        // }
 
         return {
           success: true,

@@ -14,6 +14,10 @@ const InfoCode = dbSeq.define('info_code', {
     type: Sequelize.STRING,
     allowNull: false
   },
+  description_alias: {
+    type: Sequelize.STRING,
+    allowNull: true
+  },
   code_type: {
     type: Sequelize.STRING,
     allowNull: false

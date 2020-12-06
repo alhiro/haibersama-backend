@@ -18,11 +18,11 @@ const PaymentDetail = dbSeq.define('payment_detail', {
     }
   },
   payment_channel_code: {
-    type: Sequelize.STRING(10),
+    type: Sequelize.STRING(50),
     allowNull: false
   },
   pg_code: {
-    type: Sequelize.STRING(10),
+    type: Sequelize.STRING(50),
     allowNull: true
   },
   method_code: {
@@ -38,7 +38,7 @@ const PaymentDetail = dbSeq.define('payment_detail', {
     allowNull: true
   },
   status_code: {
-    type: Sequelize.STRING(10),
+    type: Sequelize.STRING(50),
     allowNull: false
   },
   is_refund: {

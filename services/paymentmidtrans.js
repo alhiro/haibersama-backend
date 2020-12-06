@@ -3,33 +3,35 @@ const PaymentDetail = require('../models/paymentdetail');
 const PaymentChannel = require('../models/paymentchannel');
 const moment = require("moment");
 const Sequelize = require('../config/sequelize');
+const midtransClient = require('midtrans-client');
+const { MIDTRANS_ENVIRONMENT, MIDTRANS_SERVER_KEY, MIDTRANS_CLIENT_KEY } = process.env;
 
 module.exports =
   {        
     
     findOrCreatePayment: async (data) => {
       try {
-        const { reservationNo, totalPrice, totalDiscount, userId, totalPayment, paymentChannelCode, paymentTimeLimit } = data;
+        const { reservationNo, totalPrice, totalDiscount, userId, totalPayment } = data;
  
-        const paramChannel = {
-          payment_channel_code: paymentChannelCode,
-        };
+        // const paramChannel = {
+        //   payment_channel_code: paymentChannelCode,
+        // };
 
-        const channel = await PaymentChannel.findOne({ where: paramChannel });        
+        // const channel = await PaymentChannel.findOne({ where: paramChannel });        
 
         var statusCode = "PAYMENT_REQUEST";
-        var details = [];
+        // var details = [];
 
-        var detail = {
-          payment_channel_code: paymentChannelCode,
-          pg_code: channel.pg_code,
-          method_code: channel.method_code,
-          payment_amount: totalPayment,
-          status_code: statusCode,
-          created_at: moment().utcOffset(0),
-          created_by: 'system'
-        };
-        details.push(detail);
+        // var detail = {
+        //   payment_channel_code: paymentChannelCode,
+        //   pg_code: channel.pg_code,
+        //   method_code: channel.method_code,
+        //   payment_amount: totalPayment,
+        //   status_code: statusCode,
+        //   created_at: moment().utcOffset(0),
+        //   created_by: 'system'
+        // };
+        // details.push(detail);
         
         const existPayment = {
           reservation_no: reservationNo,
@@ -38,48 +40,85 @@ module.exports =
         const isPaymentExist = await Payment.findOne({ where: existPayment });
         
         if (!isPaymentExist) {
-
-          var paymentData = {
-              reservation_no: reservationNo,
-              total_price: totalPrice,
-              total_discount: totalDiscount,
-              total_payment: totalPayment,
-              payment_channel_code: paymentChannelCode,
-              payment_time_limit: paymentTimeLimit,
-              status_code: statusCode,
-              created_at: moment().utcOffset(0),
-              created_by: "system",
-              payment_detail: details
-          };      
-          
-          const insertparams = {
-            reservation_no: reservationNo
-          };
-
-          const insertPayment = await Payment.findOrCreate({
-            where: insertparams,
-            include: [
-              {
-                model: PaymentDetail,
-                as: 'payment_detail'
-              }
-            ],
-            defaults: paymentData
+          let snap = new midtransClient.Snap({
+              isProduction : MIDTRANS_ENVIRONMENT == "PRODUCTION",
+              serverKey : MIDTRANS_SERVER_KEY,
+              clientKey : MIDTRANS_CLIENT_KEY
           });
+    
+          let parameter = {
+              "transaction_details": {
+                  "order_id": reservationNo,
+                  "gross_amount": totalPrice
+              }, "credit_card":{
+                  "secure" : true
+              }
+          }; 
+       
+          let transactionResult = await snap.createTransaction(parameter)
+          .then((transaction)=>{
+              // transaction token
+              let transactionToken = transaction.token;
+              console.log('transactionToken:',transactionToken);     
+              return transaction;
+          });  
+          
+          console.log('transactionResult:',transactionResult);    
 
-          if (!insertPayment[1]) {
-            throw {
-              success: false,
-              message: "Failed to create payment",
-              data: {}
-            };
-          } else {
+          let paymentTimeLimit = moment().utcOffset(0).add(1, "days").add(5, "minutes");
+          
+          var paymentData = {
+            reservation_no: reservationNo,
+            total_price: totalPrice,
+            total_discount: totalDiscount,
+            total_payment: totalPayment,
+            // payment_channel_code: paymentChannelCode,
+            payment_time_limit: paymentTimeLimit,
+            status_code: statusCode,
+            created_at: moment().utcOffset(0),
+            created_by: "system"
+        };      
+        
+        const insertparams = {
+          reservation_no: reservationNo
+        };
+
+        const insertPayment = await Payment.findOrCreate({
+          where: insertparams,
+          // include: [
+          //   {
+          //     model: PaymentDetail,
+          //     as: 'payment_detail'
+          //   }
+          // ],
+          defaults: paymentData
+        });
+
+        if (!insertPayment[1]) {
+          throw {
+            success: false,
+            message: "Failed to create payment",
+            data: {}
+          };
+        } else {          
+          if(!transactionResult)
+          {     
             return {
               success: true,
+              message: "Failed to create midtrans token",
+              data: {}
+            }; 
+          }
+          else
+          {                 
+            return {
+              success: false,
               message: "Payment Successfully Created",
-              data: insertPayment[0].dataValues
+              data: transactionResult
             };
           }
+        }
+          
         } else {
 
           detail.payment_id = existPayment.id;

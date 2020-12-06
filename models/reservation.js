@@ -74,7 +74,7 @@ const Reservation = dbSeq.define('reservation', {
     allowNull: true
   },
   status_code: {
-    type: Sequelize.STRING(10),
+    type: Sequelize.STRING(50),
     allowNull: true
   },
   created_at: {
