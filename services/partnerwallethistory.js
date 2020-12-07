@@ -1,0 +1,138 @@
+const wallethistory = require('../models/partnerwallethistory');
+
+module.exports =
+  {  
+    getList: async (params) => {        
+      return await wallethistory.findAll({ 
+        where: params
+       })
+        .then((Wallet) => {
+          return (!Wallet) ? { success: false, message: "Partner Wallet History Not Found", data: {} } : { success: true, message: "Partner Wallet History Found", data: Wallet }
+        })
+        .catch((err) => { 
+          console.log(err);
+          return { success: false, message: "Partner Wallet History Not Found", data: err } 
+        });
+      },
+
+    getDetail: async (id) => {
+          return await wallethistory.findOne({ 
+              where: {
+                  id: id
+              }
+          })
+          .then((data) => {
+            return (!data) ? { success: false, message: "Bank Wallet Not Found", data: {} } : { success: true, message: "Bank Wallet Found", data: data }
+          })
+          .catch((err) => { 
+            console.log(err);
+            return { success: false, message: "Bank Wallet Not Found", data: err } 
+          });
+    },
+
+    findOrCreateWallet: async (params, data) => {
+      try {
+        console.log(data);
+        const { partner_id, reservation_no, transaction_type, total_amount, status } = data;
+
+        if(reservation_no){
+          if(transaction_type == "C"){
+            throw ({ success: false, message: "Please input reservation no", data: {} });
+          }else{
+            reservation_no = "";
+          }
+        }else{
+          if(transaction_type == "C"){                    
+            //check amount transaction is exist
+            const params2 = {
+              partner_id: partner_id,
+              transaction_type: transaction_type,
+              reservation_no: reservation_no
+            };
+
+            const isExists = await wallethistory.findOne({ where: params2 });
+            
+            if(!isExists){
+              return {
+                success: false,
+                message: "Already exists.",
+                data: {}
+              };
+            }
+          }
+        }
+
+        if(total_amount == 0){
+          throw ({ success: false, message: "Please input total amount", data: {} });
+        }
+
+        if (transaction_type || reservation_no || transaction_type || status) {
+          throw ({ success: false, message: "Please input all data", data: {} })
+        }
+
+        var transaction_date = moment().utcOffset(0).format("YYMMDD");
+
+        const lastReservation = await wallethistory.findOne({
+          where: { transaction_no: { [Sequelize.Op.like]: `${transaction_date}%` } },
+          order: [["transaction_no", "DESC"]]
+        });
+        
+        var transaction_no = "";
+        //create new storeid
+        if (!lastReservation) {
+          transaction_no = transaction_date + "00001";
+        } else {
+          var strNewId = Number(lastReservation.reservation_no.substring(6, 11)) + 1;
+          if (strNewId.toString().length < 5) {
+            transaction_no = transaction_date + "0".repeat(5 - strNewId.toString().length) + strNewId;
+          } else {
+            transaction_no = transaction_date + strNewId;
+          }
+        }
+
+        var objData = {
+          partner_id: partner_id,
+          transaction_no: transaction_no,
+          transaction_date: transaction_date,
+          transaction_type: transaction_type,
+          reservation_no: reservation_no,
+          total_amount: total_amount,
+          status: status
+        };
+        
+        const Wallet = await wallethistory.findOrCreate({ where: params, defaults: objData })
+  
+        // check reservation_no already registered or not
+        if (!Wallet[1]) {
+          throw ({ success: false, message: "Partner Wallet History already exists", data: {} })
+        }
+        
+        return { success: true, message: "Partner Wallet History Successfully Created", data: Wallet[0].dataValues }
+      } catch (error) {
+        
+        console.log(error);
+        throw (error)
+      }
+    },
+
+    updateStatusWallet: async (data) => {
+      try {
+        const { status, id } = data
+
+        var objData = {
+          status: status
+        };
+        
+        return wallethistory.update(objData, { where: { id:id }})
+        .then(async (updated) => { 
+            const result = await wallethistory.findOne({ where: { id: id } })
+            
+            return { success: true, message: "Partner Wallet History Status Successfully Updated", data: result.dataValues[1] } })
+        .catch((err) => { return { success: false, message: "Update Partner Wallet History Status Failed", data: err } });
+      } catch (error) {
+        console.log(error);
+        throw (error)
+      }
+    },
+}
+  

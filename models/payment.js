@@ -31,7 +31,7 @@ const Payment = dbSeq.define('payment', {
     allowNull: true
   },
   payment_channel_code: {
-    type: Sequelize.STRING(10),
+    type: Sequelize.STRING(50),
     allowNull: true
   },
   payment_time_limit: {
@@ -39,7 +39,7 @@ const Payment = dbSeq.define('payment', {
     allowNull: true
   },
   status_code: {
-    type: Sequelize.STRING(10),
+    type: Sequelize.STRING(50),
     allowNull: true
   },
   created_at: {

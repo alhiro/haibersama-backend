@@ -19,11 +19,13 @@ const portfolioRouter = require('./routes/partnerportfolio');
 const certificateRouter = require('./routes/partnercertificate');
 const experienceRouter = require('./routes/partnerexperience');
 const paymentRouter = require('./routes/payment');
+const paymentMidtransRouter = require('./routes/paymentmidtrans');
 const bannerRouter = require('./routes/banner');
+const partnerBankAccountRouter = require('./routes/partnerbankaccount');
 const serveIndex = require('serve-index');
 
 // Seed model into table
-const haiuser = require("./models/haiuser");
+const haiuser = require("./models/partnerbankaccount");
 haiuser.sequelize.sync({alter: true})
 
 // setup app with predefined configs
@@ -56,7 +58,9 @@ app.use(process.env.APP_API_PREFIX + '/certificate', certificateRouter);
 app.use(process.env.APP_API_PREFIX + '/portfolio', portfolioRouter);
 app.use(process.env.APP_API_PREFIX + '/experience', experienceRouter);
 app.use(process.env.APP_API_PREFIX + '/payment', paymentRouter);
+app.use(process.env.APP_API_PREFIX + '/paymentmidtrans', paymentMidtransRouter);
 app.use(process.env.APP_API_PREFIX + '/banner', bannerRouter);
+app.use(process.env.APP_API_PREFIX + '/partnerbankaccount', partnerBankAccountRouter);
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to Hai organizer application." });

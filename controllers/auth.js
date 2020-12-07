@@ -79,6 +79,8 @@ exports.registerUser = async function(req, res, next) {
   const transaction = await sequelizeTransaction.transaction();
 
   try {
+    if(!email)
+    {    
     console.log("email : " + email);
     var users = await auth.findUser({ email });
 
@@ -165,6 +167,14 @@ exports.registerUser = async function(req, res, next) {
           data: {}
         });
       }); */
+    } else {
+      return res.status(401).send({
+        code: 401,
+        success: false,
+        message: "Email is empty",
+        data: {}
+      });
+    }
   } catch (err) {
     return res
       .status(500)
