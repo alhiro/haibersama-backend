@@ -27,7 +27,7 @@ module.exports =
           };
         }
 
-        if(reservationType == "103102"){
+        if(reservationType == "MANUAL_ORDER"){
           if(package.partner_id != partnerId){
             return {
               success: false,
@@ -62,7 +62,7 @@ module.exports =
           partner_id: package.partner_id,
           event_date: eventDate,
           event_time: eventTime,
-          status_code: ["102103", "102104", "102105", "102106"]
+          transaction_status_code: ["ON_PROCESS"]
         };
 
         const isPartnerIsBooked = await Reservation.findOne({ where: params2 });
@@ -123,16 +123,18 @@ module.exports =
           });
 
           histories.push({
-            status_code: "102101",
+            status_code: "ORDER_NEW",
             created_at: moment().utcOffset(0),
             created_by: 'system'
           });
 
-          var statusCode = "102101";
+          var statusCode = "ORDER_NEW";
+          var transactionStatusCode = "NEW";
           var resvDate = moment().utcOffset(0);
 
-          if(reservationType == "103102"){
-            statusCode = "102105";
+          if(reservationType == "MANUAL_ORDER"){
+            statusCode = "ORDER_PARTNER_CONFIRM";
+            transactionStatusCode = "ON_PROCESS";
             resvDate = reservationDate
           }
 
@@ -153,6 +155,7 @@ module.exports =
               total_discount: 0,
               total_payment: package.totalprice,
               status_code: statusCode,
+              transaction_status_code: transaction_status_code,
               created_at: moment().utcOffset(0),
               created_by: "system",
               reservation_contact: {
@@ -264,8 +267,8 @@ module.exports =
           left join hai_user usr on usr.id = rv.user_id
           inner join category cat on cat.id = rv.category_id
           inner join service srv on srv.id = rv.service_id
-          left join code_info ci on ci.code = rv.status_code
-          left join code_info rt on rt.code = rv.reservation_type
+          left join info_code ci on ci.code = rv.status_code
+          left join info_code rt on rt.code = rv.reservation_type
           `+where+`
           order by rv.id desc;`,
         {
@@ -342,7 +345,7 @@ module.exports =
     //             where rr.partner_id = ` + partnerId + `
     //             and extract(MONTH from rr.event_date) = ` + month + `
     //             and extract(YEAR from rr.event_date) = ` + year + `
-    //             and rr.status_code in ('102104', '102105', '102106')
+    //             and rr.transaction_status_code in ('ON_PROCESS')
     //          )  a
     //       LEFT   JOIN LATERAL (
     //          SELECT json_agg(x) AS items
@@ -354,7 +357,7 @@ module.exports =
     //             on r.package_id = ph.id
     //               WHERE date(r.event_date) = date(a.event_date)
     //               and r.partner_id = a.partner_id
-    //               and r.status_code in ('102104', '102105', '102106')
+    //               and r.transaction_status_code in ('ON_PROCESS')
     //            ) x
     //          ) c ON true`;
     //       return sequelize.query(query,{ type : sequelize.QueryTypes.SELECT}).then(results => {
@@ -397,7 +400,7 @@ module.exports =
           where rr.partner_id = ` + partnerId + `
           and extract(MONTH from rr.event_date) = ` + month + `
           and extract(YEAR from rr.event_date) = ` + year + `
-          and rr.status_code in ('102104', '102105', '102106')
+          and rr.transaction_status_code in ('ON_PROCESS')
          )  a
          LEFT   JOIN LATERAL (
             SELECT json_agg(y) AS items
@@ -409,7 +412,7 @@ module.exports =
                on r.package_id = ph.id
                  WHERE date(r.event_date) = date(a.event_date)
                  and r.partner_id = a.partner_id
-                 and r.status_code in ('102104', '102105', '102106')
+                 and r.transaction_status_code in ('ON_PROCESS')
               ) y
             ) d ON true
         LEFT   JOIN LATERAL (
@@ -440,7 +443,7 @@ module.exports =
           on r.category_id = ph.id
             WHERE date(r.event_date) = date(a.event_date)
             and r.partner_id = a.partner_id
-            and r.status_code in ('102104', '102105', '102106')
+            and r.transaction_status_code in ('ON_PROCESS')
            ) x
          ) c ON true`;
           return sequelize.query(query,{ type : sequelize.QueryTypes.SELECT}).then(results => {

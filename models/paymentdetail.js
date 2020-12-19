@@ -17,7 +17,11 @@ const PaymentDetail = dbSeq.define('payment_detail', {
       key: 'id'
     }
   },
-  payment_channel_code: {
+  payment_type_code: {
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
+  payment_order_id: {
     type: Sequelize.STRING(50),
     allowNull: false
   },
@@ -25,15 +29,31 @@ const PaymentDetail = dbSeq.define('payment_detail', {
     type: Sequelize.STRING(50),
     allowNull: true
   },
+  // payment_channel_code: {
+  //   type: Sequelize.STRING(50),
+  //   allowNull: false
+  // },
   method_code: {
-    type: Sequelize.STRING(10),
-    allowNull: false
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
+  bank: {
+    type: Sequelize.STRING(50),
+    allowNull: true
   },
   payment_amount: {
     type: Sequelize.DECIMAL(18, 2),
     allowNull: true
   },
   payment_date: {
+    type: Sequelize.DATE,
+    allowNull: true
+  },
+  payment_type: {
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
+  payment_time_limit: {
     type: Sequelize.DATE,
     allowNull: true
   },
@@ -47,6 +67,14 @@ const PaymentDetail = dbSeq.define('payment_detail', {
   },
   refund_id: {
     type: Sequelize.BIGINT,
+    allowNull: true
+  },
+  token: {
+    type: Sequelize.STRING(500),
+    allowNull: true
+  },
+  redirect_url: {
+    type: Sequelize.STRING(500),
     allowNull: true
   },
   created_at: {

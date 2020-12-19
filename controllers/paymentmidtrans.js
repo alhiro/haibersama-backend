@@ -6,6 +6,9 @@ exports.createPayment = async function(req, res, next) {
         if(!req.reservationNo)
         {
           return res.status(400).send({ code: 400, success: false, message: "Invalid reservation no.", data: {} });
+        }else if(!req.paymentType)
+        {
+          return res.status(400).send({ code: 400, success: false, message: "Please input payment type. (DOWN_PAYMENT, REPAYMENT, FULL_PAYMENT).", data: {} });
         }
 
         let response = await paymentmidtrans.findOrCreatePayment(req);
@@ -18,9 +21,9 @@ exports.createPayment = async function(req, res, next) {
     }  
 };
 
-exports.updateStatus = async function(req, res, next) {
+exports.callback = async function(req, res, next) {
     try {            
-        let data = await paymentmidtrans.updateStatusPayment(req);
+        let data = await paymentmidtrans.updatePaymentCallback(req);
         return res.status(200).send(data);
       } catch (err) {
         console.log(err);

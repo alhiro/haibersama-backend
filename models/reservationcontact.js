@@ -10,7 +10,7 @@ const ReservationContact = dbSeq.define('reservation_contact', {
     autoIncrement: true
   },
   reservation_id: {
-    type: Sequelize.STRING(20),
+    type: Sequelize.BIGINT,
     allowNull: false,
     references: {
       model: 'reservation',

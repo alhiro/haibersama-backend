@@ -6,7 +6,7 @@ const InfoCode = dbSeq.define('info_code', {
   code: {
     type: Sequelize.STRING,
     allowNull: false,
-    unique: true,
+    // unique: true,
     primaryKey: true,
     autoIncrement: false
   },
@@ -14,13 +14,15 @@ const InfoCode = dbSeq.define('info_code', {
     type: Sequelize.STRING,
     allowNull: false
   },
-  description_alias: {
-    type: Sequelize.STRING,
-    allowNull: true
-  },
+  // description_alias: {
+  //   type: Sequelize.STRING,
+  //   allowNull: true
+  // },
   code_type: {
     type: Sequelize.STRING,
-    allowNull: false
+    allowNull: false,
+    // unique: true,
+    primaryKey: true,
   },
   type_description: {
     type: Sequelize.STRING,
@@ -43,6 +45,14 @@ const InfoCode = dbSeq.define('info_code', {
     allowNull: true
   }
 }, 
+{
+    indexes: [
+        {
+            unique: true,
+            fields: ['code', 'code_type']
+        }
+    ]
+},
 {
   tableName: 'info_code',
   freezeTableName: true,

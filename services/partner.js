@@ -78,7 +78,7 @@ module.exports =
                   select count(reservation_no) successjob
                   from reservation rvv
                   where rvv.partner_id = part.id
-                  and rvv.status_code = '102106'
+                  and rvv.transaction_status_code = 'SUCCESS'
                 ) rv on true
               WHERE part.type = 2
               and part.id = `+partnerID+`;`,
@@ -230,13 +230,13 @@ module.exports =
 // 						distinct date(event_date) event_date
 // 					  from reservation rr
 // 					  where rr.partner_id = p.id 
-// 					  and rr.status_code in ('102104', '102105', '102106')
+// 					  and rr.transaction_status_code in ('ON_PROCESS')
 // 					) rv on true
 // 					left join lateral (
 // 					  select count(reservation_no) successjob
 // 					  from reservation rvv
 // 					  where rvv.partner_id = p.id
-// 					  and rvv.status_code = '102106'
+// 					  and rvv.transaction_status_code = 'SUCCESS'
 // 					) sj on true
 // 					where p.type = 2
 // 					and (p_category_id is null or pc.category_id = p_category_id)
@@ -289,13 +289,13 @@ module.exports =
 // 						distinct date(event_date) event_date
 // 					  from reservation rr
 // 					  where rr.partner_id = p.id 
-// 					  and rr.status_code in (''102104'', ''102105'', ''102106'')
+// 					  and rr.transaction_status_code in (''ON_PROCESS'')
 // 					) rv on true
 // 					left join lateral (
 // 					  select count(reservation_no) successjob
 // 					  from reservation rvv
 // 					  where rvv.partner_id = p.id
-// 					  and rvv.status_code = ''102106''
+// 					  and rvv.transaction_status_code = ''SUCCESS''
 // 					) sj on true
 // 					where p.type = 2
 // 					and ($4 is null or pc.category_id = $4)
