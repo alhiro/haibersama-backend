@@ -155,7 +155,7 @@ module.exports =
               total_discount: 0,
               total_payment: package.totalprice,
               status_code: statusCode,
-              transaction_status_code: transaction_status_code,
+              transaction_status_code: transactionStatusCode,
               created_at: moment().utcOffset(0),
               created_by: "system",
               reservation_contact: {
