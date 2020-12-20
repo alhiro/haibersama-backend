@@ -22,12 +22,28 @@ const PartnerRating = dbSeq.define('partner_rating', {
     allowNull: false
   },
   reservation_id: {
-    type: Sequelize.BOOLEAN,
+    type: Sequelize.BIGINT,
     allowNull: false
   },
   rating: {
     type: Sequelize.INTEGER,
     allowNull: false
+  },
+  review: {
+    type: Sequelize.STRING(250),
+    allowNull: true
+  },
+  review_date: {
+    type: Sequelize.DATE,
+    allowNull: true
+  },
+  review_reply: {
+    type: Sequelize.STRING(250),
+    allowNull: true
+  },
+  review_reply_date: {
+    type: Sequelize.DATE,
+    allowNull: true
   },
   created_at: {
     type: Sequelize.DATE,
