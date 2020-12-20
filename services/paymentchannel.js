@@ -16,8 +16,8 @@ module.exports =
                   pc.account_name,
                   pc.icon_url
                 from payment_channel pc 
-                left join code_info pm on pm.code = pc.method_code
-                left join code_info pg on pg.code = pc.pg_code
+                left join info_code pm on pm.code = pc.method_code
+                left join info_code pg on pg.code = pc.pg_code
                 where active = true;`,
               { 
                   raw: true,
@@ -53,8 +53,8 @@ module.exports =
             pc.account_name,
             pc.icon_url
           from payment_channel pc 
-          left join code_info pm on pm.code = pc.method_code
-          left join code_info pg on pg.code = pc.pg_code
+          left join info_code pm on pm.code = pc.method_code
+          left join info_code pg on pg.code = pc.pg_code
           where payment_channel_code = '`+paymentChannelCode+`';`,
         { 
             raw: true,

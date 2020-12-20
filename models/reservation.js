@@ -77,6 +77,10 @@ const Reservation = dbSeq.define('reservation', {
     type: Sequelize.STRING(50),
     allowNull: true
   },
+  transaction_status_code: {
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
   created_at: {
     type: Sequelize.DATE,
     allowNull: true

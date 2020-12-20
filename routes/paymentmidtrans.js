@@ -11,25 +11,17 @@ paymentMidtransRouter.post("/create", headerAuth.isUserAuthenticated , (req, res
     reservationNo: req.body.reservationNo, 
     totalPrice: req.body.totalPrice, 
     totalDiscount: req.body.totalDiscount, 
-    totalPayment: req.body.totalPayment, 
-    paymentTimeLimit: req.body.paymentTimeLimit
+    // totalPayment: req.body.totalPayment, 
+    // paymentTimeLimit: req.body.paymentTimeLimit,
+    paymentType: req.body.paymentType
   };
 
   paymentMidtransController.createPayment(data, res);
 });
 
-paymentMidtransRouter.post("/updatestatus", headerAuth.isUserAuthenticated ,(req, res, next) => {
-  const id = res.locals.auth.id;
-  const type = res.locals.auth.type;
-
-  const data = { 
-    reservationNo: req.body.reservationNo, 
-    statusCode: req.body.statusCode, 
-    userId: id, 
-    type: type
-  };
+paymentMidtransRouter.post("/callback", (req, res, next) => {
   
-  paymentMidtransController.updateStatus(data, res);
+  paymentMidtransController.callback(data, res);
 });
 
 module.exports = paymentMidtransRouter;

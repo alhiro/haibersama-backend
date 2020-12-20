@@ -117,7 +117,7 @@ module.exports =
                   pc.account_name
                 from payment p
                 inner join payment_channel pc on pc.payment_channel_code = p.payment_channel_code
-                left join code_info pm on pm.code = pc.method_code
+                left join info_code pm on pm.code = pc.method_code
                 where reservation_no = '`+reservationNo+`';`,
               { 
                   raw: true,

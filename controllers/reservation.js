@@ -4,7 +4,7 @@ const { VERIFY_URL } = process.env;
 
 exports.createReservation = async function(req, res, next) {
     try {  
-      if(req.reservationType === "103102")
+      if(req.reservationType === "MANUAL_ORDER")
       {
         if(req.reservationDate === null)
         {
@@ -86,7 +86,7 @@ exports.getReservations = async function(req, res, next) {
 
         if(statusCode != ""){
           params.status_code = statusCode;
-          where += " AND status_code = '" + statusCode + "' ";
+          where += " AND (status_code = '" + statusCode + "' OR transaction_status_code = '" + statusCode + "') ";
         }
         
         if(categoryId > 0){

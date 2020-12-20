@@ -17,7 +17,7 @@ const ReservationStatusHistory = dbSeq.define('reservation_status_history', {
     }
   },
   status_code: {
-    type: Sequelize.STRING(10),
+    type: Sequelize.STRING(50),
     allowNull: false
   },
   created_at: {

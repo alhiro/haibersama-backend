@@ -26,7 +26,7 @@ reservationRouter.post("/create", headerAuth.isUserAuthenticated , (req, res, ne
   const id = res.locals.auth.id;
 
   const data = { 
-    reservationType: "103101", 
+    reservationType: "USER_ORDER", 
     userId: id,
     packageId: req.body.packageId, 
     eventDate: req.body.eventDate, 
@@ -52,7 +52,7 @@ reservationRouter.post("/manual", headerAuth.isPartnerAuthenticated , (req, res,
     userId: null,
     partnerId: id,
     reservationDate: req.body.reservationDate, 
-    reservationType: "103102", 
+    reservationType: "MANUAL_ORDER", 
     packageId: req.body.packageId, 
     eventDate: req.body.eventDate, 
     eventTime: req.body.eventTime, 
