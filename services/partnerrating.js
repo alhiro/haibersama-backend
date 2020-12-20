@@ -78,13 +78,13 @@ module.exports =
           where: { id: id }
         });
 
-        // if(order == null){          
-        //   return { success: false, message: "Review Not Found", data: {} } 
-        // }else{
-        //   if(order.partner_id != partnerId){
-        //     return { success: false, message: "Partner not match", data: {} } 
-        //   }
-        // }
+        if(order == null){          
+          return { success: false, message: "Review Not Found", data: {} } 
+        }else{
+          if(order.partner_id != partnerId){
+            return { success: false, message: "Partner not match", data: {} } 
+          }
+        }
 
         return Rating.update(objData, { where: { id:id }})
         .then(async (updated) => { 
