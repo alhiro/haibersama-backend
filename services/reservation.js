@@ -7,6 +7,7 @@ const PackageDetail = require('../models/partnerPackageDetail');
 const moment = require("moment");
 const sequelize = require('../config/sequelize');
 const Sequelize = require('sequelize');
+const wallethistory = require('../services/partnerwallethistory');
 
 module.exports =
   {        
@@ -302,9 +303,30 @@ module.exports =
     updateStatusReservation: async (req) => {
       try {
         const { reservationNo, statusCode, userId } = req;
+        
+        let transactionStatusCode = "NEW";
+
+        if(statusCode == "ORDER_COMPLETED"){
+          transactionStatusCode = "SUCCESS";
+        } else if (statusCode == "ORDER_CANCEL_BY_PARTNER"){
+          transactionStatusCode = "CANCEL";
+        } else if (statusCode == "ORDER_CANCEL_BY_USER"){
+          transactionStatusCode = "CANCEL";
+        } else if (statusCode == "ORDER_DP_REQUEST"){
+          transactionStatusCode = "NEW";
+        } else if (statusCode == "ORDER_DP_COMPLETED"){
+          transactionStatusCode = "ON_PROCESS";
+        } else if (statusCode == "ORDER_PARTNER_CONFIRM"){
+          transactionStatusCode = "ON_PROCESS";
+        } else if (statusCode == "ORDER_REPAYMENT_REQUEST"){
+          transactionStatusCode = "ON_PROCESS";
+        } else if (statusCode == "ORDER_PAYMENT_COMPLETED"){
+          transactionStatusCode = "ON_PROCESS";
+        }
 
         var objReservation = {
           status_code: statusCode, 
+          transaction_status_code: transactionStatusCode,
           updated_at: moment().utcOffset(0),
           updated_by: userId
         }
@@ -318,6 +340,27 @@ module.exports =
 
             const history = {status_code: statusCode, reservation_id: upReserv.id, updatedcreated_at: moment().utcOffset(0), created_by: userId };
             const upHistory = await ReservationStatusHistory.create(history);
+
+            if(statusCode == "COMPLETED")
+            {
+              console.log("ini ke wallet");
+              //hardcode 3 %
+              var walletAmount =  upReserv.total_price - (upReserv.total_price * 0.03);
+              
+              var objBalance = {
+                partner_id: upReserv.partner_id,
+                reservation_no: upReserv.reservation_no,
+                transaction_type: "C",
+                total_amount: walletAmount,
+                status: statusCode
+              }
+
+              var objParam = {
+                reservation_no: upReserv.reservation_no
+              }
+
+              const insertWallet = await wallethistory.findOrCreateWallet(objParam, objBalance);
+            }
 
             return { success: true, message: "Reservation Successfully Updated", data: upReserv } })
         .catch((err) => { return { success: false, message: "Update Reservation Failed", data: err } });
