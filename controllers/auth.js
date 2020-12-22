@@ -81,99 +81,100 @@ exports.registerUser = async function(req, res, next) {
   try {
     if(!email)
     {    
-    console.log("email : " + email);
-    var users = await auth.findUser({ email });
-
-    if (!users.success) {
-      console.log(users);
-      //create user by email n password
-      //hash email
-      var register = await auth.registerUser(body, transaction);
-      console.log("register test" + register.data);
-
-      var smtpTransport = nodemailer.createTransport({
-        host: "missandei.id.rapidplex.com",
-        port: 465,
-        secure: true,
-        auth: {
-          user: "notify@haiorganizer.com",
-          pass: "shasmeen11!"
-        }
-      });
-
-      let mailoptions = {
-        from: '"<notify>" notify@haiorganizer.com',
-        to: email,
-        subject: "verify your hai account",
-        html:
-          "<h4><b>Verify Account</b></h4>" +
-          "<p>To verify hai your account, click this link:</p>" +
-          "<a href=" +
-          VERIFY_URL +
-          "/api/" +
-          "auth/" +
-          "verify?" +
-          "email=" +
-          email +
-          "&" +
-          "token=" +
-          register.data.token +
-          ">" +
-          VERIFY_URL +
-          "/api/" +
-          "auth/" +
-          "verify?" +
-          "email=" +
-          email +
-          "&" +
-          "token=" +
-          register.data.token +
-          "</a>" +
-          "<br><br>" +
-          "<p>--Team</p>"
-      };
-      console.log("mailoptions :" + JSON.stringify(mailoptions));
-
-      smtpTransport.sendMail(mailoptions, function(error, res) {
-        if (error) {
-          console.log(error);
-        } else {
-          console.log("Message sent: " + res.response);
-        }
-        //smtpTransport.close();
-      });
-
-      return res.status(200).send(register);
-    } else {
-      return res.status(401).send({
-        code: 401,
-        success: false,
-        message: "That Email is already registered",
-        data: {}
-      });
-    }
-
-    /* jwt.compare(password, users.data.password)
-    .then(async function (done) {
-        let response = await auth.login(users.data, false, 1);
-        response.code = response.success ? 200 : 500;
-        return res.status(response.code).send(response);
-      })
-      .catch(function (error) {
-        return res.status(400).send({
-          code: 400,
-          success: false,
-          message: "Invalid Username / Password",
-          data: {}
-        });
-      }); */
-    } else {
       return res.status(401).send({
         code: 401,
         success: false,
         message: "Email is empty",
         data: {}
-      });
+      });    
+    } else {
+      console.log("email : " + email);
+      var users = await auth.findUser({ email });
+
+      if (!users.success) {
+        console.log(users);
+        //create user by email n password
+        //hash email
+        var register = await auth.registerUser(body, transaction);
+        console.log("register test" + register.data);
+
+        var smtpTransport = nodemailer.createTransport({
+          host: "missandei.id.rapidplex.com",
+          port: 465,
+          secure: true,
+          auth: {
+            user: "notify@haiorganizer.com",
+            pass: "shasmeen11!"
+          }
+        });
+
+        let mailoptions = {
+          from: '"<notify>" notify@haiorganizer.com',
+          to: email,
+          subject: "verify your hai account",
+          html:
+            "<h4><b>Verify Account</b></h4>" +
+            "<p>To verify hai your account, click this link:</p>" +
+            "<a href=" +
+            VERIFY_URL +
+            "/api/" +
+            "auth/" +
+            "verify?" +
+            "email=" +
+            email +
+            "&" +
+            "token=" +
+            register.data.token +
+            ">" +
+            VERIFY_URL +
+            "/api/" +
+            "auth/" +
+            "verify?" +
+            "email=" +
+            email +
+            "&" +
+            "token=" +
+            register.data.token +
+            "</a>" +
+            "<br><br>" +
+            "<p>--Team</p>"
+        };
+        console.log("mailoptions :" + JSON.stringify(mailoptions));
+
+        smtpTransport.sendMail(mailoptions, function(error, res) {
+          if (error) {
+            console.log(error);
+          } else {
+            console.log("Message sent: " + res.response);
+          }
+          //smtpTransport.close();
+        });
+
+        return res.status(200).send(register);
+        
+      } else {
+        return res.status(401).send({
+          code: 401,
+          success: false,
+          message: "That Email is already registered",
+          data: {}
+        });
+      }
+
+      /* jwt.compare(password, users.data.password)
+      .then(async function (done) {
+          let response = await auth.login(users.data, false, 1);
+          response.code = response.success ? 200 : 500;
+          return res.status(response.code).send(response);
+        })
+        .catch(function (error) {
+          return res.status(400).send({
+            code: 400,
+            success: false,
+            message: "Invalid Username / Password",
+            data: {}
+          });
+        }); */
     }
   } catch (err) {
     return res

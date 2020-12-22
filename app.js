@@ -23,10 +23,7 @@ const paymentMidtransRouter = require('./routes/paymentmidtrans');
 const bannerRouter = require('./routes/banner');
 const partnerBankAccountRouter = require('./routes/partnerbankaccount');
 const serveIndex = require('serve-index');
-
-// Seed model into table
-const haiuser = require("./models/partnerbankaccount");
-haiuser.sequelize.sync({alter: true})
+const initDB = require('./models/index');
 
 // setup app with predefined configs
 config.init(app);
@@ -90,6 +87,7 @@ app.use(function onError(err, req, res, next) {
 
 app.set('port', process.env.PORT || 3000);
 var server = app.listen(app.get('port'), function() {
+  initDB;
   console.log('Express server listening on port ' + server.address().port);
 });
 module.exports = app;

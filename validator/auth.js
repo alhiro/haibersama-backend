@@ -29,14 +29,13 @@ module.exports = {
           .min(8),
         address: joi
           .string()
-          .required()
-          .min(8),
-        dob: joi.string().required().regex(pattern),
-        nation: joi.string().required(),
+          .min(8),        
         password: joi
           .string()
           .required()
-          .min(8)
+          .min(8),
+        dob: joi.string().regex(pattern),
+        nation: joi.string(),
       })
     };
 

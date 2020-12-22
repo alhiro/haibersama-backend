@@ -44,21 +44,22 @@ const InfoCode = dbSeq.define('info_code', {
     type: Sequelize.STRING(50),
     allowNull: true
   }
-}, 
-{
-    indexes: [
-        {
-            unique: true,
-            fields: ['code', 'code_type']
-        }
-    ]
 },
-{
-  tableName: 'info_code',
-  freezeTableName: true,
-  timestamps: true,
-  paranoid: false,
-  underscored: true
-});
+  {
+    tableName: 'info_code',
+    freezeTableName: true,
+    timestamps: true,
+    paranoid: false,
+    underscored: true
+  },
+  {
+    indexes: [
+      {
+        unique: true,
+        fields: ['code', 'code_type']
+      }
+    ]
+  }
+);
 
 module.exports = InfoCode
