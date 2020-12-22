@@ -1,4 +1,8 @@
 const wallethistory = require('../models/partnerwallethistory');
+const walletbalance = require('../models/partnerwalletbalance');
+const moment = require("moment");
+const sequelize = require('../config/sequelize');
+const Sequelize = require('sequelize');
 
 module.exports =
   {  
@@ -22,20 +26,19 @@ module.exports =
               }
           })
           .then((data) => {
-            return (!data) ? { success: false, message: "Bank Wallet Not Found", data: {} } : { success: true, message: "Bank Wallet Found", data: data }
+            return (!data) ? { success: false, message: "Wallet History Not Found", data: {} } : { success: true, message: "Wallet History Found", data: data }
           })
           .catch((err) => { 
             console.log(err);
-            return { success: false, message: "Bank Wallet Not Found", data: err } 
+            return { success: false, message: "Wallet History Not Found", data: err } 
           });
     },
 
     findOrCreateWallet: async (params, data) => {
       try {
-        console.log(data);
         const { partner_id, reservation_no, transaction_type, total_amount, status } = data;
 
-        if(reservation_no){
+        if(!reservation_no){
           if(transaction_type == "C"){
             throw ({ success: false, message: "Please input reservation no", data: {} });
           }else{
@@ -52,7 +55,7 @@ module.exports =
 
             const isExists = await wallethistory.findOne({ where: params2 });
             
-            if(!isExists){
+            if(isExists){
               return {
                 success: false,
                 message: "Already exists.",
@@ -66,18 +69,18 @@ module.exports =
           throw ({ success: false, message: "Please input total amount", data: {} });
         }
 
-        if (transaction_type || reservation_no || transaction_type || status) {
+        if (!transaction_type || !reservation_no || !partner_id || !status) {
           throw ({ success: false, message: "Please input all data", data: {} })
         }
 
-        var transaction_date = moment().utcOffset(0).format("YYMMDD");
+        let transaction_date = moment().utcOffset(0).format("YYMMDD");
 
         const lastReservation = await wallethistory.findOne({
           where: { transaction_no: { [Sequelize.Op.like]: `${transaction_date}%` } },
           order: [["transaction_no", "DESC"]]
         });
         
-        var transaction_no = "";
+        let transaction_no = "";
         //create new storeid
         if (!lastReservation) {
           transaction_no = transaction_date + "00001";
@@ -103,8 +106,44 @@ module.exports =
         const Wallet = await wallethistory.findOrCreate({ where: params, defaults: objData })
   
         // check reservation_no already registered or not
-        if (!Wallet[1]) {
-          throw ({ success: false, message: "Partner Wallet History already exists", data: {} })
+        // if (Wallet[1]) {
+        //   throw ({ success: false, message: "Partner Wallet History already exists", data: {} })
+        // }
+
+        var paramBalance = {
+          partner_id: partner_id
+        };
+
+        const balance = await walletbalance.findOne({ where: paramBalance });
+        console.log(balance);
+        if(balance){
+          console.log("ini");
+          let newAmount = balance.current_balance;
+          if(transaction_type == "C"){    
+            newAmount = balance.current_balance + total_amount;
+          } else {
+            newAmount = balance.current_balance - total_amount;
+          }
+          
+          var paramUpdate = {
+            current_balance: newAmount,
+            updated_at: moment().utcOffset(0),
+            updated_by: userId
+          };
+          
+          walletbalance.update(paramUpdate, {where: {id: balance.id}} )
+        } else {      
+          console.log("itu");    
+          var paramInsert = {
+            current_balance: total_amount,
+            updated_at: moment().utcOffset(0),
+            updated_by: userId
+          };          
+
+          const insertBalance = await walletbalance.findOrCreate({
+            where: paramBalance,
+            defaults: paramInsert
+          });
         }
         
         return { success: true, message: "Partner Wallet History Successfully Created", data: Wallet[0].dataValues }

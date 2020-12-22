@@ -22,8 +22,16 @@ const paymentRouter = require('./routes/payment');
 const paymentMidtransRouter = require('./routes/paymentmidtrans');
 const bannerRouter = require('./routes/banner');
 const partnerBankAccountRouter = require('./routes/partnerbankaccount');
+const partnerRatingRouter = require('./routes/partnerrating');
+const walletRouter = require('./routes/wallet');
 const serveIndex = require('serve-index');
 const initDB = require('./models/index');
+
+// Seed model into table
+// const haiuser = require("./models/partnerwallethistory");
+// haiuser.sequelize.sync({alter: true})
+// const haiuser2 = require("./models/partnerwalletbalance");
+// haiuser2.sequelize.sync({alter: true})
 
 // setup app with predefined configs
 config.init(app);
@@ -58,6 +66,8 @@ app.use(process.env.APP_API_PREFIX + '/payment', paymentRouter);
 app.use(process.env.APP_API_PREFIX + '/paymentmidtrans', paymentMidtransRouter);
 app.use(process.env.APP_API_PREFIX + '/banner', bannerRouter);
 app.use(process.env.APP_API_PREFIX + '/partnerbankaccount', partnerBankAccountRouter);
+app.use(process.env.APP_API_PREFIX + '/rating', partnerRatingRouter);
+app.use(process.env.APP_API_PREFIX + '/wallet', walletRouter);
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to Hai organizer application." });
@@ -85,7 +95,7 @@ app.use(function onError(err, req, res, next) {
   }
 })
 
-app.set('port', process.env.PORT || 3000);
+app.set('port', process.env.PORT || 3001);
 var server = app.listen(app.get('port'), function() {
   initDB;
   console.log('Express server listening on port ' + server.address().port);
