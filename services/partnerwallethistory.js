@@ -262,8 +262,50 @@ module.exports =
           };
           
           const history = await wallethistory.findOrCreate({ where: paramHistory, defaults: objData })
+
+          //admin fee
+          // transaction_date = moment().utcOffset(0);
+          // transaction_date_format = moment().utcOffset(0).format("YYMMDD");
+
+          const lastReservationFee = await wallethistory.findOne({
+            where: { transaction_no: { [Sequelize.Op.like]: `${transaction_date_format}%` } },
+            order: [["transaction_no", "DESC"]]
+          });
+
+          transaction_no = "";
+          let adminFee = 0;
+          //create new storeid
+          if (!lastReservationFee) {
+            transaction_no = transaction_date_format + "00001";
+          } else {
+            var strNewId = Number(lastReservationFee.transaction_no.substring(6, 11)) + 1;
+            
+            if (strNewId.toString().length < 5) {
+              transaction_no = transaction_date_format + "0".repeat(5 - strNewId.toString().length) + strNewId;
+            } else {
+              transaction_no = transaction_date_format + strNewId;
+            }
+          }
+
+          var objDataFee = {
+            partner_id: userId,
+            transaction_no: transaction_no,
+            transaction_date: transaction_date,
+            transaction_type: "D",
+            reservation_no: "",
+            total_amount: adminFee,
+            status: "ADMIN_FEE",
+            created_at: moment().utcOffset(0),
+            created_by: userId
+          };
+
+          var paramHistoryFee = {
+            transaction_no: transaction_no
+          };
+          
+          const historyFee = await wallethistory.findOrCreate({ where: paramHistoryFee, defaults: objDataFee })
     
-          let newAmount = balance.current_balance - totalAmount;
+          let newAmount = balance.current_balance - totalAmount - adminFee;
                     
           var paramUpdate = {
             current_balance: newAmount,
