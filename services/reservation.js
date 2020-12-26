@@ -341,7 +341,7 @@ module.exports =
             const history = {status_code: statusCode, reservation_id: upReserv.id, updatedcreated_at: moment().utcOffset(0), created_by: userId };
             const upHistory = await ReservationStatusHistory.create(history);
 
-            if(statusCode == "COMPLETED")
+            if(statusCode == "ORDER_COMPLETED")
             {
               console.log("ini ke wallet");
               //hardcode 3 %

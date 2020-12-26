@@ -33,7 +33,9 @@ exports.getDetail = async function(req, res, next) {
 
 exports.addAccount = async function(req, res, next) {
   try {
-    const params = { account_no: req.account_no, partner_id: req.partner_id };
+    // const params = { account_no: req.account_no, partner_id: req.partner_id };
+    //1 partner 1 account
+    const params = { partner_id: req.partner_id };
 
     let result = await partnerbankaccount.findOrCreateAccount(params, req);
     return res.status(200).send(result);

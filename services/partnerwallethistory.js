@@ -3,12 +3,22 @@ const walletbalance = require('../models/partnerwalletbalance');
 const moment = require("moment");
 const sequelize = require('../config/sequelize');
 const Sequelize = require('sequelize');
+const { Op } = Sequelize;
 
 module.exports =
   {  
-    getList: async (params) => {        
+    getList: async (req) => {       
+      
+  const { userId, date_from, date_to } = req;
+ 
       return await wallethistory.findAll({ 
-        where: params
+        where: {
+          partner_id: userId,
+          transaction_date: {
+            [Op.gte]: Date.parse(date_from),
+            [Op.lte]: Date.parse(date_to)
+          }
+        }
        })
         .then((Wallet) => {
           return (!Wallet) ? { success: false, message: "Partner Wallet History Not Found", data: {} } : { success: true, message: "Partner Wallet History Found", data: Wallet }
@@ -19,7 +29,7 @@ module.exports =
         });
       },
 
-    getDetail: async (id) => {
+    getHistoryDetail: async (id) => {
           return await wallethistory.findOne({ 
               where: {
                   id: id
@@ -66,14 +76,17 @@ module.exports =
         }
 
         if(total_amount == 0){
+          console.log("error amount");
           throw ({ success: false, message: "Please input total amount", data: {} });
         }
 
         if (!transaction_type || !reservation_no || !partner_id || !status) {
+          console.log("Please input all data");
           throw ({ success: false, message: "Please input all data", data: {} })
         }
 
-        let transaction_date = moment().utcOffset(0).format("YYMMDD");
+        let transaction_date = moment().utcOffset(0);
+        let transaction_date_format = moment().utcOffset(0).format("YYMMDD");
 
         const lastReservation = await wallethistory.findOne({
           where: { transaction_no: { [Sequelize.Op.like]: `${transaction_date}%` } },
@@ -83,13 +96,13 @@ module.exports =
         let transaction_no = "";
         //create new storeid
         if (!lastReservation) {
-          transaction_no = transaction_date + "00001";
+          transaction_no = transaction_date_format + "00001";
         } else {
           var strNewId = Number(lastReservation.reservation_no.substring(6, 11)) + 1;
           if (strNewId.toString().length < 5) {
-            transaction_no = transaction_date + "0".repeat(5 - strNewId.toString().length) + strNewId;
+            transaction_no = transaction_date_format + "0".repeat(5 - strNewId.toString().length) + strNewId;
           } else {
-            transaction_no = transaction_date + strNewId;
+            transaction_no = transaction_date_format + strNewId;
           }
         }
 
@@ -128,7 +141,7 @@ module.exports =
           var paramUpdate = {
             current_balance: newAmount,
             updated_at: moment().utcOffset(0),
-            updated_by: userId
+            updated_by: partner_id
           };
           
           walletbalance.update(paramUpdate, {where: {id: balance.id}} )
@@ -136,8 +149,9 @@ module.exports =
           console.log("itu");    
           var paramInsert = {
             current_balance: total_amount,
-            updated_at: moment().utcOffset(0),
-            updated_by: userId
+            partner_id: partner_id,
+            created_at: moment().utcOffset(0),
+            created_by: partner_id
           };          
 
           const insertBalance = await walletbalance.findOrCreate({
@@ -169,6 +183,101 @@ module.exports =
             return { success: true, message: "Partner Wallet History Status Successfully Updated", data: result.dataValues[1] } })
         .catch((err) => { return { success: false, message: "Update Partner Wallet History Status Failed", data: err } });
       } catch (error) {
+        console.log(error);
+        throw (error)
+      }
+    },
+
+    
+    getBalance: async (params) => {        
+      return await walletbalance.findOne({ 
+        where: params
+       })
+        .then((Wallet) => {
+          return (!Wallet) ? { 
+            success: true, message: "Partner Wallet Balance Not Found", data: {current_balance:0} 
+          } : { 
+            success: true, message: "Partner Wallet History Found", data: Wallet 
+          }
+        })
+        .catch((err) => { 
+          console.log(err);
+          return { success: false, message: "Partner Wallet Balance Not Found", data: err } 
+        });
+      },
+      
+    withdraw: async (data) => {
+      try {
+        const { userId, totalAmount } = data
+
+        var objData = {
+          partner_id: userId
+        };
+        
+        const balance = await walletbalance.findOne({ where: paramBalance });
+        console.log(balance);
+        if(balance){
+          if(balance.current_balance < totalAmount)
+          {
+            return { success: true, message: "Balance is less than " + totalAmount, data: {} } 
+          }
+          
+          let transaction_date = moment().utcOffset(0);
+          let transaction_date_format = moment().utcOffset(0).format("YYMMDD");
+
+          const lastReservation = await wallethistory.findOne({
+            where: { transaction_no: { [Sequelize.Op.like]: `${transaction_date}%` } },
+            order: [["transaction_no", "DESC"]]
+          });
+          
+          let transaction_no = "";
+          //create new storeid
+          if (!lastReservation) {
+            transaction_no = transaction_date_format + "00001";
+          } else {
+            var strNewId = Number(lastReservation.reservation_no.substring(6, 11)) + 1;
+            if (strNewId.toString().length < 5) {
+              transaction_no = transaction_date_format + "0".repeat(5 - strNewId.toString().length) + strNewId;
+            } else {
+              transaction_no = transaction_date_format + strNewId;
+            }
+          }
+
+          var objData = {
+            partner_id: userId,
+            transaction_no: transaction_no,
+            transaction_date: transaction_date,
+            transaction_type: "D",
+            reservation_no: "",
+            total_amount: totalAmount,
+            status: "SUCCESS"
+          };
+
+          var paramHistory = {
+            partner_id: userId,
+            transaction_no: transaction_no
+          };
+          
+          const history = await wallethistory.findOrCreate({ where: paramHistory, defaults: objData })
+    
+          let newAmount = balance.current_balance - total_amount;
+                    
+          var paramUpdate = {
+            current_balance: newAmount,
+            updated_at: moment().utcOffset(0),
+            updated_by: userId
+          };
+          
+          return walletbalance.update(paramUpdate, { where: { id:balance.id }})
+          .then(async (updated) => { 
+              return { success: true, message: "Withdraw success", data: result.dataValues[1] } })
+          .catch((err) => { return { success: false, message: "Withdraw Failed", data: err } });
+        
+        } else {     
+          return { success: false, message: "No saldo", data: {} }        
+        }
+      }catch (error) {
+        
         console.log(error);
         throw (error)
       }

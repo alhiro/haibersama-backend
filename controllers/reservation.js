@@ -86,12 +86,12 @@ exports.getReservations = async function(req, res, next) {
 
         if(statusCode != ""){
           params.status_code = statusCode;
-          where += " AND (status_code = '" + statusCode + "' OR transaction_status_code = '" + statusCode + "') ";
+          where += " AND (rv.status_code = '" + statusCode + "' OR rv.transaction_status_code = '" + statusCode + "') ";
         }
         
         if(categoryId > 0){
           params.category_id = categoryId;
-          where += " AND category_id = " + categoryId + " ";
+          where += " AND rv.category_id = " + categoryId + " ";
         }
             
         console.log(where);
