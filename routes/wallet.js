@@ -33,11 +33,10 @@ walletRouter.post("/withdraw", headerAuth.isPartnerAuthenticated, (req, res, nex
 
   const data = { 
     userId: id,
-    date_from: req.body.date_from,
-    date_from: req.body.date_to
+    totalAmount: req.body.totalAmount
   };
   
-  walletController.getHistories(data, res);
+  walletController.withdraw(data, res);
 });
 
 module.exports = walletRouter;

@@ -78,10 +78,10 @@ exports.getReservations = async function(req, res, next) {
 
         if(type == 2){
             params.partner_id = userId;
-            where += " AND partner_id = " + userId;
+            where += " AND rv.partner_id = " + userId;
         }else{
             params.user_id = userId;
-            where += " AND user_id = " + userId;
+            where += " AND rv.user_id = " + userId;
         }        
 
         if(statusCode != ""){

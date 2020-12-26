@@ -248,7 +248,7 @@ module.exports =
             partner_id, 
             prt.name partner_name,
             prt.picture partner_picture,
-            category_id, 
+            rv.category_id, 
             cat.description category,
             service_id, 
             srv.description service,

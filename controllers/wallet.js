@@ -44,3 +44,24 @@ exports.getbalance = async function(req, res, next) {
       .send({ code: 500, success: false, message: err.message, data: { err } });
   }
 };
+
+exports.withdraw = async function(req, res, next) {
+  console.log("controller service");  
+
+  const { userId } = req;
+  try {
+    // var param = {
+    //   partner_id: userId,
+    //   total_amount: total_amount
+    // };
+
+    var services = await ser.withdraw(req);
+    return res
+      .status(200)
+      .json({ status: 200, data: services, message: "Succesfully Withdraw" });
+  } catch (err) {
+    return res
+      .status(500)
+      .send({ code: 500, success: false, message: err.message, data: { err } });
+  }
+};

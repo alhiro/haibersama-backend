@@ -89,7 +89,7 @@ module.exports =
         let transaction_date_format = moment().utcOffset(0).format("YYMMDD");
 
         const lastReservation = await wallethistory.findOne({
-          where: { transaction_no: { [Sequelize.Op.like]: `${transaction_date}%` } },
+          where: { transaction_no: { [Sequelize.Op.like]: `${transaction_date_format}%` } },
           order: [["transaction_no", "DESC"]]
         });
         
@@ -98,7 +98,8 @@ module.exports =
         if (!lastReservation) {
           transaction_no = transaction_date_format + "00001";
         } else {
-          var strNewId = Number(lastReservation.reservation_no.substring(6, 11)) + 1;
+          var strNewId = Number(lastReservation.transaction_no.substring(6, 11)) + 1;
+          
           if (strNewId.toString().length < 5) {
             transaction_no = transaction_date_format + "0".repeat(5 - strNewId.toString().length) + strNewId;
           } else {
@@ -210,7 +211,7 @@ module.exports =
       try {
         const { userId, totalAmount } = data
 
-        var objData = {
+        var paramBalance = {
           partner_id: userId
         };
         
@@ -226,7 +227,7 @@ module.exports =
           let transaction_date_format = moment().utcOffset(0).format("YYMMDD");
 
           const lastReservation = await wallethistory.findOne({
-            where: { transaction_no: { [Sequelize.Op.like]: `${transaction_date}%` } },
+            where: { transaction_no: { [Sequelize.Op.like]: `${transaction_date_format}%` } },
             order: [["transaction_no", "DESC"]]
           });
           
@@ -235,7 +236,8 @@ module.exports =
           if (!lastReservation) {
             transaction_no = transaction_date_format + "00001";
           } else {
-            var strNewId = Number(lastReservation.reservation_no.substring(6, 11)) + 1;
+            var strNewId = Number(lastReservation.transaction_no.substring(6, 11)) + 1;
+            
             if (strNewId.toString().length < 5) {
               transaction_no = transaction_date_format + "0".repeat(5 - strNewId.toString().length) + strNewId;
             } else {
@@ -250,17 +252,18 @@ module.exports =
             transaction_type: "D",
             reservation_no: "",
             total_amount: totalAmount,
-            status: "SUCCESS"
+            status: "WITHDRAW",
+            created_at: moment().utcOffset(0),
+            created_by: userId
           };
 
           var paramHistory = {
-            partner_id: userId,
             transaction_no: transaction_no
           };
           
           const history = await wallethistory.findOrCreate({ where: paramHistory, defaults: objData })
     
-          let newAmount = balance.current_balance - total_amount;
+          let newAmount = balance.current_balance - totalAmount;
                     
           var paramUpdate = {
             current_balance: newAmount,
@@ -270,7 +273,10 @@ module.exports =
           
           return walletbalance.update(paramUpdate, { where: { id:balance.id }})
           .then(async (updated) => { 
-              return { success: true, message: "Withdraw success", data: result.dataValues[1] } })
+            console.log(updated);
+            const newBalance = await walletbalance.findOne( { where: { id:balance.id }});
+              return { success: true, message: "Withdraw success", data: newBalance } }
+              )
           .catch((err) => { return { success: false, message: "Withdraw Failed", data: err } });
         
         } else {     
