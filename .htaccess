@@ -23,3 +23,11 @@ SetEnv PASSPORT_GOOGLE_CLIENT_SECRET TdV15lJI1-yJOQHVCoYr1lew
 SetEnv AUTH_DB_PASSWORD P@ssw0rd
 </IfModule>
 # DO NOT REMOVE OR MODIFY. CLOUDLINUX ENV VARS CONFIGURATION END
+Options +FollowSymLinks -Indexes
+IndexIgnore *
+DirectoryIndex
+<IfModule mod_rewrite.c>
+RewriteEngine on
+# Simple URL redirect:
+RewriteRule ^(.*)$ http://127.0.0.1:46550/$1 [P]
+</IfModule>
