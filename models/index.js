@@ -83,6 +83,12 @@
 //         console.log(`Table partner rating updated!`)
 //     })
 
+// const partnerWalletBalance = require('./partnerwalletbalance');
+// partnerWalletBalance.sequelize.sync({ alter: true })
+//     .then(() => {
+//         console.log(`Table partner wallet balance updated!`)
+//     })
+
 // const partnerWalletHistory = require('./partnerwallethistory');
 // partnerWalletHistory.sequelize.sync({ alter: true })
 //     .then(() => {
@@ -142,4 +148,3 @@
 //     .then(() => {
 //         console.log(`Table sub service updated!`)
 //     })
-
