@@ -377,7 +377,7 @@ module.exports = {
     let data = {
       name: name,
       address: address,
-      phone: phone,
+      phone_number: phone,
       dob: dob,
       nation: nation,
       province: province,

@@ -34,7 +34,7 @@ authRouter.post("/updateProfile", headerAuth.isUserAuthenticated ,(req, res, nex
   console.log("endpoint : update Profile")
   const email = res.locals.auth.email
   console.log("email :", email)
-  const data = { name: req.body.name, address: req.body.address, phone: req.body.phone, 
+  const data = { name: req.body.name, address: req.body.address, phone: req.body.phone_number, 
                   dob: req.body.dob, nation:req.body.nation, province: req.body.province, city: req.body.city, 
                   postalcode: req.body.postalcode, email: email, type: req.body.usertype}
   authController.updateProfile(data, res);
