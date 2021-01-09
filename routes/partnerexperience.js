@@ -2,6 +2,26 @@ var express = require("express");
 var partnerExperienceRouter = express.Router();
 var partnerExperienceController = require("../controllers/partnerexperience");
 var headerAuth  =  require('../authMiddleware')
+const path = require('path');
+const multer = require('multer');
+// upload file path
+const FILE_PATH = 'imagehai';
+// const API_URL = process.env;
+const API_URL ='http://development.haiorganizer.com';
+const now = Date.now();
+// configure multer
+
+var storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+      cb(null, './public/' + FILE_PATH)
+  },
+  filename: (req, file, cb) => {
+      cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname))
+  }
+});
+
+//will be using this for uplading
+const upload = multer({ storage: storage });
 
 partnerExperienceRouter.get("/getall", headerAuth.isUserAuthenticated, (req, res, next) => {
     const partner_id = res.locals.auth.id;
@@ -12,9 +32,16 @@ partnerExperienceRouter.get("/get", headerAuth.isUserAuthenticated, (req, res, n
   partnerExperienceController.getDetail(req, res);
 });
 
-partnerExperienceRouter.post("/add",  headerAuth.isPartnerAuthenticated, (req, res, next) => {
-    const partner_id = res.locals.auth.id;
-
+partnerExperienceRouter.post("/add",  headerAuth.isPartnerAuthenticated, upload.single('imageFile'), (req, res, next) => {
+  const imagefile = req.file;
+  const partner_id = res.locals.auth.id;
+  
+  if (!imagefile) {
+    res.status(400).send({
+        status: false,
+        data: 'No file is selected.'
+    });
+  } else {
     const data = { 
       partner_id: partner_id,
       position: req.body.position,
@@ -22,13 +49,16 @@ partnerExperienceRouter.post("/add",  headerAuth.isPartnerAuthenticated, (req, r
       period_to: req.body.periodTo,
       company_name: req.body.companyName,
       description: req.body.description,
-      image_url: req.body.imageUrl
+      //image_url: req.body.imageUrl
+      image_url: API_URL + '/ftp/'+ FILE_PATH + '/' + imagefile.fieldname + '-' + now + path.extname(imagefile.originalname)   
     };
 
     partnerExperienceController.addExperience(data, res);
-  });
+  }
+});
 
-partnerExperienceRouter.post("/update",  headerAuth.isPartnerAuthenticated, (req, res, next) => {
+partnerExperienceRouter.post("/update",  headerAuth.isPartnerAuthenticated, upload.single('imageFile'), (req, res, next) => {
+  const imagefile = req.file;
   const partner_id = res.locals.auth.id;
 
   const data = { 
@@ -38,9 +68,12 @@ partnerExperienceRouter.post("/update",  headerAuth.isPartnerAuthenticated, (req
     period_from: req.body.periodFrom,
     period_to: req.body.periodTo,
     company_name: req.body.companyName,
-    description: req.body.description,
-    image_url: req.body.imageUrl
+    description: req.body.description
   };
+
+  if (imagefile) {
+      data.image_url = API_URL + '/ftp/'+ FILE_PATH + '/' + imagefile.fieldname + '-' + now + path.extname(imagefile.originalname);
+  } 
 
     partnerExperienceController.updateExperience(data, res);
   });

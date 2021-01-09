@@ -102,6 +102,14 @@ const HaiUser = dbSeq.define('hai_user', {
     type: Sequelize.STRING,
     allowNull: true
   },
+  verified_document: {
+    type: Sequelize.STRING(255),
+    allowNull: true
+  },
+  is_verified: {
+    type: Sequelize.BOOLEAN,
+    allowNull: true
+  },
   created_at: {
     type: Sequelize.DATE,
     allowNull: true

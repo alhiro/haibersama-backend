@@ -20,10 +20,14 @@ const ReservationService = dbSeq.define('reservation_service', {
     type: Sequelize.INTEGER,
     allowNull: false
   },
-  sub_service_id: {
-    type: Sequelize.INTEGER,
-    allowNull: false
+  sub_service_title: {
+    type: Sequelize.STRING(500),
+    allowNull: true
   },
+  // sub_service_id: {
+  //   type: Sequelize.INTEGER,
+  //   allowNull: false
+  // },
   description: {
     type: Sequelize.STRING(500),
     allowNull: false

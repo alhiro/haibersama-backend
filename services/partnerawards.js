@@ -5,13 +5,13 @@ module.exports =
     getList: async (params) => {        
       return await Awards.findAll({ 
         where: params,
-        attributes: ["id",
-                    "name",
-                    "awards_date",
-                    "organizer",
-                    "description",
-                    "image_url"
-        ], 
+        // attributes: ["id",
+        //             "name",
+        //             "awards_date",
+        //             "organizer",
+        //             "description",
+        //             "image_url"
+        // ], 
         order: [["awards_date", "DESC"]]
        })
         .then((awards) => {
@@ -28,13 +28,13 @@ module.exports =
               where: {
                   id: id
               }, 
-              attributes: ["id",
-                          "name",
-                          "awards_date",
-                          "organizer",
-                          "description",
-                          "image_url"
-              ], 
+              // attributes: ["id",
+              //             "name",
+              //             "awards_date",
+              //             "organizer",
+              //             "description",
+              //             "image_url"
+              // ], 
           })
           .then((data) => {
             return (!data) ? { success: false, message: "Award Not Found", data: {} } : { success: true, message: "Award Found", data: data }
@@ -48,7 +48,7 @@ module.exports =
     findOrCreateAwards: async (params, data) => {
       try {
         console.log(data);
-        const { partner_id, name, description, awards_date, organizer, image_url } = data;
+        const { partner_id, name, description, awards_date, organizer, image_url, location, occupation } = data;
 
         var objData = {
           name: name,
@@ -56,6 +56,8 @@ module.exports =
           awards_date: awards_date,
           organizer: organizer,
           description: description,
+          location: location,
+          accupation: accupation,
           image_url: image_url
         };
         
@@ -76,22 +78,28 @@ module.exports =
 
     updateAwards: async (data) => {
       try {
-        const { name, awards_date, organizer, description, image_url, id } = data
-
+        const { name, awards_date, organizer, description, image_url, id, location, occupation } = data
         var objData = {
           name: name,
           awards_date: awards_date,
           organizer: organizer,
           description: description,
-          image_url: image_url
+          location: location,
+          occupation: occupation
         };
+
+        if(image_url){
+          objData.image_url = image_url;
+        }
         
         return Awards.update(objData, { where: { id:id }})
         .then(async (updated) => { 
-            const result = await Awards.findOne({ where: { id: id } })
+            const result = await Awards.findOne({ where: { id: id } });
             
-            return { success: true, message: "Partner Awards Successfully Updated", data: result.dataValues[1] } })
-        .catch((err) => { return { success: false, message: "Update Partner Awards Failed", data: err } });
+            return { success: true, message: "Partner Awards Successfully Updated", data: result.dataValues } })
+        .catch((err) => { 
+          console.log(error);
+          return { success: false, message: "Update Partner Awards Failed", data: err } });
       } catch (error) {
         console.log(error);
         throw (error)

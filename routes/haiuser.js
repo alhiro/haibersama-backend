@@ -5,6 +5,26 @@ var validator = require("../validator/auth");
 var authController = require("../controllers/auth");
 const passportConf = require("../lib/passport");
 const jwt = require("../lib/jwt");
+const path = require('path');
+const multer = require('multer');
+// upload file path
+const FILE_PATH = 'imagehai';
+// const API_URL = process.env;
+const API_URL ='http://development.haiorganizer.com';
+const now = Date.now();
+// configure multer
+
+var storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+      cb(null, './public/' + FILE_PATH)
+  },
+  filename: (req, file, cb) => {
+      cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname))
+  }
+});
+
+//will be using this for uplading
+const upload = multer({ storage: storage });
 
 authRouter.get("/getAll", headerAuth.isUserAuthenticated,(req, res, next) => {
   authController.getAll(req, res);
@@ -30,14 +50,26 @@ authRouter.get("/verify" ,(req, res, next) => {
   authController.verify(req, res);
 });
 
-authRouter.post("/updateProfile", headerAuth.isUserAuthenticated ,(req, res, next) => {
+authRouter.post("/updateProfile", headerAuth.isUserAuthenticated, upload.single('verified_document'), (req, res, next) => {
   console.log("endpoint : update Profile")
   const email = res.locals.auth.email
   console.log("email :", email)
-  const data = { name: req.body.name, address: req.body.address, phone: req.body.phone_number, 
-                  dob: req.body.dob, nation:req.body.nation, province: req.body.province, city: req.body.city, 
-                  postalcode: req.body.postalcode, email: email, type: req.body.usertype}
-  authController.updateProfile(data, res);
+  const docimage = req.file;
+  console.log(docimage);
+  console.log('storage location is ', req.hostname +'/' + req.file.path);
+  // make sure file is available
+  if (!docimage) {
+      res.status(400).send({
+          status: false,
+          data: 'No file is selected.'
+      });
+  } else {
+    const verified_document =  API_URL + '/ftp/'+ FILE_PATH + '/' + docimage.fieldname + '-' + now + path.extname(docimage.originalname);
+    const data = { name: req.body.name, address: req.body.address, phone: req.body.phone_number, 
+                    dob: req.body.dob, nation:req.body.nation, province: req.body.province, city: req.body.city, 
+                    postalcode: req.body.postalcode, verified_document: verified_document, email: email, type: req.body.usertype}
+    authController.updateProfile(data, res);
+  }
 });
 
 authRouter.get("/google", passportConf.authenticate("google", { scope: ["profile", "email", "openid"], state: 'client' })

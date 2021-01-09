@@ -28,14 +28,19 @@ const PartnerPackageDetail = dbSeq.define('partner_package_detail', {
   //     key: 'id'
   //   }
   // },
-  subservice_id: {
-    type: Sequelize.INTEGER,
-    allowNull: false,
-    primaryKey: true,
-    references: {
-      model: 'subservice',
-      key: 'id'
-    }
+  // not use user input description manual
+  // subservice_id: {
+  //   type: Sequelize.INTEGER,
+  //   allowNull: false,
+  //   primaryKey: true,
+  //   references: {
+  //     model: 'subservice',
+  //     key: 'id'
+  //   }
+  // },
+  sub_service_title: {
+    type: Sequelize.STRING(500),
+    allowNull: true
   },
   price: {
     type: Sequelize.DECIMAL,
@@ -74,7 +79,7 @@ const PartnerPackageDetail = dbSeq.define('partner_package_detail', {
   underscored: true,
 });
 
-PartnerPackageDetail.belongsTo(SubService, { foreignKey: "subservice_id" });
+// PartnerPackageDetail.belongsTo(SubService, { foreignKey: "subservice_id" });
 
 module.exports = PartnerPackageDetail
 

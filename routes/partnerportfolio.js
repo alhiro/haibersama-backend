@@ -2,6 +2,26 @@ var express = require("express");
 var partnerPortfolioRouter = express.Router();
 var partnerPortfolioController = require("../controllers/partnerportfolio");
 var headerAuth  =  require('../authMiddleware')
+const path = require('path');
+const multer = require('multer');
+// upload file path
+const FILE_PATH = 'imagehai';
+// const API_URL = process.env;
+const API_URL ='http://development.haiorganizer.com';
+const now = Date.now();
+// configure multer
+
+var storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+      cb(null, './public/' + FILE_PATH)
+  },
+  filename: (req, file, cb) => {
+      cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname))
+  }
+});
+
+//will be using this for uplading
+const upload = multer({ storage: storage });
 
 partnerPortfolioRouter.get("/getall", headerAuth.isUserAuthenticated, (req, res, next) => {
   const partner_id = res.locals.auth.id;
@@ -12,9 +32,15 @@ partnerPortfolioRouter.get("/get", headerAuth.isUserAuthenticated, (req, res, ne
   partnerPortfolioController.getDetail(req, res);
 });
 
-partnerPortfolioRouter.post("/add",  headerAuth.isPartnerAuthenticated, (req, res, next) => {
-    const partner_id = res.locals.auth.id;
-
+partnerPortfolioRouter.post("/add",  headerAuth.isPartnerAuthenticated, upload.single('imageFile'), (req, res, next) => {
+  const imagefile = req.file;
+  const partner_id = res.locals.auth.id;
+  if (!imagefile) {
+    res.status(400).send({
+        status: false,
+        data: 'No file is selected.'
+    });
+  } else {
     const data = { 
       partner_id: partner_id,
       name: req.body.name,
@@ -22,13 +48,16 @@ partnerPortfolioRouter.post("/add",  headerAuth.isPartnerAuthenticated, (req, re
       portfolio_date: req.body.portfolioDate,
       organizer: req.body.organizer,
       description: req.body.description,
-      image_url: req.body.imageUrl
+      //image_url: req.body.imageUrl
+      image_url: API_URL + '/ftp/'+ FILE_PATH + '/' + imagefile.fieldname + '-' + now + path.extname(imagefile.originalname)   
     };
 
     partnerPortfolioController.addPortfolio(data, res);
-  });
+  }
+});
 
-partnerPortfolioRouter.post("/update",  headerAuth.isPartnerAuthenticated, (req, res, next) => {
+partnerPortfolioRouter.post("/update",  headerAuth.isPartnerAuthenticated, upload.single('imageFile'), (req, res, next) => {
+  const imagefile = req.file;
   const partner_id = res.locals.auth.id;
 
   const data = { 
@@ -38,9 +67,12 @@ partnerPortfolioRouter.post("/update",  headerAuth.isPartnerAuthenticated, (req,
     category_id: req.body.categoryId,
     portfolio_date: req.body.portfolioDate,
     organizer: req.body.organizer,
-    description: req.body.description,
-    image_url: req.body.imageUrl
+    description: req.body.description
   };
+
+  if (imagefile) {
+      data.image_url = API_URL + '/ftp/'+ FILE_PATH + '/' + imagefile.fieldname + '-' + now + path.extname(imagefile.originalname);
+  } 
 
     partnerPortfolioController.updatePortfolio(data, res);
   });

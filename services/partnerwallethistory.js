@@ -330,5 +330,53 @@ module.exports =
         throw (error)
       }
     },
+    getHistoriesGroupByDate: async (req) => {
+      try {
+      
+        const { userId, date_from, date_to } = req;
+        var histories = {};
+
+        var query = `
+        select 
+          json_agg(
+            json_build_object(
+              to_char(a.transaction_date, 'YYYY-MM-DD'), items
+            )
+          ) d
+        FROM (select 
+                distinct date(transaction_date) transaction_date, 
+                partner_id	  
+              from partner_wallet_history rr
+              where rr.partner_id = ` + userId + `
+              and date(rr.transaction_date) >= '` + date_from + `'
+              and date(rr.transaction_date) <= '` + date_to + `'
+          )  a
+        LEFT JOIN LATERAL (
+          SELECT json_agg(x) AS items
+          FROM  (select 
+              transaction_date,
+              transaction_type,
+              reservation_no,
+              transaction_no,
+              status,
+              total_amount
+              from partner_wallet_history r
+              where date(r.transaction_date) = a.transaction_date
+            ) x 
+          ) c ON true`;
+          return sequelize.query(query,{ type : sequelize.QueryTypes.SELECT}).then(results => {
+              if(results === null){
+                return histories;
+              }
+              else{
+                return results[0].d;
+              }
+          });
+
+      } catch (error) {
+        console.log(error);
+        throw error
+      }
+    },
 }
   

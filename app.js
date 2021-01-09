@@ -28,8 +28,8 @@ const serveIndex = require('serve-index');
 const initDB = require('./models/index');
 
 // Seed model into table
-// const haiuser = require("./models/partnerwallethistory");
-// haiuser.sequelize.sync({alter: true})
+const haiuser = require("./models/haiuser");
+haiuser.sequelize.sync({alter: true})
 // const haiuser2 = require("./models/partnerwalletbalance");
 // haiuser2.sequelize.sync({alter: true})
 
