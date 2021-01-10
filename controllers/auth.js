@@ -4,7 +4,7 @@ var nodemailer = require("nodemailer");
 const sequelizeTransaction = require("../config/sequelizeTransaction");
 const axios = require("axios");
 const utils = require("../lib/utils");
-const { VERIFY_URL } = process.env;
+const { VERIFY_URL, EMAIL_PASSWORD, EMAIL_USERNAME } = process.env;
 
 exports.getAll =  async function(req, res, next) {
   try {
@@ -103,8 +103,8 @@ exports.registerUser = async function(req, res, next) {
           port: 465,
           secure: true,
           auth: {
-            user: "notify@haiorganizer.com",
-            pass: "shasmeen11!"
+            user: EMAIL_USERNAME,
+            pass: EMAIL_PASSWORD
           }
         });
 

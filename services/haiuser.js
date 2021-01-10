@@ -148,7 +148,8 @@ module.exports = {
               refresh_token: users.refresh_token,
               rating: partner.rating,   
               follower: partner.follower,   
-              successjob: partner.successjob,           
+              successjob: partner.successjob,  
+              is_verified: !partner.is_verified? false: partner.is_verified,        
               awards: partner.awards,
               portfolios: partner.portfolios,
               experiences: partner.experiences,
@@ -371,6 +372,7 @@ module.exports = {
       province,
       city,
       postalcode,
+      verified_document,
       type 
     } = params;
     console.log("params :", params);
@@ -383,6 +385,7 @@ module.exports = {
       province: province,
       city: city,
       postalcode: postalcode,
+      verified_document: verified_document,
       type: type
     };
 

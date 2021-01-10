@@ -114,8 +114,9 @@ module.exports =
           packageDetails.forEach(detail => {
             service = {
               service_id: package.service_id,
-              sub_service_id: detail.subservice_id,
-              description: detail.description,              
+              // sub_service_id: detail.subservice_id,
+              sub_service_title: detail.sub_service_title,
+              description: "",
               price: detail.price,
               terms: detail.terms,
               additional_services: detail.additional_services,
@@ -301,7 +302,7 @@ module.exports =
     if(reservations.length > 0){
       return (!reservations) ? { success: false, message: "Reservation Not Found", data: {} } : { success: true, message: "Reservation Found", data: reservations }
     } else {      
-      return { success: false, message: "Reservation Not Found", data: err } 
+      return { success: false, message: "Reservation Not Found", data: {} } 
     }
       // const {limit, offset} = paging;      
       // return await Reservation.findAll({ 
@@ -469,6 +470,9 @@ module.exports =
             SELECT json_agg(y) AS items
             FROM  (select 
                (event_time::text || ' ' || ph.name || ' at ' || r.event_address) as name,
+               event_time::text event_time,
+               ph.name package_name,
+               r.event_address,
                50 height
                from reservation r
                inner join partner_package_header ph
@@ -523,4 +527,104 @@ module.exports =
         throw error
       }
     },
+    
+    findReservationsGroupByCategory: async (where) => {
+      var reservations = await sequelize.query(
+        `		select 
+        json_agg(
+          json_build_object(
+            category, items
+          )
+        ) d
+      FROM (select 
+             id category_id,
+       rr.description category
+            from category rr
+        )  a
+      LEFT JOIN LATERAL (
+        SELECT json_agg(x) AS items
+        FROM  (select 
+        rv.id, 
+        reservation_no, 
+        reservation_date, 
+        user_id, 
+        usr.name user_name,
+        partner_id, 
+        prt.name partner_name,
+        prt.picture partner_picture,
+        rv.category_id, 
+        cat.description category,
+        service_id, 
+        srv.description service,
+        event_date, 
+        event_time, 
+        event_address, 
+        total_price, 
+        total_discount, 
+        total_payment, 
+        status_code, 
+        ci.description status,
+        duration, 
+        reservation_type,
+        rt.description reservation_type_desc
+        FROM public.reservation rv
+        inner join hai_user prt on prt.id = rv.partner_id
+        left join hai_user usr on usr.id = rv.user_id
+        inner join category cat on cat.id = rv.category_id
+        inner join service srv on srv.id = rv.service_id
+        left join info_code ci on ci.code = rv.status_code
+        left join info_code rt on rt.code = rv.reservation_type
+        WHERE cat.description = a.category 
+        `+where+`				  
+          ) x
+        ) c ON true;`,
+        {
+            raw: true,
+            type: sequelize.QueryTypes.SELECT
+        }
+    );
+
+    if(reservations.length > 0){
+      return (!reservations) ? { success: false, message: "Reservation Not Found", data: {} } : { success: true, message: "Reservation Found", data: reservations[0].d }
+    } else {      
+      return { success: false, message: "Reservation Not Found", data: err } 
+    }
+    },
+    
+    findReservationSummary: async (partnerId) => {
+      // "--CREATE EXTENSION IF NOT EXISTS tablefunc;"
+        var reservations = await sequelize.query(
+          `SELECT 
+            partner_id, 
+            coalesce("NEW", 0) "NEW", 
+            coalesce("ON_PROCESS", 0) "ON_PROCESS", 
+            coalesce("SUCCESS", 0) "SUCCESS", 
+            coalesce("FAILED", 0) "FAILED", 
+            coalesce("CANCEL", 0) "CANCEL"
+                    FROM   crosstab(
+                      'select partner_id, code status, coalesce(total_order, 0) total_order
+                        from info_code ic
+                        left join lateral (
+                          select rv.partner_id, count(reservation_no) total_order
+                          from reservation rv
+                          where rv.transaction_status_code = ic.code
+                          AND rv.partner_id = ` + partnerId + `
+                          group by rv.partner_id
+                        ) a on true
+                        where code_type = ''TRANSACTION_STATUS''' 
+                        ) AS ct (partner_id int, "NEW" bigint, "ON_PROCESS" bigint, "SUCCESS" bigint, "FAILED" bigint, "CANCEL" bigint )
+                        WHERE partner_id = ` + partnerId + `;`,
+          {
+              raw: true,
+              type: sequelize.QueryTypes.SELECT
+          }
+      );
+          console.log(reservations);
+      if(reservations.length > 0){
+        return (!reservations) ? { success: false, message: "Summary Not Found", data: {} } : { success: true, message: "Summary Found", data: reservations[0] }
+      } else {      
+        return { success: false, message: "Summary Not Found", data: err } 
+      }
+    },
+
   }

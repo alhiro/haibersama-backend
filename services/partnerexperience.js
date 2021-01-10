@@ -84,15 +84,18 @@ module.exports =
           period_from: period_from,
           period_to: period_to,
           company_name: company_name,
-          description: description,
-          image_url: image_url
+          description: description
         };
+
+        if(image_url){
+          objData.image_url = image_url;
+        }
         
         return Experience.update(objData, { where: { id:id }})
         .then(async (updated) => { 
             const result = await Experience.findOne({ where: { id: id } })
             
-            return { success: true, message: "Partner Experience Successfully Updated", data: result } })
+            return { success: true, message: "Partner Experience Successfully Updated", data: result.dataValues } })
         .catch((err) => { return { success: false, message: "Update Partner Experience Failed", data: err } });
       } catch (error) {
         console.log(error)

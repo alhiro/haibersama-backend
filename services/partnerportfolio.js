@@ -80,15 +80,18 @@ module.exports =
           name: name,
           portfolio_date: portfolio_date,
           category_id: category_id,
-          description: description,
-          image_url: image_url
-        };        
+          description: description
+        };       
+
+        if(image_url){
+          objData.image_url = image_url;
+        } 
 
         return Portfolio.update(objData, { where: { id:id }})
         .then(async (updated) => { 
             const result = await Portfolio.findOne({ where: { id: id } })
             
-            return { success: true, message: "Partner Portfolio Successfully Updated", data: result } })
+            return { success: true, message: "Partner Portfolio Successfully Updated", data: result.dataValues } })
         .catch((err) => { return { success: false, message: "Update Partner Portfolio Failed", data: err } });
       } catch (error) {
         console.log(error)

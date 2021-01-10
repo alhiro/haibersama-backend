@@ -48,7 +48,8 @@ module.exports = {
 
       for (let i = 0; i < req.body.PackageDetails.length; i++) {
         var objDetail = {
-          subservice_id: req.body.PackageDetails[i].SubServiceId,
+          // subservice_id: req.body.PackageDetails[i].SubServiceId,
+          sub_service_title: req.body.PackageDetails[i].SubServiceTitle,
           price: req.body.PackageDetails[i].Price,
           description: req.body.PackageDetails[i].Description,
           duration: req.body.PackageDetails[i].Duration,
@@ -154,7 +155,8 @@ module.exports = {
         var objDetail = {
           id: req.body.PackageDetails[i].Id,
           package_header_id: req.body.PackageDetails[i].PackageHeaderId,
-          subservice_id: req.body.PackageDetails[i].SubServiceId,
+          // subservice_id: req.body.PackageDetails[i].SubServiceId,
+          sub_service_title: req.body.PackageDetails[i].SubServiceTitle,
           price: req.body.PackageDetails[i].Price,
           description: req.body.PackageDetails[i].Description,
           duration: req.body.PackageDetails[i].Duration,

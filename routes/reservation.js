@@ -109,4 +109,47 @@ reservationRouter.post("/calendardata", headerAuth.isPartnerAuthenticated, (req,
   reservationController.getCalendarData(data, res);
 });
 
+
+reservationRouter.post("/getlistgroupbycategory", headerAuth.isUserAuthenticated, (req, res, next) => {
+  const id = res.locals.auth.id;
+  const type = res.locals.auth.type;
+
+  const data = { 
+    statusCode: req.body.statusCode, 
+    categoryId: req.body.categoryId,
+    userId: id, 
+    type: type
+  };
+  
+  reservationController.getReservationsGroupByCategory(data, res);
+});
+
+reservationRouter.post("/getinvoicelist", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+  const id = res.locals.auth.id;
+  const email = res.locals.auth.email;
+
+  const data = { 
+    eventFrom: req.body.eventFrom, 
+    eventTo: req.body.eventTo,
+    email: email,
+    userId: id
+  };
+  
+  reservationController.getSuccessReservations(data, res);
+});
+
+reservationRouter.post("/sendinvoicelistemail", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+  const id = res.locals.auth.id;
+  const email = res.locals.auth.email;
+
+  const data = { 
+    eventFrom: req.body.eventFrom, 
+    eventTo: req.body.eventTo,
+    email: email,
+    userId: id
+  };
+  
+  reservationController.getSuccessReservationsEmail(data, res);
+});
+
 module.exports = reservationRouter;

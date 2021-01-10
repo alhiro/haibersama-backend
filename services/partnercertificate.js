@@ -79,15 +79,18 @@ module.exports =
           name: name,
           certificate_date: certificate_date,
           organizer: organizer,
-          description: description,
-          image_url: image_url
+          description: description
         };    
+
+        if(image_url){
+          objData.image_url = image_url;
+        }
         
         return Certificate.update(objData, { where: { id:id }})
         .then(async (updated) => { 
             const result = await Certificate.findOne({ where: { id: id } })
             
-            return { success: true, message: "Partner Certificate Successfully Updated", data: result } })
+            return { success: true, message: "Partner Certificate Successfully Updated", data: result.dataValues } })
         .catch((err) => { return { success: false, message: "Update Partner Certificate Failed", data: err } });
       } catch (error) {
         console.log(error)
