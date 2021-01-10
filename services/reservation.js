@@ -115,8 +115,10 @@ module.exports =
             service = {
               service_id: package.service_id,
               sub_service_id: detail.subservice_id,
-              description: "",
+              description: detail.description,              
               price: detail.price,
+              terms: detail.terms,
+              additional_services: detail.additional_services,
               created_at: moment().utcOffset(0),
               created_by: 'system'
             };
@@ -148,6 +150,7 @@ module.exports =
               category_id: package.category_id,
               package_id: packageId,
               service_id: package.service_id,
+              name: package.name,
               event_date: eventDate,
               event_time: eventTime,
               duration: package.duration,
@@ -230,7 +233,23 @@ module.exports =
     },
     
     findReservation: async (reservationNo) => {
-      return await Reservation.findOne({ where: {reservation_no: reservationNo }})
+      return await Reservation.findOne({ 
+        where: { reservation_no: reservationNo },
+        include: [
+          {
+            model: ReservationContact,
+            as: 'reservation_contact'
+          },
+          {
+            model: ReservationService,
+            as: 'reservation_services'
+          },
+          {
+            model: ReservationStatusHistory,
+            as: 'reservation_status_histories'
+          }
+        ]
+      })
         .then((reservations) => {
           return (!reservations) ? { success: false, message: "Reservation Not Found", data: {} } : { success: true, message: "Reservation Found", data: reservations }
         })
@@ -252,6 +271,7 @@ module.exports =
             cat.description category,
             service_id, 
             srv.description service,
+            rv.name,
             event_date, 
             event_time, 
             event_address, 
