@@ -22,9 +22,6 @@ module.exports =
           ],
           include: [
             {
-              model: subService
-            },
-            {
               model: Category
             }
           ]
