@@ -43,7 +43,7 @@ const SubService = dbSeq.define('subservice', {
   underscored: true,
 });
 
-// SubService.belongsTo(Service, { foreignKey: "service_id" });
-// Service.hasMany(SubService, { foreignKey: "service_id" });
+SubService.belongsTo(Service, { foreignKey: "service_id" });
+Service.hasMany(SubService, { foreignKey: "service_id" });
 
 module.exports = SubService

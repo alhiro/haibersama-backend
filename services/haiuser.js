@@ -365,8 +365,11 @@ module.exports = {
     const {
       email,
       name,
+      picture,
+      description,
       address,
       phone,
+      whatsapp_number,
       dob,
       nation,
       province,
@@ -378,8 +381,11 @@ module.exports = {
     console.log("params :", params);
     let data = {
       name: name,
+      picture: picture,
+      description: description,
       address: address,
       phone_number: phone,
+      whatsapp_number: whatsapp_number,
       dob: dob,
       nation: nation,
       province: province,
