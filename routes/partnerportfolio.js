@@ -6,8 +6,7 @@ const path = require('path');
 const multer = require('multer');
 // upload file path
 const FILE_PATH = 'imagehai';
-// const API_URL = process.env;
-const API_URL ='http://development.haiorganizer.com';
+const ENV = process.env;
 const now = Date.now();
 // configure multer
 
@@ -49,7 +48,7 @@ partnerPortfolioRouter.post("/add",  headerAuth.isPartnerAuthenticated, upload.s
       organizer: req.body.organizer,
       description: req.body.description,
       //image_url: req.body.imageUrl
-      image_url: API_URL + '/ftp/'+ FILE_PATH + '/' + imagefile.fieldname + '-' + now + path.extname(imagefile.originalname)   
+      image_url: ENV.API_URL + '/ftp/'+ FILE_PATH + '/' + imagefile.filename
     };
 
     partnerPortfolioController.addPortfolio(data, res);
@@ -71,7 +70,7 @@ partnerPortfolioRouter.post("/update",  headerAuth.isPartnerAuthenticated, uploa
   };
 
   if (imagefile) {
-      data.image_url = API_URL + '/ftp/'+ FILE_PATH + '/' + imagefile.fieldname + '-' + now + path.extname(imagefile.originalname);
+      data.image_url = ENV.API_URL + '/ftp/'+ FILE_PATH + '/' + imagefile.filename;
   } 
 
     partnerPortfolioController.updatePortfolio(data, res);

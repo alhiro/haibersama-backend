@@ -6,8 +6,7 @@ const path = require('path');
 const multer = require('multer');
 // upload file path
 const FILE_PATH = 'imagehai';
-// const API_URL = process.env;
-const API_URL ='http://development.haiorganizer.com';
+const ENV = process.env;
 const now = Date.now();
 // configure multer
 
@@ -47,7 +46,7 @@ bannerRouter.post("/add", headerAuth.isUserAuthenticated, upload.single('bannerI
       const data = { 
         title: req.body.title, 
         description: req.body.description, 
-        image_url: API_URL + '/ftp/'+ FILE_PATH + '/' + bannerimage.fieldname + '-' + now + path.extname(bannerimage.originalname), 
+        image_url: ENV.API_URL + '/ftp/'+ FILE_PATH + '/' + bannerimage.filename, 
         order_no: parseInt(req.body.orderNo), 
         active: req.body.active
       };
@@ -76,7 +75,7 @@ bannerRouter.post("/update", headerAuth.isUserAuthenticated, upload.single('bann
         id: parseInt(req.body.id), 
         title: req.body.title, 
         description: req.body.description, 
-        image_url: API_URL + '/ftp/'+ FILE_PATH + '/' + bannerimage.fieldname + '-' + now + path.extname(bannerimage.originalname), 
+        image_url: ENV.API_URL + '/ftp/'+ FILE_PATH + '/' + bannerimage.filename, 
         order_no: parseInt(req.body.orderNo), 
         active: req.body.active
       };

@@ -10,7 +10,8 @@ module.exports =
             },
             attributes: ['id',
                         'title',
-                        'description'
+                        'description',
+                        'image_url'
             ],
             order:[
                 ["order_no", "ASC"]

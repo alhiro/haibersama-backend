@@ -6,8 +6,7 @@ const path = require('path');
 const multer = require('multer');
 // upload file path
 const FILE_PATH = 'imagehai';
-// const API_URL = process.env;
-const API_URL ='http://development.haiorganizer.com';
+const ENV = process.env;
 const now = Date.now();
 // configure multer
 
@@ -50,7 +49,7 @@ partnerAwardsRouter.post("/add",  headerAuth.isPartnerAuthenticated, upload.sing
         location: req.body.location,
         accupation: req.body.accupation,
         //image_url: req.body.imageUrl
-        image_url: API_URL + '/ftp/'+ FILE_PATH + '/' + imagefile.fieldname + '-' + now + path.extname(imagefile.originalname)        
+        image_url: ENV.API_URL + '/ftp/'+ FILE_PATH + '/' + imagefile.filename        
       };
 
       partnerAwardsController.addAwards(data, res);
@@ -73,7 +72,7 @@ partnerAwardsRouter.post("/update",  headerAuth.isPartnerAuthenticated, upload.s
   };
 
   if (imagefile) {
-      data.image_url = API_URL + '/ftp/'+ FILE_PATH + '/' + imagefile.fieldname + '-' + now + path.extname(imagefile.originalname);
+      data.image_url = ENV.API_URL + '/ftp/'+ FILE_PATH + '/' + imagefile.filename;
   }  
 
   partnerAwardsController.updateAwards(data, res);  
