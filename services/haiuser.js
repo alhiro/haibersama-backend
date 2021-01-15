@@ -414,6 +414,37 @@ module.exports = {
       });
   },
 
+  updatePassword: async params => {
+    console.log("Update profile password service");    
+
+    const { email, password } = params;
+    console.log("params :", params);
+
+    const generateHashPassword = await jwt.hash(password, 10);
+    let data = {
+      email: email,
+      password: generateHashPassword
+    };
+
+    return User.update(data, {
+      where: { email: email },
+      returning: true,
+      plain: true
+    })
+      .then(updated => {
+        console.log(updated[1].dataValues);
+        delete updated[1].dataValues.password;
+        return {
+          success: true,
+          message: "update profile password Successful",
+          data: updated[1]
+        };
+      })
+      .catch(err => {
+        return { success: false, message: "Update profile password Failed", data: err };
+      });
+  },
+
   registerPartner: async (params, transaction, res) => {
     try {
       console.log("service register partner");

@@ -6,6 +6,7 @@ var authController = require("../controllers/auth");
 const passportConf = require("../lib/passport");
 const jwt = require("../lib/jwt");
 const path = require('path');
+const bcrypt = require("bcrypt-nodejs");
 const multer = require('multer');
 // upload file path
 const FILE_PATH = 'imagehai';
@@ -47,6 +48,18 @@ authRouter.post("/registerGoogle", (req, res, next) => {
 
 authRouter.get("/verify" ,(req, res, next) => {
   authController.verify(req, res);
+});
+
+authRouter.post("/updatePassword", headerAuth.isUserAuthenticated, (req, res, next) => {
+  const email = res.locals.auth.email;
+  console.log("email :", email);
+
+  const data = {
+    email: email,
+    password: req.body.password
+  }
+
+  authController.updatePassword(data, res);
 });
 
 authRouter.post("/updateProfile", headerAuth.isUserAuthenticated, upload.fields(
