@@ -72,12 +72,14 @@ reservationRouter.post("/manual", headerAuth.isPartnerAuthenticated , (req, res,
 reservationRouter.post("/updatestatus", headerAuth.isUserAuthenticated ,(req, res, next) => {
   const id = res.locals.auth.id;
   const type = res.locals.auth.type;
+  const email = res.locals.auth.email;
 
   const data = { 
     reservationNo: req.body.reservationNo, 
     statusCode: req.body.statusCode, 
     userId: id, 
-    type: type
+    type: type,
+    email: email
   };
   
   reservationController.updateStatus(data, res);
@@ -124,7 +126,7 @@ reservationRouter.post("/getlistgroupbycategory", headerAuth.isUserAuthenticated
   reservationController.getReservationsGroupByCategory(data, res);
 });
 
-reservationRouter.post("/getinvoicelist", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+reservationRouter.post("/getinvoicelist", headerAuth.isUserAuthenticated, (req, res, next) => {
   const id = res.locals.auth.id;
   const email = res.locals.auth.email;
 
@@ -138,18 +140,33 @@ reservationRouter.post("/getinvoicelist", headerAuth.isPartnerAuthenticated, (re
   reservationController.getSuccessReservations(data, res);
 });
 
-reservationRouter.post("/sendinvoicelistemail", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+reservationRouter.post("/sendinvoicelistemail", headerAuth.isUserAuthenticated, (req, res, next) => {
   const id = res.locals.auth.id;
   const email = res.locals.auth.email;
+  const type = res.locals.auth.type;
 
   const data = { 
     eventFrom: req.body.eventFrom, 
     eventTo: req.body.eventTo,
+    type: type,
     email: email,
     userId: id
   };
   
   reservationController.getSuccessReservationsEmail(data, res);
+});
+
+reservationRouter.post("/sendinvoiceemail", headerAuth.isUserAuthenticated, (req, res, next) => {
+  const id = res.locals.auth.id;
+  const email = res.locals.auth.email;
+
+  const data = { 
+    reservationNo: req.body.reservationNo,
+    email: email,
+    userId: id
+  };
+  
+  reservationController.getSuccessReservationEmail(data, res);
 });
 
 module.exports = reservationRouter;

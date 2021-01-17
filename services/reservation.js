@@ -8,6 +8,8 @@ const moment = require("moment");
 const sequelize = require('../config/sequelize');
 const Sequelize = require('sequelize');
 const wallethistory = require('../services/partnerwallethistory');
+const appSetting = require('../models/applicationsetting');
+const pointprocess = require('../services/point');
 
 module.exports =
   {        
@@ -116,8 +118,10 @@ module.exports =
               service_id: package.service_id,
               // sub_service_id: detail.subservice_id,
               sub_service_title: detail.sub_service_title,
-              description: "",
+              description: detail.description,
               price: detail.price,
+              additional_services:  detail.additional_services,
+              terms: detail.terms,
               created_at: moment().utcOffset(0),
               created_by: 'system'
             };
@@ -187,20 +191,20 @@ module.exports =
 
           const insertReservation = await Reservation.findOrCreate({
             where: insertparams,
-            include: [
-              {
-                model: ReservationContact,
-                as: 'reservation_contact'
-              },
-              {
-                model: ReservationService,
-                as: 'reservation_services'
-              },
-              {
-                model: ReservationStatusHistory,
-                as: 'reservation_status_histories'
-              }
-            ],
+            // include: [
+            //   {
+            //     model: ReservationContact,
+            //     as: 'reservation_contact'
+            //   },
+            //   {
+            //     model: ReservationService,
+            //     as: 'reservation_services'
+            //   },
+            //   {
+            //     model: ReservationStatusHistory,
+            //     as: 'reservation_status_histories'
+            //   }
+            // ],
             defaults: reservationData
           });
 
@@ -346,8 +350,12 @@ module.exports =
             {
               console.log("ini ke wallet");
               //hardcode 3 %
-              var walletAmount =  upReserv.total_price - (upReserv.total_price * 0.03);
-              
+              const feeSetting = await appSetting.findOne({
+                where: { setting_name: "ORDER_FEE" }
+              });
+      
+              var walletAmount =  upReserv.total_price - (upReserv.total_price * (parseInt(feeSetting.setting_value) / 100));
+              console.log(walletAmount);
               var objBalance = {
                 partner_id: upReserv.partner_id,
                 reservation_no: upReserv.reservation_no,
@@ -361,6 +369,14 @@ module.exports =
               }
 
               const insertWallet = await wallethistory.findOrCreateWallet(objParam, objBalance);
+
+              var objParamPoint = {
+                user_id: upReserv.partner_id, 
+                reservation_no: upReserv.reservation_no, 
+                reservation_date: upReserv.reservation_date, 
+                total_price: upReserv.total_price
+              };
+              const pointinput = await pointprocess.setPoint(objParamPoint);
             }
 
             return { success: true, message: "Reservation Successfully Updated", data: upReserv } })
@@ -453,13 +469,28 @@ module.exports =
                event_time::text event_time,
                ph.name package_name,
                r.event_address,
-               50 height
+               r.duration,           
+               50 height,
+               r_details.det details
                from reservation r
                inner join partner_package_header ph
                on r.package_id = ph.id
-                 WHERE date(r.event_date) = date(a.event_date)
-                 and r.partner_id = a.partner_id
-                 and r.transaction_status_code in ('ON_PROCESS')
+               inner join lateral
+                 (
+                    SELECT json_agg(json_build_object(
+                      'sub_service_title', sub_service_title,
+                      'description', description,
+                      'price', price,
+                      'additional_services', additional_services,
+                      'terms', terms
+                        )
+                    ) det
+                    FROM reservation_service td 
+                    WHERE td.reservation_id = r.id
+                 ) r_details on true
+                WHERE date(r.event_date) = date(a.event_date)
+                and r.partner_id = a.partner_id
+                and r.transaction_status_code in ('ON_PROCESS')
               ) y
             ) d ON true
         LEFT   JOIN LATERAL (

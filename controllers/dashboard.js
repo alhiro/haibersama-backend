@@ -73,7 +73,7 @@ exports.getPartnerReminderMore = async function (req, res, next) {
     var where = " WHERE 1=1 ";
     where += " AND rv.partner_id = " + userId;
     where += " AND rv.transaction_status_code = 'ON_PROCESS' ";
-    where += " AND DATE(rv.event_date) BETWEEN DATE(NOW()) AND DATE(now() + interval '7' day)";
+    where += " AND DATE(rv.event_date) BETWEEN DATE(NOW()) AND DATE(now() + interval '1' month)";
     
     let data = await resv.findReservations(where);
     data.code = data.success ? 200 : 500;

@@ -61,11 +61,14 @@ module.exports =
                 part.nation, 
                 part.picture,
                 coalesce(rating, 0) rating,
+                coalesce(reviewcount, 0) reviewcount,
                 coalesce(follower, 0) follower,
-                coalesce(successjob, 0) successjob
+                coalesce(successjob, 0) successjob,
+                coalesce(pbb.current_balance, 0) currentbalance,
+                coalesce(pt.tier_name, '') tiername
                 FROM hai_user part
                 left join lateral (
-                  select avg(rating) rating
+                  select avg(rating) rating, count(prr.user_id) reviewcount
                   from partner_rating prr
                   where prr.partner_id = part.id
                 ) pr on true
@@ -80,6 +83,18 @@ module.exports =
                   where rvv.partner_id = part.id
                   and rvv.transaction_status_code = 'SUCCESS'
                 ) rv on true
+                left join lateral (
+                  select current_balance
+                  from partner_wallet_balance pb
+                  where pb.partner_id = part.id
+                ) pbb on true
+                left join lateral (
+                  select tier_name
+                  from tier_history ppt
+                  where ppt.user_id = part.id
+                  AND date(start_date) <= date(now()) 
+                  AND date(end_date) >= date(now()) 
+                ) pt on true
               WHERE part.type = 2
               and part.id = `+partnerID+`;`,
             {

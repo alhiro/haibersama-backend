@@ -4,6 +4,7 @@ const moment = require("moment");
 const sequelize = require('../config/sequelize');
 const Sequelize = require('sequelize');
 const { Op } = Sequelize;
+const appSetting = require('../models/applicationsetting');
 
 module.exports =
   {  
@@ -273,7 +274,12 @@ module.exports =
           });
 
           transaction_no = "";
-          let adminFee = 0;
+          const feeSetting = await appSetting.findOne({
+            where: { setting_name: "ADMIN_FEE" }
+          });
+
+          let adminFee = parseInt(feeSetting.setting_value);
+          
           //create new storeid
           if (!lastReservationFee) {
             transaction_no = transaction_date_format + "00001";

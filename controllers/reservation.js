@@ -49,6 +49,59 @@ exports.createReservation = async function(req, res, next) {
 exports.updateStatus = async function(req, res, next) {
     try {            
         let data = await resv.updateStatusReservation(req);
+        
+        if (data.success) {
+          var reservation = data.data;
+
+          console.log(reservation);
+          //create user by email n password
+          //hash email
+
+          var smtpTransport = nodemailer.createTransport({
+            host: "missandei.id.rapidplex.com",
+            port: 465,
+            secure: true,
+            auth: {
+              user: EMAIL_USERNAME,
+              pass: EMAIL_PASSWORD
+            }
+          });
+
+          var emailBody = 
+          "<h4><b>Invoice</b></h4>" +
+          "<p>Status: " + reservation.transaction_status_code + "</p>";
+          "<p>This is your invoice:</p>";
+
+          emailBody += "<table>"; 
+          emailBody += "<th><td>Category</td><td>Reservation No</td><td>Reservation Date</td><td>Event Date</td><td>Total Price</td></th>";
+               
+          emailBody += "<tr><td>" + reservation.category + "</td><td>" + reservation.reservation_no + "</td><td>" + reservation.reservation_date + "</td><td>" + reservation.event_date + "</td><td>" + reservation.total_price + "</td></tr>";
+          
+          
+          emailBody += "</table>" +
+          "<br><br>" +
+          "<p>--Team</p>";
+
+          // console.log(emailBody);
+
+          let mailoptions = {
+            from: '"<notify>" notify@haiorganizer.com',
+            to: req.email,
+            subject: "Invoice",
+            html: emailBody
+          };
+          console.log("mailoptions :" + JSON.stringify(mailoptions));
+
+          smtpTransport.sendMail(mailoptions, function(error, res) {
+            if (error) {
+              console.log(error);
+            } else {
+              console.log("Message sent: " + res.response);
+            }
+            //smtpTransport.close();
+          });
+        } 
+
         return res.status(200).send(data);
       } catch (err) {
         console.log(err);
@@ -207,7 +260,12 @@ exports.getSuccessReservationsEmail = async function(req, res, next) {
     var where = " WHERE 1=1 "
 
     params.partner_id = userId;
-    where += " AND rv.partner_id = " + userId; 
+    
+    if(type == 2){
+      where += " AND rv.partner_id = " + userId;
+    }else{
+        where += " AND rv.user_id = " + userId;
+    }        
 
     where += " AND rv.transaction_status_code = 'SUCCESS' ";
     
@@ -242,8 +300,8 @@ exports.getSuccessReservationsEmail = async function(req, res, next) {
 
       emailBody += "<table>"; 
       emailBody += "<th><td>Category</td><td>Reservation No</td><td>Reservation Date</td><td>Event Date</td><td>Total Price</td></th>";
-      reservation.data.forEach(element => {        
-        emailBody += "<tr><td>" + element.category + "</td><td>" + element.reservation_no + "</td><td>" + element.reservation_date + "</td><td>" + element.event_date + "</td><td>" + element.total_price + "</td></tr>";
+      reservation.data.forEach(reservation => {        
+        emailBody += "<tr><td>" + reservation.category + "</td><td>" + reservation.reservation_no + "</td><td>" + reservation.reservation_date + "</td><td>" + reservation.event_date + "</td><td>" + reservation.total_price + "</td></tr>";
       });
       
       emailBody += "</table>" +
@@ -290,3 +348,88 @@ exports.getSuccessReservationsEmail = async function(req, res, next) {
       .send({ code: 500, success: false, message: err.message, data: {} });
   }
 };
+
+exports.getSuccessReservationEmail = async function(req, res, next) {
+  try { 
+     const { reservationNo,  userId, email } = req;
+         
+     //const paging = { limit: pageSize, offset: (page - 1) *  pageSize};
+ 
+     const params = { };
+     var where = " WHERE 1=1 "
+ 
+     params.partner_id = userId;
+     where += " AND rv.reservation_no = '" + reservationNo + "' "; 
+          
+     let reservation = await resv.findReservations(where);
+ 
+     if (reservation.success) {
+       console.log(reservation);
+       //create user by email n password
+       //hash email
+ 
+       var smtpTransport = nodemailer.createTransport({
+         host: "missandei.id.rapidplex.com",
+         port: 465,
+         secure: true,
+         auth: {
+           user: EMAIL_USERNAME,
+           pass: EMAIL_PASSWORD
+         }
+       });
+ 
+       var emailBody = 
+       "<h4><b>Invoice</b></h4>" +
+       "<p>This is your invoice list:</p>";
+ 
+       emailBody += "<table>"; 
+       emailBody += "<th><td>Category</td><td>Reservation No</td><td>Reservation Date</td><td>Event Date</td><td>Total Price</td></th>";
+       reservation.data.forEach(reservation => {        
+         emailBody += "<tr><td>" + reservation.category + "</td><td>" + reservation.reservation_no + "</td><td>" + reservation.reservation_date + "</td><td>" + reservation.event_date + "</td><td>" + reservation.total_price + "</td></tr>";
+       });
+       
+       emailBody += "</table>" +
+       "<br><br>" +
+       "<p>--Team</p>";
+ 
+       // console.log(emailBody);
+ 
+       let mailoptions = {
+         from: '"<notify>" notify@haiorganizer.com',
+         to: email,
+         subject: "Invoice",
+         html: emailBody
+       };
+       console.log("mailoptions :" + JSON.stringify(mailoptions));
+ 
+       smtpTransport.sendMail(mailoptions, function(error, res) {
+         if (error) {
+           console.log(error);
+         } else {
+           console.log("Message sent: " + res.response);
+         }
+         //smtpTransport.close();
+       });
+ 
+       return res.status(200).send({
+         code: 200,
+         success: true,
+         message: "Success to send email",
+         data: {}
+       });
+     } else {
+       return res.status(401).send({
+         code: 401,
+         success: false,
+         message: "Failed to send email",
+         data: {}
+       });
+     }
+ 
+   } catch (err) {
+     return res
+       .status(500)
+       .send({ code: 500, success: false, message: err.message, data: {} });
+   }
+ };
+ 

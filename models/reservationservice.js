@@ -36,6 +36,14 @@ const ReservationService = dbSeq.define('reservation_service', {
     type: Sequelize.DECIMAL(18,2),
     allowNull: false
   },
+  additional_services: {
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
+  terms: {
+    type: Sequelize.STRING(300),
+    allowNull: false
+  },
   created_at: {
     type: Sequelize.DATE,
     allowNull: true
