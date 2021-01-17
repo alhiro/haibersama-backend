@@ -45,6 +45,10 @@ const Reservation = dbSeq.define('reservation', {
     type: Sequelize.INTEGER,
     allowNull: false
   },
+  name: {
+    type: Sequelize.STRING(50),
+    allowNull: false
+  },
   event_date:{
     type: Sequelize.DATE,
     allowNull: false

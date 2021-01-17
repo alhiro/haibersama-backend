@@ -438,6 +438,21 @@ exports.updateProfile = async function(req, res, next) {
   }
 };
 
+exports.updatePassword = async function(req, res, next) {
+  console.log("controller update profile password");
+
+  try {
+    var response = await auth.updatePassword(req);
+
+    response.code = response.success ? 200 : 500;
+    return res.status(200).send(response);
+  } catch (err) {
+    return res
+      .status(500)
+      .send({ code: 500, success: false, message: err.message, data: {} });
+  }
+};
+
 exports.googleLoginCallBack = async function(req, res, next) {
   try {
     const { email, name, picture, userType } = req;

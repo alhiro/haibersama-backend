@@ -17,11 +17,11 @@ module.exports = {
         include: [
           {
             model: PartnerPackageDetail,
-            include: [
-              {
-                model: SubService
-              }
-            ]
+            // include: [
+            //   {
+            //     model: SubService
+            //   }
+            // ]
           }
         ]
       });
@@ -123,11 +123,11 @@ module.exports = {
         include: [
           {
             model: PartnerPackageDetail,
-            include: [
-              {
-                model: SubService
-              }
-            ]
+            // include: [
+            //   {
+            //     model: SubService
+            //   }
+            // ]
           }
         ]
       });
@@ -195,11 +195,11 @@ module.exports = {
             include: [
               {
                 model: PartnerPackageDetail,
-                include: [
-                  {
-                    model: SubService
-                  }
-                ]
+                // include: [
+                //   {
+                //     model: SubService
+                //   }
+                // ]
               }
             ], 
           });
@@ -222,11 +222,11 @@ module.exports = {
         include: [
           {
             model: PartnerPackageDetail,
-            include: [
-              {
-                model: SubService
-              }
-            ]
+            // include: [
+            //   {
+            //     model: SubService
+            //   }
+            // ]
           }
         ], 
     })

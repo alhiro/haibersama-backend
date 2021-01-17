@@ -6,11 +6,11 @@ var authController = require("../controllers/auth");
 const passportConf = require("../lib/passport");
 const jwt = require("../lib/jwt");
 const path = require('path');
+const bcrypt = require("bcrypt-nodejs");
 const multer = require('multer');
 // upload file path
 const FILE_PATH = 'imagehai';
-// const API_URL = process.env;
-const API_URL ='http://development.haiorganizer.com';
+const ENV = process.env;
 const now = Date.now();
 // configure multer
 
@@ -50,27 +50,67 @@ authRouter.get("/verify" ,(req, res, next) => {
   authController.verify(req, res);
 });
 
-authRouter.post("/updateProfile", headerAuth.isUserAuthenticated, upload.single('verified_document'), (req, res, next) => {
-  console.log("endpoint : update Profile")
-  const email = res.locals.auth.email
-  console.log("email :", email)
-  const docimage = req.file;
-  console.log(docimage);
-  console.log('storage location is ', req.hostname +'/' + req.file.path);
-  // make sure file is available
-  if (!docimage) {
-      res.status(400).send({
-          status: false,
-          data: 'No file is selected.'
-      });
-  } else {
-    const verified_document =  API_URL + '/ftp/'+ FILE_PATH + '/' + docimage.fieldname + '-' + now + path.extname(docimage.originalname);
-    const data = { name: req.body.name, address: req.body.address, phone: req.body.phone_number, 
-                    dob: req.body.dob, nation:req.body.nation, province: req.body.province, city: req.body.city, 
-                    postalcode: req.body.postalcode, verified_document: verified_document, email: email, type: req.body.usertype}
-    authController.updateProfile(data, res);
+authRouter.post("/updatePassword", headerAuth.isUserAuthenticated, (req, res, next) => {
+  const email = res.locals.auth.email;
+  console.log("email :", email);
+
+  const data = {
+    email: email,
+    password: req.body.password
   }
+
+  authController.updatePassword(data, res);
 });
+
+authRouter.post("/updateProfile", headerAuth.isUserAuthenticated, upload.fields(
+  [{
+    name: 'picture', maxCount: 1
+  }, {
+    name: 'verified_document', maxCount: 1
+  }]), (req, res, next) => {
+    console.log("endpoint : update Profile")
+    const email = res.locals.auth.email
+    console.log("email :", email)
+
+    // Check array fields
+    const pictureFile = [];
+    if (!req.files.picture) {
+      console.log('profilePicture ' + JSON.stringify(pictureFile));
+    } else {
+      const getFile = req.files.picture[0];
+      const picture = ENV.API_URL + '/ftp/' + FILE_PATH + '/' + getFile.filename;
+      pictureFile.push(picture);
+      console.log('profilePicture ' + JSON.stringify(pictureFile));
+    }
+    
+    const verifiedFile = [];
+    if (!req.files.verified_document) {
+      console.log('verifiedDocument ' + JSON.stringify(verifiedFile));
+    } else {
+      const getFile = req.files.verified_document[0];
+      const verified_document = ENV.API_URL + '/ftp/' + FILE_PATH + '/' + getFile.filename;
+      verifiedFile.push(verified_document);
+      console.log('verifiedDocument ' + JSON.stringify(verifiedFile));
+    }
+
+    const data = {
+      name: req.body.name,
+      picture: pictureFile[0],
+      address: req.body.address,
+      description: req.body.description,
+      phone: req.body.phone_number,
+      whatsapp_number: req.body.whatsapp_number,
+      dob: req.body.dob,
+      nation: req.body.nation,
+      province: req.body.province,
+      city: req.body.city,
+      postalcode: req.body.postalcode,
+      verified_document: verifiedFile[0],
+      email: email,
+      type: req.body.usertype
+    }
+    authController.updateProfile(data, res);
+  });
 
 authRouter.get("/google", passportConf.authenticate("google", { scope: ["profile", "email", "openid"], state: 'client' })
  );

@@ -57,7 +57,7 @@ module.exports =
           organizer: organizer,
           description: description,
           location: location,
-          accupation: accupation,
+          accupation: occupation,
           image_url: image_url
         };
         

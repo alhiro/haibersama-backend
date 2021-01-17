@@ -6,8 +6,7 @@ const path = require('path');
 const multer = require('multer');
 // upload file path
 const FILE_PATH = 'imagehai';
-// const API_URL = process.env;
-const API_URL ='http://development.haiorganizer.com';
+const ENV = process.env;
 const now = Date.now();
 // configure multer
 
@@ -48,7 +47,7 @@ partnerCertificateRouter.post("/add", headerAuth.isPartnerAuthenticated, upload.
       organizer: req.body.organizer,
       description: req.body.description,
       //image_url: req.body.imageUrl
-      image_url: API_URL + '/ftp/'+ FILE_PATH + '/' + imagefile.fieldname + '-' + now + path.extname(imagefile.originalname)   
+      image_url: ENV.API_URL + '/ftp/'+ FILE_PATH + '/' + imagefile.filename
     };
 
     partnerCertificateController.addCertificate(data, res);
@@ -69,7 +68,7 @@ partnerCertificateRouter.post("/update",  headerAuth.isPartnerAuthenticated, upl
   };
 
   if (imagefile) {
-      data.image_url = API_URL + '/ftp/'+ FILE_PATH + '/' + imagefile.fieldname + '-' + now + path.extname(imagefile.originalname);
+      data.image_url = ENV.API_URL + '/ftp/'+ FILE_PATH + '/' + imagefile.filename;
   } 
 
     partnerCertificateController.updateCertificate(data, res);

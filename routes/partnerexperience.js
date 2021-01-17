@@ -6,8 +6,7 @@ const path = require('path');
 const multer = require('multer');
 // upload file path
 const FILE_PATH = 'imagehai';
-// const API_URL = process.env;
-const API_URL ='http://development.haiorganizer.com';
+const ENV = process.env;
 const now = Date.now();
 // configure multer
 
@@ -50,7 +49,7 @@ partnerExperienceRouter.post("/add",  headerAuth.isPartnerAuthenticated, upload.
       company_name: req.body.companyName,
       description: req.body.description,
       //image_url: req.body.imageUrl
-      image_url: API_URL + '/ftp/'+ FILE_PATH + '/' + imagefile.fieldname + '-' + now + path.extname(imagefile.originalname)   
+      image_url: ENV.API_URL + '/ftp/'+ FILE_PATH + '/' + imagefile.filename 
     };
 
     partnerExperienceController.addExperience(data, res);
@@ -72,7 +71,7 @@ partnerExperienceRouter.post("/update",  headerAuth.isPartnerAuthenticated, uplo
   };
 
   if (imagefile) {
-      data.image_url = API_URL + '/ftp/'+ FILE_PATH + '/' + imagefile.fieldname + '-' + now + path.extname(imagefile.originalname);
+      data.image_url = ENV.API_URL + '/ftp/'+ FILE_PATH + '/' + imagefile.filename;
   } 
 
     partnerExperienceController.updateExperience(data, res);
