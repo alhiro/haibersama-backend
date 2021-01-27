@@ -120,6 +120,7 @@ module.exports =
               sub_service_title: detail.sub_service_title,
               description: detail.description,
               price: detail.price,
+              duration: detail.duration,
               additional_services:  detail.additional_services,
               terms: detail.terms,
               created_at: moment().utcOffset(0),
@@ -139,7 +140,7 @@ module.exports =
           var resvDate = moment().utcOffset(0);
 
           if(reservationType == "MANUAL_ORDER"){
-            statusCode = "ORDER_PARTNER_CONFIRM";
+            statusCode = "ORDER_PAYMENT_COMPLETED";
             transactionStatusCode = "ON_PROCESS";
             resvDate = reservationDate
           }
@@ -192,20 +193,20 @@ module.exports =
 
           const insertReservation = await Reservation.findOrCreate({
             where: insertparams,
-            // include: [
-            //   {
-            //     model: ReservationContact,
-            //     as: 'reservation_contact'
-            //   },
-            //   {
-            //     model: ReservationService,
-            //     as: 'reservation_services'
-            //   },
-            //   {
-            //     model: ReservationStatusHistory,
-            //     as: 'reservation_status_histories'
-            //   }
-            // ],
+            include: [
+              {
+                model: ReservationContact,
+                as: 'reservation_contact'
+              },
+              {
+                model: ReservationService,
+                as: 'reservation_services'
+              },
+              {
+                model: ReservationStatusHistory,
+                as: 'reservation_status_histories'
+              }
+            ],
             defaults: reservationData
           });
 
@@ -499,6 +500,7 @@ module.exports =
                       'sub_service_title', sub_service_title,
                       'description', description,
                       'price', price,
+                      'duration', duration,
                       'additional_services', additional_services,
                       'terms', terms
                         )

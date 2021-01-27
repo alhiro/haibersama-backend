@@ -22,7 +22,7 @@ const ReservationService = dbSeq.define('reservation_service', {
   },
   sub_service_title: {
     type: Sequelize.STRING(500),
-    allowNull: true
+    allowNull: false
   },
   // sub_service_id: {
   //   type: Sequelize.INTEGER,
@@ -31,6 +31,10 @@ const ReservationService = dbSeq.define('reservation_service', {
   description: {
     type: Sequelize.STRING(500),
     allowNull: false
+  },
+  duration: {
+    type: Sequelize.INTEGER,
+    allowNull: true
   },
   price: {
     type: Sequelize.DECIMAL(18,2),

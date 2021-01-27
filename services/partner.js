@@ -65,7 +65,7 @@ module.exports =
                 coalesce(follower, 0) follower,
                 coalesce(successjob, 0) successjob,
                 coalesce(pbb.current_balance, 0) currentbalance,
-                coalesce(pt.tier_name, '') tiername
+                coalesce(pt.tier_name, 'Perintis') tiername
                 FROM hai_user part
                 left join lateral (
                   select avg(rating) rating, count(prr.user_id) reviewcount
