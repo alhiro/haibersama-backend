@@ -230,7 +230,7 @@ exports.getSuccessReservations = async function(req, res, next) {
       params.partner_id = userId;
       where += " AND rv.partner_id = " + userId; 
 
-      where += " AND rv.transaction_status_code = 'SUCCESS' ";
+      // where += " AND rv.transaction_status_code = 'SUCCESS' ";
       
       if(eventFrom != null){
         where += " AND date(rv.event_date) >= date('" + eventFrom + "') ";

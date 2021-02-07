@@ -147,6 +147,7 @@ module.exports = {
               last_login: users.last_login,
               refresh_token: users.refresh_token,
               rating: partner.rating,   
+              review: partner.reviewcount,   
               follower: partner.follower,   
               successjob: partner.successjob, 
               currentbalance: partner.currentbalance, 
