@@ -327,7 +327,7 @@ module.exports =
     
     updateStatusReservation: async (req) => {
       try {
-        const { reservationNo, statusCode, userId } = req;
+        const { reservationNo, statusCode, totalDp, userId } = req;
         
         let transactionStatusCode = "NEW";
 
@@ -349,8 +349,10 @@ module.exports =
           transactionStatusCode = "ON_PROCESS";
         }
 
+        // total dp blum dieksekusi
         var objReservation = {
           status_code: statusCode, 
+          total_dp: totalDp,
           transaction_status_code: transactionStatusCode,
           updated_at: moment().utcOffset(0),
           updated_by: userId
@@ -365,7 +367,7 @@ module.exports =
 
             const history = {status_code: statusCode, reservation_id: upReserv.id, updatedcreated_at: moment().utcOffset(0), created_by: userId };
             const upHistory = await ReservationStatusHistory.create(history);
-
+          
             if(statusCode == "ORDER_COMPLETED")
             {
               console.log("ini ke wallet");
@@ -376,6 +378,7 @@ module.exports =
       
               var walletAmount =  upReserv.total_price - (upReserv.total_price * (parseInt(feeSetting.setting_value) / 100));
               console.log(walletAmount);
+              
               var objBalance = {
                 partner_id: upReserv.partner_id,
                 reservation_no: upReserv.reservation_no,

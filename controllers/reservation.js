@@ -1,7 +1,10 @@
 const resv = require("../services/reservation");
 const sequelizeTransaction = require("../config/sequelizeTransaction");
 const { VERIFY_URL, EMAIL_PASSWORD, EMAIL_USERNAME } = process.env;
+const moment = require("moment");
 var nodemailer = require("nodemailer");
+var Hogan = require("hogan.js");
+var fs = require("fs");
 
 exports.createReservation = async function(req, res, next) {
     try {  
@@ -53,7 +56,7 @@ exports.updateStatus = async function(req, res, next) {
         if (data.success) {
           var reservation = data.data;
 
-          console.log(reservation);
+          //console.log('reservation ' + reservation);
           //create user by email n password
           //hash email
 
@@ -75,7 +78,7 @@ exports.updateStatus = async function(req, res, next) {
           emailBody += "<table>"; 
           emailBody += "<th><td>Category</td><td>Reservation No</td><td>Reservation Date</td><td>Event Date</td><td>Total Price</td></th>";
                
-          emailBody += "<tr><td>" + reservation.category + "</td><td>" + reservation.reservation_no + "</td><td>" + reservation.reservation_date + "</td><td>" + reservation.event_date + "</td><td>" + reservation.total_price + "</td></tr>";
+          emailBody += "<tr><td>" + reservation.package_name + "</td><td>" + reservation.reservation_no + "</td><td>" + reservation.reservation_date + "</td><td>" + reservation.event_date + "</td><td>" + reservation.total_price + "</td></tr>";
           
           
           emailBody += "</table>" +
@@ -84,11 +87,33 @@ exports.updateStatus = async function(req, res, next) {
 
           // console.log(emailBody);
 
+          var statusPayment = "";
+          if (reservation.status_code == "ORDER_NEW") {
+            statusPayment = "Belum Dibayar";
+          } else if (reservation.status_code == "ORDER_DP_COMPLETED") {
+            statusPayment = "Sudah DP";
+          } else if (reservation.status_code == "ORDER_PAYMENT_COMPLETED") {
+            statusPayment = "Sudah Lunas";
+          }
+
+          var templateInvoice = fs.readFileSync('./views/invoice.html', 'utf-8');
+          var compileInvoice = Hogan.compile(templateInvoice);
+
           let mailoptions = {
-            from: '"<notify>" notify@haiorganizer.com',
+            from: '"Hai Info" notify@haiorganizer.com',
             to: req.email,
             subject: "Invoice",
-            html: emailBody
+            html: compileInvoice.render({
+              packageName: reservation.package_name,
+              eventDate:  moment(reservation.event_date).utcOffset(0).format("DD-MM-YYYY"),
+              eventTime: reservation.event_time,
+              codeInvoice: reservation.reservation_no,
+              invoiceDate: moment(reservation.reservation_date).utcOffset(0).format("DD-MM-YYYY"),
+              completePayment: statusPayment,
+              totalPrice: reservation.total_price,
+              totalDiscount: reservation.total_discount,
+              totalPayment: reservation.total_payment
+            })
           };
           console.log("mailoptions :" + JSON.stringify(mailoptions));
 

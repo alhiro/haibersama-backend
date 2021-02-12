@@ -77,6 +77,7 @@ reservationRouter.post("/updatestatus", headerAuth.isUserAuthenticated ,(req, re
   const data = { 
     reservationNo: req.body.reservationNo, 
     statusCode: req.body.statusCode, 
+    totalDp: req.body.totalDp, 
     userId: id, 
     type: type,
     email: email
