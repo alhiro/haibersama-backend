@@ -81,6 +81,10 @@ const Reservation = dbSeq.define('reservation', {
     type: Sequelize.DECIMAL(18, 2),
     allowNull: true
   },
+  total_down_payment: {
+    type: Sequelize.DECIMAL(18, 2),
+    allowNull: true
+  },
   status_code: {
     type: Sequelize.STRING(50),
     allowNull: true

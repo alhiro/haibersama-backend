@@ -258,7 +258,7 @@ module.exports =
         .then((reservations) => {
           return (!reservations) ? { success: false, message: "Reservation Not Found", data: {} } : { success: true, message: "Reservation Found", data: reservations }
         })
-        .catch((err) => { return { success: false, message: "Reservation Not Found", data: err } });
+        .catch((err) => { return { success: false, message: "Reservation Not Found", data: {}, error: err } });
     },
     
     findReservations: async (where) => {
@@ -352,10 +352,14 @@ module.exports =
         // total dp blum dieksekusi
         var objReservation = {
           status_code: statusCode, 
-          total_dp: totalDp,
+          // total_down_payment: totalDp,
           transaction_status_code: transactionStatusCode,
           updated_at: moment().utcOffset(0),
           updated_by: userId
+        }
+
+        if(totalDp){
+          objReservation.total_down_payment = totalDp;
         }
 
         console.log(JSON.stringify(objReservation), "objReservation")

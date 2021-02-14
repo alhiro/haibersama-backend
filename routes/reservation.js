@@ -77,13 +77,30 @@ reservationRouter.post("/updatestatus", headerAuth.isUserAuthenticated ,(req, re
   const data = { 
     reservationNo: req.body.reservationNo, 
     statusCode: req.body.statusCode, 
-    totalDp: req.body.totalDp, 
+    // totalDp: req.body.totalDp, 
     userId: id, 
     type: type,
     email: email
   };
   
   reservationController.updateStatus(data, res);
+});
+
+reservationRouter.post("/updatestatusmanual", headerAuth.isPartnerAuthenticated ,(req, res, next) => {
+  const id = res.locals.auth.id;
+  const type = res.locals.auth.type;
+  const email = res.locals.auth.email;
+
+  const data = { 
+    reservationNo: req.body.reservationNo, 
+    statusCode: req.body.statusCode, 
+    totalDp: req.body.totalDp, 
+    userId: id, 
+    type: type,
+    email: email
+  };
+  
+  reservationController.updateStatusManual(data, res);
 });
 
 // reservationRouter.post("/agendaitems", headerAuth.isPartnerAuthenticated, (req, res, next) => {

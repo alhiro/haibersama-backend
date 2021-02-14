@@ -56,9 +56,119 @@ exports.updateStatus = async function(req, res, next) {
         if (data.success) {
           var reservation = data.data;
 
-          //console.log('reservation ' + reservation);
-          //create user by email n password
-          //hash email
+          if(reservation.status_code == "ORDER_NEW" || reservation.status_code == "ORDER_DP_COMPLETED" || reservation.status_code == "ORDER_PAYMENT_COMPLETED")
+          {
+            let getData = await resv.findReservation(reservation.reservation_no);        
+  
+            var smtpTransport = nodemailer.createTransport({
+              host: "missandei.id.rapidplex.com",
+              port: 465,
+              secure: true,
+              auth: {
+                user: EMAIL_USERNAME,
+                pass: EMAIL_PASSWORD
+              }
+            });
+
+            var statusPayment = "";
+            if (reservation.status_code == "ORDER_NEW") {
+              statusPayment = "Belum Dibayar";
+            } else if (reservation.status_code == "ORDER_DP_COMPLETED") {
+              statusPayment = "Sudah DP";
+            } else if (reservation.status_code == "ORDER_PAYMENT_COMPLETED") {
+              statusPayment = "Sudah Lunas";
+            }
+
+            var templateInvoice = fs.readFileSync('./views/invoice.html', 'utf-8');
+            var compileInvoice = Hogan.compile(templateInvoice);
+
+            var zero = 0;
+            var totalPrice = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+            var totalDiscount = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+            var totalPayment = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+            var totalDownPayment = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+
+            if(reservation.total_price){
+              totalPrice = reservation.total_price.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+            }
+
+            if(reservation.total_discount){
+              totalDiscount = reservation.total_discount.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+            }
+
+            if(reservation.total_payment){
+              totalPayment = reservation.total_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+            }
+
+            if(reservation.total_down_payment){
+              totalDownPayment = reservation.total_down_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+            }
+  
+            var services = new Array();
+            
+            getData.data.reservation_services.forEach(
+              element => { 
+                var price = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+
+                if(element.price){
+                  price = element.price.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+                }
+
+                services.push({ 
+                  description: element.description,
+                  price: price
+                 }); 
+              }
+            );
+
+            let mailoptions = {
+              from: '"Hai Info" notify@haiorganizer.com',
+              to: req.email,
+              subject: "Invoice",
+              html: compileInvoice.render({
+                packageName: reservation.package_name,
+                eventDate:  moment(reservation.event_date).utcOffset(0).format("DD-MM-YYYY"),
+                eventTime: reservation.event_time,
+                codeInvoice: reservation.reservation_no,
+                invoiceDate: moment(reservation.reservation_date).utcOffset(0).format("DD-MM-YYYY"),
+                completePayment: statusPayment,
+                totalPrice: totalPrice,
+                totalDiscount: totalDiscount,
+                totalPayment: totalPayment,
+                totalDownPayment: totalDownPayment,
+                services: services
+              })
+            };
+            // console.log("mailoptions :" + JSON.stringify(mailoptions));
+
+            smtpTransport.sendMail(mailoptions, function(error, res) {
+              if (error) {
+                console.log(error);
+              } else {
+                console.log("Message sent: " + res.response);
+              }
+              //smtpTransport.close();
+            });
+          }
+        } 
+
+        return res.status(200).send(data);
+      } catch (err) {
+        console.log(err);
+        return res.status(500).send({ data: err });
+      }    
+};
+
+exports.updateStatusManual = async function(req, res, next) {
+  try {            
+      let data = await resv.updateStatusReservation(req);
+      
+      if (data.success) {
+        var reservation = data.data;
+
+        if(reservation.status_code == "ORDER_NEW" || reservation.status_code == "ORDER_DP_COMPLETED" || reservation.status_code == "ORDER_PAYMENT_COMPLETED")
+        {
+          let getData = await resv.findReservation(reservation.reservation_no);        
 
           var smtpTransport = nodemailer.createTransport({
             host: "missandei.id.rapidplex.com",
@@ -69,23 +179,6 @@ exports.updateStatus = async function(req, res, next) {
               pass: EMAIL_PASSWORD
             }
           });
-
-          var emailBody = 
-          "<h4><b>Invoice</b></h4>" +
-          "<p>Status: " + reservation.transaction_status_code + "</p>";
-          "<p>This is your invoice:</p>";
-
-          emailBody += "<table>"; 
-          emailBody += "<th><td>Category</td><td>Reservation No</td><td>Reservation Date</td><td>Event Date</td><td>Total Price</td></th>";
-               
-          emailBody += "<tr><td>" + reservation.package_name + "</td><td>" + reservation.reservation_no + "</td><td>" + reservation.reservation_date + "</td><td>" + reservation.event_date + "</td><td>" + reservation.total_price + "</td></tr>";
-          
-          
-          emailBody += "</table>" +
-          "<br><br>" +
-          "<p>--Team</p>";
-
-          // console.log(emailBody);
 
           var statusPayment = "";
           if (reservation.status_code == "ORDER_NEW") {
@@ -99,9 +192,48 @@ exports.updateStatus = async function(req, res, next) {
           var templateInvoice = fs.readFileSync('./views/invoice.html', 'utf-8');
           var compileInvoice = Hogan.compile(templateInvoice);
 
+          var zero = 0;
+          var totalPrice = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          var totalDiscount = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          var totalPayment = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          var totalDownPayment = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+
+          if(reservation.total_price){
+            totalPrice = reservation.total_price.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          }
+
+          if(reservation.total_discount){
+            totalDiscount = reservation.total_discount.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          }
+
+          if(reservation.total_payment){
+            totalPayment = reservation.total_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          }
+
+          if(reservation.total_down_payment){
+            totalDownPayment = reservation.total_down_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          }
+
+          var services = new Array();
+          
+          getData.data.reservation_services.forEach(
+            element => { 
+              var price = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+
+              if(element.price){
+                price = element.price.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+              }
+
+              services.push({ 
+                description: element.description,
+                price: price
+               }); 
+            }
+          );
+          
           let mailoptions = {
             from: '"Hai Info" notify@haiorganizer.com',
-            to: req.email,
+            to: getData.data.reservation_contact.email,
             subject: "Invoice",
             html: compileInvoice.render({
               packageName: reservation.package_name,
@@ -110,12 +242,14 @@ exports.updateStatus = async function(req, res, next) {
               codeInvoice: reservation.reservation_no,
               invoiceDate: moment(reservation.reservation_date).utcOffset(0).format("DD-MM-YYYY"),
               completePayment: statusPayment,
-              totalPrice: reservation.total_price,
-              totalDiscount: reservation.total_discount,
-              totalPayment: reservation.total_payment
+              totalPrice: totalPrice,
+              totalDiscount: totalDiscount,
+              totalPayment: totalPayment,
+              totalDownPayment: totalDownPayment,
+              services: services
             })
           };
-          console.log("mailoptions :" + JSON.stringify(mailoptions));
+          // console.log("mailoptions :" + JSON.stringify(mailoptions));
 
           smtpTransport.sendMail(mailoptions, function(error, res) {
             if (error) {
@@ -125,13 +259,14 @@ exports.updateStatus = async function(req, res, next) {
             }
             //smtpTransport.close();
           });
-        } 
+        }
+      } 
 
-        return res.status(200).send(data);
-      } catch (err) {
-        console.log(err);
-        return res.status(500).send({ data: err });
-      }    
+      return res.status(200).send(data);
+    } catch (err) {
+      console.log(err);
+      return res.status(500).send({ data: err });
+    }    
 };
 
 exports.getReservation = async function(req, res, next) {

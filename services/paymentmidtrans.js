@@ -182,6 +182,7 @@ module.exports =
             }
           } 
 
+          var details = new Array();
           var detail = {
             payment_order_id: paymentOrderID,
             pg_code: "MIDTRANS",
@@ -199,7 +200,7 @@ module.exports =
 
           details.push(detail);
           
-          let paymentTimeLimit = moment().utcOffset(0).add(expiredDuration, "days").add(5, "minutes");
+          // let paymentTimeLimit = moment().utcOffset(0).add(expiredDuration, "days").add(5, "minutes");
           
           //sementara hardcode
           var totalPaymentFee = 2 * totalPrice / 100;
@@ -239,7 +240,7 @@ module.exports =
               data: {}
             };        
            } else {
-            throw {
+            return {
               success: true,
               message: "Success to create payment",
               data: transactionResult
@@ -341,7 +342,7 @@ module.exports =
           
             const insertdetailparams = {
               payment_id: isPaymentExist.id,
-              payment_type: reservationNo
+              payment_type: paymentType
             };
 
             const insertDetailPayment = await PaymentDetail.findOrCreate({
@@ -356,7 +357,7 @@ module.exports =
                 data: {}
               };        
             } else {
-              throw {
+              return {
                 success: true,
                 message: "Success to create payment",
                 data: transactionResult

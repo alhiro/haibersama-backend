@@ -110,6 +110,10 @@ const HaiUser = dbSeq.define('hai_user', {
     type: Sequelize.BOOLEAN,
     allowNull: true
   },
+  process_verified: {
+    type: Sequelize.INTEGER,
+    allowNull: true
+  },
   created_at: {
     type: Sequelize.DATE,
     allowNull: true
