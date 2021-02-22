@@ -1,4 +1,5 @@
 const resv = require("../services/reservation");
+const emailcounter = require("../services/emailcounter");
 const sequelizeTransaction = require("../config/sequelizeTransaction");
 const { VERIFY_URL, EMAIL_PASSWORD, EMAIL_USERNAME } = process.env;
 const moment = require("moment");
@@ -591,5 +592,139 @@ exports.getSuccessReservationEmail = async function(req, res, next) {
        .status(500)
        .send({ code: 500, success: false, message: err.message, data: {} });
    }
- };
+ }; 
  
+exports.sendEmailToCustomer = async function(req, res, next) {
+  try {           
+    const { reservationNo, statusCode } = req;
+    
+    var counterParams = {
+      reservation_no: reservationNo,
+      status_code: statusCode
+    };
+    console.log(counterParams);
+    var counter = await emailcounter.findCounter(counterParams);
+    if(counter.success) {
+      var dataCounter = counter.data;
+      if(dataCounter.counter >= 2){       
+        return res.status(500).send( { success: false, message: "Reach limit send email for status" + statusCode, data: {} }); 
+      } else{
+        dataCounter.counter = dataCounter.counter + 1;
+
+        var updateCounter = await emailcounter.updateCounter(dataCounter);
+      }
+    }else{
+      var counterInsertParams = {
+        reservation_no: reservationNo,
+        status_code: statusCode,
+        counter: 1
+      };
+  
+      var createCounter = await emailcounter.findOrCreate(dataCounter, counterInsertParams);
+    }
+
+    const params = { };
+    var where = " WHERE 1=1 "
+
+    params.partner_id = userId;
+    where += " AND rv.reservation_no = '" + reservationNo + "' "; 
+         
+    let getData = await resv.findReservation(where);   
+
+    if (getData.success) {   
+      var smtpTransport = nodemailer.createTransport({
+        host: "missandei.id.rapidplex.com",
+        port: 465,
+        secure: true,
+        auth: {
+          user: EMAIL_USERNAME,
+          pass: EMAIL_PASSWORD
+        }
+      });
+
+      var statusPayment = "";
+      if (reservation.status_code == "ORDER_NEW") {
+        statusPayment = "Belum Dibayar";
+      } else if (reservation.status_code == "ORDER_DP_COMPLETED") {
+        statusPayment = "Sudah DP";
+      } else if (reservation.status_code == "ORDER_PAYMENT_COMPLETED") {
+        statusPayment = "Sudah Lunas";
+      }
+
+      var templateInvoice = fs.readFileSync('./views/invoice.html', 'utf-8');
+      var compileInvoice = Hogan.compile(templateInvoice);
+
+      var zero = 0;
+      var totalPrice = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+      var totalDiscount = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+      var totalPayment = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+      var totalDownPayment = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+
+      if(reservation.total_price){
+        totalPrice = reservation.total_price.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+      }
+
+      if(reservation.total_discount){
+        totalDiscount = reservation.total_discount.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+      }
+
+      if(reservation.total_payment){
+        totalPayment = reservation.total_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+      }
+
+      if(reservation.total_down_payment){
+        totalDownPayment = reservation.total_down_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+      }
+
+      var services = new Array();
+      
+      getData.data.reservation_services.forEach(
+        element => { 
+          var price = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+
+          if(element.price){
+            price = element.price.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          }
+
+          services.push({ 
+            description: element.description,
+            price: price
+            }); 
+        }
+      );
+      
+      let mailoptions = {
+        from: '"Hai Info" notify@haiorganizer.com',
+        to: getData.data.reservation_contact.email,
+        subject: "Invoice",
+        html: compileInvoice.render({
+          packageName: reservation.package_name,
+          eventDate:  moment(reservation.event_date).utcOffset(0).format("DD-MM-YYYY"),
+          eventTime: reservation.event_time,
+          codeInvoice: reservation.reservation_no,
+          invoiceDate: moment(reservation.reservation_date).utcOffset(0).format("DD-MM-YYYY"),
+          completePayment: statusPayment,
+          totalPrice: totalPrice,
+          totalDiscount: totalDiscount,
+          totalPayment: totalPayment,
+          totalDownPayment: totalDownPayment,
+          services: services
+        })
+      };
+      // console.log("mailoptions :" + JSON.stringify(mailoptions));
+
+      smtpTransport.sendMail(mailoptions, function(error, res) {
+        if (error) {
+          console.log(error);
+        } else {
+          console.log("Message sent: " + res.response);
+        }
+        //smtpTransport.close();
+      });      
+      }
+      return res.status(200).send( { success: true, message: "Send email for status" + statusCode, data: {} });
+    } catch (err) {
+      console.log(err);
+      return res.status(500).send({ data: err });
+    }    
+};

@@ -187,4 +187,11 @@ reservationRouter.post("/sendinvoiceemail", headerAuth.isUserAuthenticated, (req
   reservationController.getSuccessReservationEmail(data, res);
 });
 
+reservationRouter.post("/sendemailtocustomer", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+  const id = res.locals.auth.id;
+  const type = res.locals.auth.type;
+  
+  reservationController.sendEmailToCustomer(req.body, res);
+});
+
 module.exports = reservationRouter;
