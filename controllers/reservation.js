@@ -97,16 +97,17 @@ exports.updateStatus = async function(req, res, next) {
               totalDiscount = reservation.total_discount.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
             }
 
-            if(reservation.total_payment){
-              totalPayment = reservation.total_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
-            }
-
             if(reservation.total_down_payment){
               totalDownPayment = reservation.total_down_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
             }
+
+            if(reservation.total_payment){
+              totalPayment = reservation.total_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+            }            
+           
+            var detailUser = getData.data.reservation_contact;
   
-            var services = new Array();
-            
+            var services = new Array();            
             getData.data.reservation_services.forEach(
               element => { 
                 var price = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
@@ -116,6 +117,7 @@ exports.updateStatus = async function(req, res, next) {
                 }
 
                 services.push({ 
+                  serviceTitle: element.sub_service_title,
                   description: element.description,
                   price: price
                  }); 
@@ -132,6 +134,8 @@ exports.updateStatus = async function(req, res, next) {
                 eventTime: reservation.event_time,
                 codeInvoice: reservation.reservation_no,
                 invoiceDate: moment(reservation.reservation_date).utcOffset(0).format("DD-MM-YYYY"),
+                customerName: detailUser.name,
+                customerAddress: detailUser.address,
                 completePayment: statusPayment,
                 totalPrice: totalPrice,
                 totalDiscount: totalDiscount,
@@ -190,7 +194,7 @@ exports.updateStatusManual = async function(req, res, next) {
             statusPayment = "Sudah Lunas";
           }
 
-          var templateInvoice = fs.readFileSync('./views/invoice.html', 'utf-8');
+          var templateInvoice = fs.readFileSync('./views/invoice_manual.html', 'utf-8');
           var compileInvoice = Hogan.compile(templateInvoice);
 
           var zero = 0;
@@ -205,18 +209,19 @@ exports.updateStatusManual = async function(req, res, next) {
 
           if(reservation.total_discount){
             totalDiscount = reservation.total_discount.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          }          
+
+          if(reservation.total_down_payment){
+            totalDownPayment = reservation.total_down_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
           }
 
           if(reservation.total_payment){
             totalPayment = reservation.total_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
           }
 
-          if(reservation.total_down_payment){
-            totalDownPayment = reservation.total_down_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
-          }
+          var detailUser = getData.data.reservation_contact;
 
           var services = new Array();
-          
           getData.data.reservation_services.forEach(
             element => { 
               var price = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
@@ -226,6 +231,7 @@ exports.updateStatusManual = async function(req, res, next) {
               }
 
               services.push({ 
+                serviceTitle: element.sub_service_title,
                 description: element.description,
                 price: price
                }); 
@@ -238,10 +244,12 @@ exports.updateStatusManual = async function(req, res, next) {
             subject: "Invoice",
             html: compileInvoice.render({
               packageName: reservation.package_name,
-              eventDate:  moment(reservation.event_date).utcOffset(0).format("DD-MM-YYYY"),
+              eventDate: moment(reservation.event_date).utcOffset(0).format("DD-MM-YYYY"),
               eventTime: reservation.event_time,
               codeInvoice: reservation.reservation_no,
               invoiceDate: moment(reservation.reservation_date).utcOffset(0).format("DD-MM-YYYY"),
+              customerName: detailUser.name,
+              customerAddress: detailUser.address,
               completePayment: statusPayment,
               totalPrice: totalPrice,
               totalDiscount: totalDiscount,

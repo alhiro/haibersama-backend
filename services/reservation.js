@@ -140,7 +140,7 @@ module.exports =
           var resvDate = moment().utcOffset(0);
 
           if(reservationType == "MANUAL_ORDER"){
-            statusCode = "ORDER_PAYMENT_COMPLETED";
+            statusCode = "ORDER_PARTNER_CONFIRM";
             transactionStatusCode = "ON_PROCESS";
             resvDate = reservationDate
           }

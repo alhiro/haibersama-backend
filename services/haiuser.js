@@ -120,6 +120,7 @@ module.exports = {
           var partnerResult = await PartnerService.getDetail(users.id);
           if(partnerResult.success){ 
             var partner = partnerResult.data;
+            console.log("Data Partner");
             console.log(partner);
             var user = {
               id: users.id,
@@ -152,7 +153,8 @@ module.exports = {
               successjob: partner.successjob, 
               currentbalance: partner.currentbalance, 
               tiername: partner.tiername,  
-              is_verified: !partner.is_verified? false: partner.is_verified,        
+              is_verified: !partner.is_verified ? false : partner.is_verified,
+              process_verified: users.process_verified,     
               awards: partner.awards,
               portfolios: partner.portfolios,
               experiences: partner.experiences,

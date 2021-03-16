@@ -3,7 +3,7 @@ var categoryRouter = express.Router();
 var categoryController = require("../controllers/category");
 var headerAuth  =  require('../authMiddleware')
 
-categoryRouter.get("/getall", headerAuth.isUserAuthenticated, (req, res, next) => {
+categoryRouter.get("/getall", (req, res, next) => {
   categoryController.getAllCategories(req, res);
 });
 

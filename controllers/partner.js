@@ -9,7 +9,7 @@ exports.getDetail = async function (req, res, next) {
   try {
         var partnerDetail = await partner.getDetail(partner_id);
         console.log("controller test test");
-        return res.status(200).json({ status: 200, data: partnerDetail, message: "Succesfully Partner Retrieved" });
+        return res.status(200).json({ status: 200, data: partnerDetail.data, message: "Succesfully Partner Retrieved" });
   } catch (err) {
     return res
       .status(500)

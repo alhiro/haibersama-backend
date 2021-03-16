@@ -7,7 +7,7 @@ packageRouter.get("/getall", headerAuth.isUserAuthenticated, (req, res, next) =>
   packageController.getAllPackage(req, res);
 });
 
-packageRouter.get("/getlist", headerAuth.isUserAuthenticated, (req, res, next) => {
+packageRouter.get("/getlist", (req, res, next) => {
   packageController.getList(req, res);
 });
 
