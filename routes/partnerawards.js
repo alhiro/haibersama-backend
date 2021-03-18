@@ -22,9 +22,9 @@ var storage = multer.diskStorage({
 //will be using this for uplading
 const upload = multer({ storage: storage });
 
-partnerAwardsRouter.get("/getall", headerAuth.isUserAuthenticated, (req, res, next) => {
-    const partner_id = res.locals.auth.id;
-    partnerAwardsController.getAllAwards(partner_id, res);
+partnerAwardsRouter.get("/getall", (req, res, next) => {
+    // const partner_id = res.locals.auth.id;
+    partnerAwardsController.getAllAwards(req, res);
 });
 
 partnerAwardsRouter.get("/get", headerAuth.isUserAuthenticated, (req, res, next) => {

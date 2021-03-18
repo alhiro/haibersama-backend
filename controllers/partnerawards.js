@@ -2,9 +2,10 @@ const partnerawards = require("../services/partnerawards");
 const sequelizeTransaction = require("../config/sequelizeTransaction");
 
 exports.getAllAwards = async function(req, res, next) {
-  const partner_id = req;
+  // const partner_id = req;  
+  const partner_id = req.query.partner_id;
   try {
-    var params = { partner_id: partner_id };
+    var params = { partner_id: partner_id }    
     var awards = await partnerawards.getList(params);
     return res
       .status(200)

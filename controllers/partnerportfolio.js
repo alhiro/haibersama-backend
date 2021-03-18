@@ -2,7 +2,8 @@ const partnerportfolio = require("../services/partnerportfolio");
 const sequelizeTransaction = require("../config/sequelizeTransaction");
 
 exports.getAllPortfolio = async function(req, res, next) {
-  const partner_id = req;
+  // const partner_id = req;
+  const partner_id = req.query.partner_id;
   try {
     var params = { partner_id: partner_id };
     var portfolio = await partnerportfolio.getList(params);

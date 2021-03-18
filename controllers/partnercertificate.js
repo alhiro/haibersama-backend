@@ -2,7 +2,8 @@ const partnercertificate = require("../services/partnercertificate");
 const sequelizeTransaction = require("../config/sequelizeTransaction");
 
 exports.getAllCertificate = async function(req, res, next) {
-  const partner_id = req;
+  // const partner_id = req;
+  const partner_id = req.query.partner_id;
   try {
     var params = { partner_id: partner_id };
     var certificate = await partnercertificate.getList(params);
