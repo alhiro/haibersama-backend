@@ -22,9 +22,13 @@ var storage = multer.diskStorage({
 //will be using this for uplading
 const upload = multer({ storage: storage });
 
-partnerCertificateRouter.get("/getall", (req, res, next) => {
-    // const partner_id = res.locals.auth.id;
-    partnerCertificateController.getAllCertificate(req, res);
+partnerCertificateRouter.get("/getcertificated", (req, res, next) => {
+  partnerCertificateController.getCertificate(req, res);
+});
+
+partnerCertificateRouter.get("/getall", headerAuth.isUserAuthenticated, (req, res, next) => {
+    const partner_id = res.locals.auth.id;
+    partnerCertificateController.getAllCertificate(partner_id, res);
 });
 
 partnerCertificateRouter.get("/get", headerAuth.isUserAuthenticated, (req, res, next) => {

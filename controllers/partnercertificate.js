@@ -1,9 +1,24 @@
 const partnercertificate = require("../services/partnercertificate");
 const sequelizeTransaction = require("../config/sequelizeTransaction");
 
-exports.getAllCertificate = async function(req, res, next) {
+exports.getCertificate = async function(req, res, next) {
   // const partner_id = req;
   const partner_id = req.query.partner_id;
+  try {
+    var params = { partner_id: partner_id };
+    var certificate = await partnercertificate.getList(params);
+    return res
+      .status(200)
+      .json({ status: 200, data: certificate.data, message: "Succesfully Retrieved" });
+  } catch (err) {
+    return res
+      .status(500)
+      .send({ code: 500, success: false, message: err.message, data: { err } });
+  }
+};
+
+exports.getAllCertificate = async function(req, res, next) {
+  const partner_id = req;
   try {
     var params = { partner_id: partner_id };
     var certificate = await partnercertificate.getList(params);

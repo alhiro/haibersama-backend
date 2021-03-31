@@ -69,3 +69,4 @@ const partnerCertificate = dbSeq.define('partner_certificate', {
 module.exports = partnerCertificate
 
 partnerCertificate.belongsTo(HaiUser, { foreignKey: "partner_id" });
+HaiUser.hasMany(partnerCertificate, { foreignKey: "partner_id" });

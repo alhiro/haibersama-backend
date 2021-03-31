@@ -73,3 +73,4 @@ const partnerExperience = dbSeq.define('partner_experience', {
 module.exports = partnerExperience
 
 partnerExperience.belongsTo(HaiUser, { foreignKey: "partner_id" });
+HaiUser.hasMany(partnerExperience, { foreignKey: "partner_id" });

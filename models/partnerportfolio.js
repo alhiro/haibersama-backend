@@ -1,6 +1,6 @@
 var dbSeq = require('../config/sequelize')
 var Sequelize = require('sequelize')
-var User = require('./haiuser')
+var HaiUser = require('./haiuser')
 
 const partnerPortfolio = dbSeq.define('partner_portfolio', {
   id: {
@@ -68,4 +68,5 @@ const partnerPortfolio = dbSeq.define('partner_portfolio', {
 
 module.exports = partnerPortfolio
 
-partnerPortfolio.belongsTo(User, { foreignKey: "partner_id" });
+partnerPortfolio.belongsTo(HaiUser, { foreignKey: "partner_id" });
+HaiUser.hasMany(partnerPortfolio, { foreignKey: "partner_id" });

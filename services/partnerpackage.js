@@ -66,9 +66,9 @@ module.exports = {
         partner_id: partnerId,
         category_id: CategoryId,
         service_id: ServiceId,
-        totalprice: TotalPrice,
-        // description: Description,
+        totalprice: TotalPrice,        
         duration: Duration,
+        // description: Description,
         // additional_services: Additional,
         // terms: terms,
         partner_package_details: arrDetails
@@ -175,19 +175,21 @@ module.exports = {
         category_id: CategoryId,
         service_id: ServiceId,
         totalprice: TotalPrice,
+        duration: Duration,
         // description: Description,
-        duration: Duration//,
         // additional_services: Additional,
         // terms: terms
       };
 
       console.log(objPackage, "objPackage");
       
-      return PartnerPackageHeader.update(objPackage, { where: { id:Id }})
+      return PartnerPackageHeader.update(objPackage, { where: { id: Id }})
       .then(async (updated) => {           
           for (let i = 0; i < arrDetails.length; i++) {
             var objDetail = arrDetails[i];
-            var res = PartnerPackageDetail.update(objDetail, { where: { id: objDetail.id }});
+            var res = PartnerPackageDetail.update(objDetail, { 
+              where: { id: objDetail.id }
+            });
           }
 
           var package = await PartnerPackageHeader.findOne({

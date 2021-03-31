@@ -22,9 +22,13 @@ var storage = multer.diskStorage({
 //will be using this for uplading
 const upload = multer({ storage: storage });
 
-partnerPortfolioRouter.get("/getall", (req, res, next) => {
-  // const partner_id = res.locals.auth.id;
-  partnerPortfolioController.getAllPortfolio(req, res);
+partnerPortfolioRouter.get("/getportfolio", (req, res, next) => {
+  partnerPortfolioController.getPortfolio(req, res);
+});
+
+partnerPortfolioRouter.get("/getall", headerAuth.isUserAuthenticated, (req, res, next) => {
+  const partner_id = res.locals.auth.id;
+  partnerPortfolioController.getAllPortfolio(partner_id, res);
 });
 
 partnerPortfolioRouter.get("/get", headerAuth.isUserAuthenticated, (req, res, next) => {

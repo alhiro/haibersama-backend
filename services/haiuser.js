@@ -1,6 +1,10 @@
 const User = require("../models/haiuser");
 const PartnerCategory = require("../models/partnerCategory");
 const PartnerService = require("../services/partner");
+const PartnerAward = require('../models/partnerawards');
+const PartnerCertificate = require('../models/partnercertificate');
+const PartnerExperience = require('../models/partnerexperience');
+const PartnerPortfolio = require('../models/partnerportfolio');
 //const Otp = require('../models/otp');
 const transformers = require("../lib/transformers");
 const jwt = require("../lib/jwt");
@@ -106,7 +110,21 @@ module.exports = {
   findUserProfile: async (params) => {    
     try {
       var users = await User.findOne({ 
-        where: params 
+        where: params,
+        include: [
+          {
+            model: PartnerAward
+          },
+          {
+            model: PartnerCertificate
+          },
+          {
+            model: PartnerExperience
+          },
+          {
+            model: PartnerPortfolio
+          }
+        ]
       });
         
       if(!users)
@@ -155,10 +173,10 @@ module.exports = {
               tiername: partner.tiername,  
               is_verified: !partner.is_verified ? false : partner.is_verified,
               process_verified: users.process_verified,     
-              awards: partner.awards,
-              portfolios: partner.portfolios,
-              experiences: partner.experiences,
-              certificates: partner.certificates, 
+              partner_awards: users.partner_awards,
+              partner_portfolios: users.partner_portfolios,
+              partner_experiences: users.partner_experiences,
+              partner_certificates: users.partner_certificates
             }
             
             return { success: true, message: "User Found", data: user };              
