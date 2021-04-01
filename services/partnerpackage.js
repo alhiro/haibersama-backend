@@ -176,6 +176,7 @@ module.exports = {
         service_id: ServiceId,
         totalprice: TotalPrice,
         duration: Duration,
+        partner_package_details: arrDetails
         // description: Description,
         // additional_services: Additional,
         // terms: terms
@@ -187,7 +188,7 @@ module.exports = {
       .then(async (updated) => {           
           for (let i = 0; i < arrDetails.length; i++) {
             var objDetail = arrDetails[i];
-            var res = PartnerPackageDetail.update(objDetail, { 
+            var res = await PartnerPackageDetail.update(objDetail, { 
               where: { id: objDetail.id }
             });
           }
@@ -207,6 +208,75 @@ module.exports = {
           });
 
           return { success: true, message: "Package Successfully Updated", data: package } })
+      .catch((err) => { return { success: false, message: "Update Package Failed", data: err } });
+
+    } catch (error) {
+      console.log(error);
+      //await transaction.rollback();
+      throw error;
+    }
+  },
+
+  updatePackageDetail: async req => {
+    try {
+      const Id = req.body.Id;
+      const name = req.body.Name;
+      const partnerId = req.body.PartnerId;
+      const CategoryId = req.body.CategoryId;
+      const ServiceId = req.body.ServiceId;
+      var TotalPrice = 0;
+      var Duration = 0;
+
+      var arrDetails = [];
+
+      for (let i = 0; i < req.body.PackageDetails.length; i++) {
+        var objDetail = {
+          //id: req.body.PackageDetails[i].Id,
+          package_header_id: req.body.PackageDetails[i].PackageHeaderId,
+          sub_service_title: req.body.PackageDetails[i].SubServiceTitle,
+          price: req.body.PackageDetails[i].Price,
+          description: req.body.PackageDetails[i].Description,
+          duration: req.body.PackageDetails[i].Duration,
+          additional_services: req.body.PackageDetails[i].Additional,
+          terms: req.body.PackageDetails[i].Terms
+        };
+        TotalPrice += parseInt(req.body.PackageDetails[i].Price);
+        Duration += req.body.PackageDetails[i].Duration;
+        arrDetails.push(objDetail);
+      }
+
+      var objPackage = {
+        id: Id,
+        name: name,
+        partner_id: partnerId,
+        category_id: CategoryId,
+        service_id: ServiceId,
+        totalprice: TotalPrice,
+        duration: Duration,
+        partner_package_details: arrDetails
+      };
+
+      console.log(objPackage, "objPackage");
+      
+      return PartnerPackageHeader.update(objPackage, { where: { id: Id }})
+      .then(async (updated) => {           
+          for (let i = 0; i < arrDetails.length; i++) {
+            var objDetail = arrDetails[i];
+            var res = await PartnerPackageDetail.create(objDetail,{ 
+              where: { package_header_id: objDetail.package_header_id }
+            });
+          }
+
+          var package = await PartnerPackageHeader.findOne({
+            where: { id: Id }, 
+            include: [
+              {
+                model: PartnerPackageDetail
+              }
+            ], 
+          });
+
+          return { success: true, message: "Package Detail Successfully Added", data: package } })
       .catch((err) => { return { success: false, message: "Update Package Failed", data: err } });
 
     } catch (error) {
@@ -239,5 +309,35 @@ module.exports = {
       console.log(err);
       return { success: false, message: "Package Not Found", data: err } 
     });
- },
+  },
+
+  destroyPackage: async (id) => {
+    return await PartnerPackageHeader.destroy({
+      where: {
+        id: id
+      }
+    })
+      .then((data) => {
+        return (!data) ? { success: false, message: "Package Not Found", data: {} } : { success: true, message: "Package Found", data: {} }
+      })
+      .catch((err) => {
+        console.log(err);
+        return { success: false, message: "Package Not Found", data: err }
+      });
+  },
+
+  destroyPackageDetail: async (id) => {
+    return await PartnerPackageDetail.destroy({
+      where: {
+        id: id
+      }
+    })
+      .then((data) => {
+        return (!data) ? { success: false, message: "Package Not Found", data: {} } : { success: true, message: "Package Found", data: {} }
+      })
+      .catch((err) => {
+        console.log(err);
+        return { success: false, message: "Package Not Found", data: err }
+      });
+  },  
 };

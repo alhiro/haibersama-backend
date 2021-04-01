@@ -40,6 +40,17 @@ exports.addPackage = async function(req, res, next) {
     }
   };
 
+  exports.addPackageDetail = async function(req, res, next) {
+    try {
+      console.log("controller add package detail")
+
+      let update = await package.updatePackageDetail(req);
+      return res.status(200).send(update);
+    } catch (err) {
+      return res.status(500).send({ data: err });
+    }
+  };
+
   exports.getList = async function (req, res, next) {
     const { body } = req;
     const partner_id = parseInt(req.query.partnerid);
@@ -60,6 +71,32 @@ exports.addPackage = async function(req, res, next) {
     try {
           var packages = await package.getPackage(id);
           return res.status(200).json({ status: 200, data: packages, message: "Succesfully Partner Packages Retrieved" });
+    } catch (err) {
+      return res
+        .status(500)
+        .send({ code: 500, success: false, message: err.message, data: { err } });
+    }
+  };
+
+  exports.deletePackage = async function (req, res, next) {
+    const { body } = req;
+    const id = parseInt(req.query.id);
+    try {
+          var packages = await package.destroyPackage(id);
+          return res.status(200).json({ status: 200, data: packages, message: "Succesfully Deleted Partner Packages" });
+    } catch (err) {
+      return res
+        .status(500)
+        .send({ code: 500, success: false, message: err.message, data: { err } });
+    }
+  };
+
+  exports.deletePackageDetail = async function (req, res, next) {
+    const { body } = req;
+    const id = parseInt(req.query.id);
+    try {
+          var packages = await package.destroyPackageDetail(id);
+          return res.status(200).json({ status: 200, data: packages, message: "Succesfully Deleted Partner Packages" });
     } catch (err) {
       return res
         .status(500)
