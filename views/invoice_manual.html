@@ -1240,7 +1240,7 @@
                                                                                                                         class="invReg"
                                                                                                                         style="text-align:right;
                                                                                                                         padding: 8px 12px;">
-                                                                                                                         &nbsp;
+                                                                                                                        Rp. {{totalPrice}}
                                                                                                                     </td>
                                                                                                                 </tr>
                                                                                                                 <tr
@@ -1266,7 +1266,9 @@
                                                                                                                             style="padding: 0;
                                                                                                                             margin: 0;
                                                                                                                             list-style: '- '">
-                                                                                                                            {{#services}}
+                                                                                                                            {{description}}
+
+                                                                                                                            <!-- {{#services}}
                                                                                                                             <li style="margin: 0; width: 100%; display: inline-block; border-top: 1px dashed #cccccc;
                                                                                                                             padding-top: 10px;">
                                                                                                                                 <div style="text-align: left;
@@ -1276,7 +1278,7 @@
                                                                                                                                 <div style="width: 100%;
                                                                                                                                 float: left; margin-bottom: 5px;">{{description}}</div>
                                                                                                                             </li>
-                                                                                                                            {{/services}}
+                                                                                                                            {{/services}} -->
                                                                                                                         </ul>
                                                                                                                     </td>
                                                                                                                 </tr>
@@ -1312,7 +1314,7 @@
                                                                                                                         123 123 123 -->
                                                                                                                     </td>
                                                                                                                 </tr>
-                                                                                                                <tr>
+                                                                                                                <!-- <tr>
                                                                                                                     <td width="189"
                                                                                                                         valign="middle"
                                                                                                                         height="25"
@@ -1327,7 +1329,7 @@
                                                                                                                         style="text-align: right">
                                                                                                                         Rp. {{totalPrice}}
                                                                                                                     </td>
-                                                                                                                </tr>
+                                                                                                                </tr> -->
                                                                                                                 <!-- end group -->
                                                                                                                 <!-- you can duplicate this group or delete it-->
                                                                                                                 <tr>
@@ -1383,6 +1385,24 @@
                                                                                                                     </td>
                                                                                                                 </tr>
                                                                                                                 <!-- end group -->
+                                                                                                                <tr>
+                                                                                                                    <td width="189"
+                                                                                                                        valign="middle"
+                                                                                                                        height="25"
+                                                                                                                        class="invReg"
+                                                                                                                        style="text-align: right">
+                                                                                                                        Sisa Pembayaran
+                                                                                                                    </td>
+                                                                                                                    <td width="189"
+                                                                                                                        valign="middle"
+                                                                                                                        height="25"
+                                                                                                                        class="invReg"
+                                                                                                                        style="text-align: right">
+                                                                                                                        <span style="color: rgb(255, 103, 95)">Rp. {{remainingPayment}}</span>
+                                                                                                                    </td>
+                                                                                                                </tr>
+                                                                                                                <!-- end group -->
+                                                                                                                <!-- you can duplicate this group or delete it-->
                                                                                                             </tbody>
                                                                                                         </table>
                                                                                                         <!--======================= END SUBTOTAL, TOTAL, VAT. GROUP =-->

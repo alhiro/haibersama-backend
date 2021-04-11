@@ -107,22 +107,22 @@ exports.updateStatus = async function(req, res, next) {
            
             var detailUser = getData.data.reservation_contact;
   
-            var services = new Array();            
-            getData.data.reservation_services.forEach(
-              element => { 
-                var price = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+            // var services = new Array();            
+            // getData.data.reservation_services.forEach(
+            //   element => { 
+            //     var price = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
 
-                if(element.price){
-                  price = element.price.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
-                }
+            //     if(element.price){
+            //       price = element.price.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+            //     }
 
-                services.push({ 
-                  serviceTitle: element.sub_service_title,
-                  description: element.description,
-                  price: price
-                 }); 
-              }
-            );
+            //     services.push({ 
+            //       serviceTitle: element.sub_service_title,
+            //       description: element.description,
+            //       price: price
+            //      }); 
+            //   }
+            // );
 
             let mailoptions = {
               from: '"Hai Info" notify@haiorganizer.com',
@@ -141,7 +141,8 @@ exports.updateStatus = async function(req, res, next) {
                 totalDiscount: totalDiscount,
                 totalPayment: totalPayment,
                 totalDownPayment: totalDownPayment,
-                services: services
+                description: reservation.description,
+                //services: services
               })
             };
             // console.log("mailoptions :" + JSON.stringify(mailoptions));
@@ -202,6 +203,7 @@ exports.updateStatusManual = async function(req, res, next) {
           var totalDiscount = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
           var totalPayment = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
           var totalDownPayment = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          var remainingPayment = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
 
           if(reservation.total_price){
             totalPrice = reservation.total_price.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
@@ -221,23 +223,25 @@ exports.updateStatusManual = async function(req, res, next) {
 
           var detailUser = getData.data.reservation_contact;
 
-          var services = new Array();
-          getData.data.reservation_services.forEach(
-            element => { 
-              var price = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          remainingPayment = parseInt(totalDownPayment.replace(/[$,]/g, '')) - parseInt(totalPrice.replace(/[$,]/g, ''));
 
-              if(element.price){
-                price = element.price.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
-              }
+          // var services = new Array();
+          // getData.data.reservation_services.forEach(
+          //   element => { 
+          //     var price = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
 
-              services.push({ 
-                serviceTitle: element.sub_service_title,
-                description: element.description,
-                price: price
-               }); 
-            }
-          );
-          
+          //     if(element.price){
+          //       price = element.price.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          //     }
+
+          //     services.push({ 
+          //       serviceTitle: element.sub_service_title,
+          //       description: element.description,
+          //       price: price
+          //      }); 
+          //   }
+          // );
+
           let mailoptions = {
             from: '"Hai Info" notify@haiorganizer.com',
             to: getData.data.reservation_contact.email,
@@ -255,7 +259,9 @@ exports.updateStatusManual = async function(req, res, next) {
               totalDiscount: totalDiscount,
               totalPayment: totalPayment,
               totalDownPayment: totalDownPayment,
-              services: services
+              remainingPayment: remainingPayment.toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+              description: reservation.description,
+              // services: services
             })
           };
           // console.log("mailoptions :" + JSON.stringify(mailoptions));

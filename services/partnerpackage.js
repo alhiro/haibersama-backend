@@ -14,16 +14,16 @@ module.exports = {
         //               'description'
         //   ],
         order: [["created_at", "ASC"]],
-        include: [
-          {
-            model: PartnerPackageDetail,
-            // include: [
-            //   {
-            //     model: SubService
-            //   }
-            // ]
-          }
-        ]
+        // include: [
+        //   {
+        //     model: PartnerPackageDetail,
+        //     // include: [
+        //     //   {
+        //     //     model: SubService
+        //     //   }
+        //     // ]
+        //   }
+        // ]
       });
     } catch (error) {
       throw error;
@@ -38,28 +38,28 @@ module.exports = {
       const partnerId = req.body.PartnerId;
       const CategoryId = req.body.CategoryId;
       const ServiceId = req.body.ServiceId;
-      var TotalPrice = 0;
-      // const Description = req.body.Description;
-      var Duration = 0;
-      // const Additional = req.body.Additional;
-      // const terms = req.body.terms;
+      const TotalPrice = req.body.Price;
+      const Duration = req.body.Duration;
+      const Description = req.body.Description;
+      const Additional = req.body.Additional;
+      const Terms = req.body.Terms;
 
-      var arrDetails = [];
+      // var arrDetails = [];
 
-      for (let i = 0; i < req.body.PackageDetails.length; i++) {
-        var objDetail = {
-          // subservice_id: req.body.PackageDetails[i].SubServiceId,
-          sub_service_title: req.body.PackageDetails[i].SubServiceTitle,
-          price: req.body.PackageDetails[i].Price,
-          description: req.body.PackageDetails[i].Description,
-          duration: req.body.PackageDetails[i].Duration,
-          additional_services: req.body.PackageDetails[i].Additional,
-          terms: req.body.PackageDetails[i].Terms
-        };
-        TotalPrice += req.body.PackageDetails[i].Price;
-        Duration += req.body.PackageDetails[i].Duration;
-        arrDetails.push(objDetail);
-      }
+      // for (let i = 0; i < req.body.PackageDetails.length; i++) {
+      //   var objDetail = {
+      //     // subservice_id: req.body.PackageDetails[i].SubServiceId,
+      //     sub_service_title: req.body.PackageDetails[i].SubServiceTitle,
+      //     price: req.body.PackageDetails[i].Price,
+      //     description: req.body.PackageDetails[i].Description,
+      //     duration: req.body.PackageDetails[i].Duration,
+      //     additional_services: req.body.PackageDetails[i].Additional,
+      //     terms: req.body.PackageDetails[i].Terms
+      //   };
+      //   TotalPrice += req.body.PackageDetails[i].Price;
+      //   Duration += req.body.PackageDetails[i].Duration;
+      //   arrDetails.push(objDetail);
+      // }
 
       var objPackage = {
         name: name,
@@ -68,10 +68,10 @@ module.exports = {
         service_id: ServiceId,
         totalprice: TotalPrice,        
         duration: Duration,
-        // description: Description,
-        // additional_services: Additional,
-        // terms: terms,
-        partner_package_details: arrDetails
+        description: Description,
+        additional_services: Additional,
+        terms: Terms,
+        //partner_package_details: arrDetails
       };
 
       console.log(objPackage, "objPackage");
@@ -83,12 +83,12 @@ module.exports = {
           category_id: CategoryId,
           service_id: ServiceId
         },
-        include: [
-          {
-            model: PartnerPackageDetail,
-            //transaction
-          }
-        ],
+        // include: [
+        //   {
+        //     model: PartnerPackageDetail,
+        //     //transaction
+        //   }
+        // ],
         defaults: objPackage,
         //transaction
       });
@@ -120,16 +120,16 @@ module.exports = {
       return await PartnerPackageHeader.findAll({
         where: params,
         order: [["created_at", "ASC"]],
-        include: [
-          {
-            model: PartnerPackageDetail,
-            // include: [
-            //   {
-            //     model: SubService
-            //   }
-            // ]
-          }
-        ]
+        // include: [
+        //   {
+        //     model: PartnerPackageDetail,
+        //     // include: [
+        //     //   {
+        //     //     model: SubService
+        //     //   }
+        //     // ]
+        //   }
+        // ]
       });
     } catch (error) {
       throw error;
@@ -143,30 +143,30 @@ module.exports = {
       const partnerId = req.body.PartnerId;
       const CategoryId = req.body.CategoryId;
       const ServiceId = req.body.ServiceId;
-      var TotalPrice = 0;
-      // const Description = req.body.Description;
-      var Duration = 0;
-      // const Additional = req.body.Additional;
-      // const terms = req.body.terms;
+      const TotalPrice = req.body.Price;
+      const Duration = req.body.Duration;
+      const Description = req.body.Description;
+      const Additional = req.body.Additional;
+      const Terms = req.body.Terms;
 
-      var arrDetails = [];
+      // var arrDetails = [];
 
-      for (let i = 0; i < req.body.PackageDetails.length; i++) {
-        var objDetail = {
-          id: req.body.PackageDetails[i].Id,
-          package_header_id: req.body.PackageDetails[i].PackageHeaderId,
-          // subservice_id: req.body.PackageDetails[i].SubServiceId,
-          sub_service_title: req.body.PackageDetails[i].SubServiceTitle,
-          price: req.body.PackageDetails[i].Price,
-          description: req.body.PackageDetails[i].Description,
-          duration: req.body.PackageDetails[i].Duration,
-          additional_services: req.body.PackageDetails[i].Additional,
-          terms: req.body.PackageDetails[i].Terms
-        };
-        TotalPrice += parseInt(req.body.PackageDetails[i].Price);
-        Duration += req.body.PackageDetails[i].Duration;
-        arrDetails.push(objDetail);
-      }
+      // for (let i = 0; i < req.body.PackageDetails.length; i++) {
+      //   var objDetail = {
+      //     id: req.body.PackageDetails[i].Id,
+      //     package_header_id: req.body.PackageDetails[i].PackageHeaderId,
+      //     // subservice_id: req.body.PackageDetails[i].SubServiceId,
+      //     sub_service_title: req.body.PackageDetails[i].SubServiceTitle,
+      //     price: req.body.PackageDetails[i].Price,
+      //     description: req.body.PackageDetails[i].Description,
+      //     duration: req.body.PackageDetails[i].Duration,
+      //     additional_services: req.body.PackageDetails[i].Additional,
+      //     terms: req.body.PackageDetails[i].Terms
+      //   };
+      //   TotalPrice += parseInt(req.body.PackageDetails[i].Price);
+      //   Duration += req.body.PackageDetails[i].Duration;
+      //   arrDetails.push(objDetail);
+      // }
 
       var objPackage = {
         id: Id,
@@ -174,12 +174,12 @@ module.exports = {
         partner_id: partnerId,
         category_id: CategoryId,
         service_id: ServiceId,
-        totalprice: TotalPrice,
+        totalprice: TotalPrice,        
         duration: Duration,
-        partner_package_details: arrDetails
-        // description: Description,
-        // additional_services: Additional,
-        // terms: terms
+        description: Description,
+        additional_services: Additional,
+        terms: Terms,
+        //partner_package_details: arrDetails
       };
 
       console.log(objPackage, "objPackage");
@@ -195,16 +195,16 @@ module.exports = {
 
           var package = await PartnerPackageHeader.findOne({
             where: { id: Id }, 
-            include: [
-              {
-                model: PartnerPackageDetail,
-                // include: [
-                //   {
-                //     model: SubService
-                //   }
-                // ]
-              }
-            ], 
+            // include: [
+            //   {
+            //     model: PartnerPackageDetail,
+            //     // include: [
+            //     //   {
+            //     //     model: SubService
+            //     //   }
+            //     // ]
+            //   }
+            // ], 
           });
 
           return { success: true, message: "Package Successfully Updated", data: package } })
@@ -224,26 +224,29 @@ module.exports = {
       const partnerId = req.body.PartnerId;
       const CategoryId = req.body.CategoryId;
       const ServiceId = req.body.ServiceId;
-      var TotalPrice = 0;
-      var Duration = 0;
+      const TotalPrice = req.body.Price;
+      const Duration = req.body.Duration;
+      const Description = req.body.Description;
+      const Additional = req.body.Additional;
+      const Terms = req.body.Terms;
 
-      var arrDetails = [];
+      // var arrDetails = [];
 
-      for (let i = 0; i < req.body.PackageDetails.length; i++) {
-        var objDetail = {
-          //id: req.body.PackageDetails[i].Id,
-          package_header_id: req.body.PackageDetails[i].PackageHeaderId,
-          sub_service_title: req.body.PackageDetails[i].SubServiceTitle,
-          price: req.body.PackageDetails[i].Price,
-          description: req.body.PackageDetails[i].Description,
-          duration: req.body.PackageDetails[i].Duration,
-          additional_services: req.body.PackageDetails[i].Additional,
-          terms: req.body.PackageDetails[i].Terms
-        };
-        TotalPrice += parseInt(req.body.PackageDetails[i].Price);
-        Duration += req.body.PackageDetails[i].Duration;
-        arrDetails.push(objDetail);
-      }
+      // for (let i = 0; i < req.body.PackageDetails.length; i++) {
+      //   var objDetail = {
+      //     //id: req.body.PackageDetails[i].Id,
+      //     package_header_id: req.body.PackageDetails[i].PackageHeaderId,
+      //     sub_service_title: req.body.PackageDetails[i].SubServiceTitle,
+      //     price: req.body.PackageDetails[i].Price,
+      //     description: req.body.PackageDetails[i].Description,
+      //     duration: req.body.PackageDetails[i].Duration,
+      //     additional_services: req.body.PackageDetails[i].Additional,
+      //     terms: req.body.PackageDetails[i].Terms
+      //   };
+      //   TotalPrice += parseInt(req.body.PackageDetails[i].Price);
+      //   Duration += req.body.PackageDetails[i].Duration;
+      //   arrDetails.push(objDetail);
+      // }
 
       var objPackage = {
         id: Id,
@@ -251,9 +254,12 @@ module.exports = {
         partner_id: partnerId,
         category_id: CategoryId,
         service_id: ServiceId,
-        totalprice: TotalPrice,
+        totalprice: TotalPrice,        
         duration: Duration,
-        partner_package_details: arrDetails
+        description: Description,
+        additional_services: Additional,
+        terms: Terms,
+        //partner_package_details: arrDetails
       };
 
       console.log(objPackage, "objPackage");
@@ -269,11 +275,11 @@ module.exports = {
 
           var package = await PartnerPackageHeader.findOne({
             where: { id: Id }, 
-            include: [
-              {
-                model: PartnerPackageDetail
-              }
-            ], 
+            // include: [
+            //   {
+            //     model: PartnerPackageDetail
+            //   }
+            // ], 
           });
 
           return { success: true, message: "Package Detail Successfully Added", data: package } })
@@ -291,16 +297,16 @@ module.exports = {
         where: {
             id: id
         }, 
-        include: [
-          {
-            model: PartnerPackageDetail,
-            // include: [
-            //   {
-            //     model: SubService
-            //   }
-            // ]
-          }
-        ], 
+        // include: [
+        //   {
+        //     model: PartnerPackageDetail,
+        //     // include: [
+        //     //   {
+        //     //     model: SubService
+        //     //   }
+        //     // ]
+        //   }
+        // ], 
     })
     .then((data) => {
       return (!data) ? { success: false, message: "Package Not Found", data: {} } : { success: true, message: "Package Found", data: data }

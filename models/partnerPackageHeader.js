@@ -43,22 +43,22 @@ const PartnerPackageHeader = dbSeq.define('partner_package_header', {
     type: Sequelize.DECIMAL,
     allowNull: true
   },
-  // description: {
-  //   type: Sequelize.STRING(200),
-  //   allowNull: false
-  // },
   duration: {
     type: Sequelize.INTEGER,
     allowNull: false
   },
-  // additional_services: {
-  //   type: Sequelize.STRING(50),
-  //   allowNull: true
-  // },
-  // terms: {
-  //   type: Sequelize.STRING(300),
-  //   allowNull: false
-  // },
+  description: {
+    type: Sequelize.STRING(500),
+    allowNull: false
+  },
+  additional_services: {
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
+  terms: {
+    type: Sequelize.STRING(300),
+    allowNull: false
+  },
   created_at: {
     type: Sequelize.DATE,
     allowNull: true

@@ -156,6 +156,7 @@ module.exports =
               service_id: package.service_id,
               name: name,
               package_name: package.name,
+              description: package.description,
               event_date: eventDate,
               event_time: eventTime,
               duration: package.duration,
