@@ -3,6 +3,7 @@ var Sequelize = require('sequelize')
 var Category = require('./category')
 var PartnerPackageDetail = require('./partnerPackageDetail')
 var Service = require('./service')
+var HaiUser = require('./haiuser')
 
 const PartnerPackageHeader = dbSeq.define('partner_package_header', {
   id: {
@@ -19,7 +20,7 @@ const PartnerPackageHeader = dbSeq.define('partner_package_header', {
   partner_id: {
     type: Sequelize.INTEGER,
     allowNull: false,
-    primaryKey: true
+    primaryKey: true,
   },
   category_id: {
     type: Sequelize.INTEGER,
@@ -84,9 +85,11 @@ const PartnerPackageHeader = dbSeq.define('partner_package_header', {
   underscored: true,
 });
 
+PartnerPackageHeader.belongsTo(HaiUser, { foreignKey: "partner_id" });
+HaiUser.hasMany(PartnerPackageHeader, { foreignKey: "partner_id" });
+
 PartnerPackageHeader.belongsTo(Category, {foreignKey: 'category_id'})
 PartnerPackageHeader.belongsTo(Service, {foreignKey: 'service_id'});
-PartnerPackageHeader.hasMany(PartnerPackageDetail, { foreignKey: "package_header_id" });
 
 module.exports = PartnerPackageHeader
 

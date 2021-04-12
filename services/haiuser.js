@@ -5,6 +5,7 @@ const PartnerAward = require('../models/partnerawards');
 const PartnerCertificate = require('../models/partnercertificate');
 const PartnerExperience = require('../models/partnerexperience');
 const PartnerPortfolio = require('../models/partnerportfolio');
+const PartnerPackage = require('../models/partnerPackageHeader');
 //const Otp = require('../models/otp');
 const transformers = require("../lib/transformers");
 const jwt = require("../lib/jwt");
@@ -123,6 +124,9 @@ module.exports = {
           },
           {
             model: PartnerPortfolio
+          },
+          {
+            model: PartnerPackage
           }
         ]
       });
@@ -139,7 +143,7 @@ module.exports = {
           if(partnerResult.success){ 
             var partner = partnerResult.data;
             console.log("Data Partner");
-            console.log(partner);
+            console.log(JSON.stringify(users));
             var user = {
               id: users.id,
               email: users.email,
@@ -176,7 +180,8 @@ module.exports = {
               partner_awards: users.partner_awards,
               partner_portfolios: users.partner_portfolios,
               partner_experiences: users.partner_experiences,
-              partner_certificates: users.partner_certificates
+              partner_certificates: users.partner_certificates,
+              partner_packages: users.partner_package_headers
             }
             
             return { success: true, message: "User Found", data: user };              
