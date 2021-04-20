@@ -493,11 +493,19 @@ module.exports =
          LEFT   JOIN LATERAL (
             SELECT json_agg(y) AS items
             FROM  (select 
-               (event_time::text || ' ' || ph.name || ' at ' || r.event_address) as name,
+               (ph.name || ' at ' || r.event_address) as name,
                event_time::text event_time,
                ph.name package_name,
+               r.name,
+               r.reservation_no,
                r.event_address,
-               r.duration,           
+               r.duration,   
+               r.description,    
+               r.total_price,
+               r.total_payment,
+               r.total_discount,
+               r.total_down_payment,
+               r.transaction_status_code,
                50 height,
                r_details.det details
                from reservation r
