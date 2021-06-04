@@ -45,3 +45,33 @@ exports.searchPartner = async function (req, res, next) {
       .send({ code: 500, success: false, message: err.message, data: { err } });
   }
 };
+
+exports.provinces = async function (req, res, next) {
+  try {
+    var provinc = await partner.getProvinces();
+    return res.status(200).json(
+      { status: 200, message: "Succesfully Provinces Retrieved", data: provinc}
+    );
+  } catch (err) {
+    return res
+      .status(500)
+      .send(
+        { code: 500, success: false, message: err.message, data: { err } }
+      );
+  }
+};
+
+exports.city = async function (req, res, next) {
+  try {
+    var cities = await partner.getCity();
+    return res.status(200).json(
+      { status: 200, message: "Succesfully City Retrieved", data: cities}
+    );
+  } catch (err) {
+    return res
+      .status(500)
+      .send(
+        { code: 500, success: false, message: err.message, data: { err } }
+      );
+  }
+};

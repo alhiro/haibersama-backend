@@ -1,4 +1,6 @@
 const Partner = require('../models/haiuser');
+const Province = require('../models/province');
+const City = require('../models/city');
 
 // const PartnerAwardsService = require('../services/partnerawards');
 // const PartnerExperienceService = require('../services/partnerexperience');
@@ -50,6 +52,42 @@ module.exports =
           throw error
         }
       },
+
+    getProvinces: async () => {
+      try {
+        return await Province.findAll({
+          attributes: [
+            'id',
+            'name'
+          ],
+          include: [
+            {
+              model: City
+            }
+          ]
+        });
+      } catch (error) {
+        throw error
+      }
+    },
+
+    getCity: async () => {
+      try {
+        return await City.findAll({
+          attributes: [
+            'id',
+            'name'
+          ],
+          include: [
+            {
+              model: Province
+            }
+          ]
+        });
+      } catch (error) {
+        throw error
+      }
+    },
 
     getDetail: async (partnerID) => {
         try{

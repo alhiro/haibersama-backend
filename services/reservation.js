@@ -380,6 +380,104 @@ module.exports =
               const feeSetting = await appSetting.findOne({
                 where: { setting_name: "ORDER_FEE" }
               });
+              
+              if (statusCode == "MANUAL_ORDER") {
+                var objBalance = {
+                  partner_id: upReserv.partner_id,
+                  reservation_no: upReserv.reservation_no,
+                  transaction_type: "C",
+                  total_amount: upReserv.total_price,
+                  status: statusCode
+                }
+              } else {
+                var walletAmount =  upReserv.total_price - (upReserv.total_price * (parseInt(feeSetting.setting_value) / 100));
+                console.log(walletAmount);
+                
+                var objBalance = {
+                  partner_id: upReserv.partner_id,
+                  reservation_no: upReserv.reservation_no,
+                  transaction_type: "C",
+                  total_amount: walletAmount,
+                  status: statusCode
+                }
+              }
+
+              var objParam = {
+                reservation_no: upReserv.reservation_no
+              }
+
+              const insertWallet = await wallethistory.findOrCreateWallet(objParam, objBalance);
+
+              var objParamPoint = {
+                user_id: upReserv.partner_id, 
+                reservation_no: upReserv.reservation_no, 
+                reservation_date: upReserv.reservation_date, 
+                total_price: upReserv.total_price
+              };
+              const pointinput = await pointprocess.setPoint(objParamPoint);
+            }
+
+            return { success: true, message: "Reservation Successfully Updated", data: upReserv } })
+        .catch((err) => { return { success: false, message: "Update Reservation Failed", data: err } });
+      } catch (error) {
+        throw (error)
+      }
+    },
+
+    sendInvoiceEmail: async (req) => {
+      try {
+        const { reservationNo, statusCode, totalDp, userId } = req;
+        
+        let transactionStatusCode = "NEW";
+
+        if(statusCode == "ORDER_COMPLETED"){
+          transactionStatusCode = "SUCCESS";
+        } else if (statusCode == "ORDER_CANCEL_BY_PARTNER"){
+          transactionStatusCode = "CANCEL";
+        } else if (statusCode == "ORDER_CANCEL_BY_USER"){
+          transactionStatusCode = "CANCEL";
+        } else if (statusCode == "ORDER_DP_REQUEST"){
+          transactionStatusCode = "NEW";
+        } else if (statusCode == "ORDER_DP_COMPLETED"){
+          transactionStatusCode = "ON_PROCESS";
+        } else if (statusCode == "ORDER_PARTNER_CONFIRM"){
+          transactionStatusCode = "ON_PROCESS";
+        } else if (statusCode == "ORDER_REPAYMENT_REQUEST"){
+          transactionStatusCode = "ON_PROCESS";
+        } else if (statusCode == "ORDER_PAYMENT_COMPLETED"){
+          transactionStatusCode = "ON_PROCESS";
+        }
+
+        // total dp blum dieksekusi
+        var objReservation = {
+          status_code: statusCode, 
+          // total_down_payment: totalDp,
+          transaction_status_code: transactionStatusCode,
+          updated_at: moment().utcOffset(0),
+          updated_by: userId
+        }
+
+        if(totalDp){
+          objReservation.total_down_payment = totalDp;
+        }
+
+        console.log(JSON.stringify(objReservation), "objReservation")
+
+        return Reservation.update(objReservation, {where: {reservation_no: reservationNo}} )
+        .then(async (updated) => { 
+            const upReserv = await Reservation.findOne({ where: { reservation_no: reservationNo } })
+            console.log(JSON.stringify(upReserv), "upReserv")
+
+            const history = {status_code: statusCode, reservation_id: upReserv.id, updatedcreated_at: moment().utcOffset(0), created_by: userId };
+            const upHistory = await ReservationStatusHistory.create(history);
+          
+            if(statusCode == "ORDER_COMPLETED")
+            {
+              console.log("ini ke wallet");
+              //hardcode 3 %
+              const feeSetting = await appSetting.findOne({
+                where: { setting_name: "ORDER_FEE" }
+              });
       
               var walletAmount =  upReserv.total_price - (upReserv.total_price * (parseInt(feeSetting.setting_value) / 100));
               console.log(walletAmount);
@@ -407,8 +505,8 @@ module.exports =
               const pointinput = await pointprocess.setPoint(objParamPoint);
             }
 
-            return { success: true, message: "Reservation Successfully Updated", data: upReserv } })
-        .catch((err) => { return { success: false, message: "Update Reservation Failed", data: err } });
+            return { success: true, message: "Email Invoice Successfully Send", data: upReserv } })
+        .catch((err) => { return { success: false, message: "Send Email Invoice Failed", data: err } });
       } catch (error) {
         throw (error)
       }
@@ -604,6 +702,7 @@ module.exports =
         cat.description category,
         service_id, 
         srv.description service,
+        rv.name,
         event_date, 
         event_time, 
         event_address, 
