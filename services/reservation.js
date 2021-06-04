@@ -722,7 +722,8 @@ module.exports =
         left join info_code ci on ci.code = rv.status_code
         left join info_code rt on rt.code = rv.reservation_type
         WHERE cat.description = a.category 
-        `+where+`				  
+        `+where+`
+          order by rv.id desc
           ) x
         ) c ON true;`,
         {

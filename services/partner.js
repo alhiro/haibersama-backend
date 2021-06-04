@@ -76,7 +76,8 @@ module.exports =
         return await City.findAll({
           attributes: [
             'id',
-            'name'
+            'name',
+            'province_id',
           ],
           include: [
             {
