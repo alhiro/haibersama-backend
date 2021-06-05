@@ -21,6 +21,14 @@ const ReservationContact = dbSeq.define('reservation_contact', {
     type: Sequelize.STRING(50),
     allowNull: false
   },
+  provinsi: {
+    type: Sequelize.STRING(500),
+    allowNull: true
+  },
+  city: {
+    type: Sequelize.STRING(500),
+    allowNull: true
+  },
   address: {
     type: Sequelize.STRING(500),
     allowNull: false

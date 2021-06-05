@@ -16,7 +16,7 @@ module.exports =
     
     findOrCreateReservation: async (data) => {
       try {
-        const { reservationType, reservationDate, partnerId, userId, packageId, eventDate, eventTime, eventAddress, name, address, phoneNo, waNo, email, socialMedia, otherDescription } = data;
+        const { reservationType, reservationDate, partnerId, userId, packageId, eventDate, eventTime, eventAddress, name, provinsi, city, address, phoneNo, waNo, email, socialMedia, otherDescription } = data;
 
         // get services from package partner
         var package = await PackageHeader.findOne({
@@ -171,6 +171,8 @@ module.exports =
               reservation_contact: {
                 reservation_no: reservationNo,
                 name: name,
+                provinsi: provinsi,
+                city: city,
                 address: address,
                 phone_no: phoneNo,
                 wa_no: waNo,
