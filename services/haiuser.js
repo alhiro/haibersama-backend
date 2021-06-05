@@ -393,6 +393,7 @@ module.exports = {
     const {
       email,
       name,
+      title,
       picture,
       description,
       address,
@@ -409,6 +410,7 @@ module.exports = {
     console.log("params :", params);
     let data = {
       name: name,
+      title: title,
       picture: picture,
       description: description,
       address: address,

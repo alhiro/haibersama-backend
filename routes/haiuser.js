@@ -95,6 +95,7 @@ authRouter.post("/updateProfile", headerAuth.isUserAuthenticated, upload.fields(
 
     const data = {
       name: req.body.name,
+      title: req.body.title,
       picture: pictureFile[0],
       address: req.body.address,
       description: req.body.description,
