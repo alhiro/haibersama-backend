@@ -185,15 +185,8 @@ module.exports = {
       console.log(objPackage, "objPackage");
       
       return PartnerPackageHeader.update(objPackage, { where: { id: Id }})
-      .then(async (updated) => {           
-          for (let i = 0; i < arrDetails.length; i++) {
-            var objDetail = arrDetails[i];
-            var res = await PartnerPackageDetail.update(objDetail, { 
-              where: { id: objDetail.id }
-            });
-          }
-
-          var package = await PartnerPackageHeader.findOne({
+      .then(async (updated) => {   
+          const package = await PartnerPackageHeader.findOne({
             where: { id: Id }, 
             // include: [
             //   {

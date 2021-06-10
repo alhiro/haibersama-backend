@@ -92,6 +92,15 @@ module.exports =
 
     getDetail: async (partnerID) => {
         try{
+          var totalPoint = await sequelize.query(`SELECT coalesce(sum(point), 0) AS point FROM point_history AS point_history WHERE point_history.user_id = ` + partnerID,
+          {
+              raw: true,
+              type: sequelize.QueryTypes.SELECT
+          });
+
+          console.log("totalPoint ", + totalPoint);
+
+
           var partners = await sequelize.query(
             `SELECT
                 part.id partnerid, 
@@ -109,8 +118,14 @@ module.exports =
                 coalesce(follower, 0) follower,
                 coalesce(successjob, 0) successjob,
                 coalesce(pbb.current_balance, 0) currentbalance,
+                coalesce(points, 0) points,
                 coalesce(pt.tier_name, 'Perintis') tiername
                 FROM hai_user part
+                left join lateral (
+                  select sum(point) points
+                  from point_history poo
+                  where poo.user_id = part.id
+                ) po on true
                 left join lateral (
                   select avg(rating) rating, count(prr.user_id) reviewcount
                   from partner_rating prr
