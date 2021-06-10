@@ -167,7 +167,7 @@ exports.updateStatus = async function(req, res, next) {
 
 exports.updateStatusManual = async function(req, res, next) {
   try {            
-      let data = await resv.sendInvoiceEmail(req);
+      let data = await resv.updateStatusReservationManual(req);
       
       if (data.success) {
         var reservation = data.data;

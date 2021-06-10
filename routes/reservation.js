@@ -81,7 +81,7 @@ reservationRouter.post("/updatestatus", headerAuth.isUserAuthenticated ,(req, re
   const data = { 
     reservationNo: req.body.reservationNo, 
     statusCode: req.body.statusCode, 
-    // totalDp: req.body.totalDp, 
+    totalDp: req.body.totalDp, 
     userId: id, 
     type: type,
     email: email
@@ -97,6 +97,7 @@ reservationRouter.post("/updatestatusmanual", headerAuth.isPartnerAuthenticated 
 
   const data = { 
     reservationNo: req.body.reservationNo, 
+    reservationType: "MANUAL_ORDER",
     statusCode: req.body.statusCode, 
     totalDp: req.body.totalDp, 
     userId: id, 

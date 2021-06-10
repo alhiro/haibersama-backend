@@ -383,16 +383,7 @@ module.exports =
                 where: { setting_name: "ORDER_FEE" }
               });
               
-              if (statusCode == "MANUAL_ORDER") {
-                var objBalance = {
-                  partner_id: upReserv.partner_id,
-                  reservation_no: upReserv.reservation_no,
-                  transaction_type: "C",
-                  total_amount: upReserv.total_price,
-                  status: statusCode
-                }
-              } else {
-                var walletAmount =  upReserv.total_price - (upReserv.total_price * (parseInt(feeSetting.setting_value) / 100));
+              var walletAmount =  upReserv.total_price - (upReserv.total_price * (parseInt(feeSetting.setting_value) / 100));
                 console.log(walletAmount);
                 
                 var objBalance = {
@@ -402,7 +393,6 @@ module.exports =
                   total_amount: walletAmount,
                   status: statusCode
                 }
-              }
 
               var objParam = {
                 reservation_no: upReserv.reservation_no
@@ -426,9 +416,9 @@ module.exports =
       }
     },
 
-    sendInvoiceEmail: async (req) => {
+    updateStatusReservationManual: async (req) => {
       try {
-        const { reservationNo, statusCode, totalDp, userId } = req;
+        const { reservationNo, reservationType, statusCode, totalDp, userId } = req;
         
         let transactionStatusCode = "NEW";
 
@@ -480,23 +470,49 @@ module.exports =
               const feeSetting = await appSetting.findOne({
                 where: { setting_name: "ORDER_FEE" }
               });
-      
-              var walletAmount =  upReserv.total_price - (upReserv.total_price * (parseInt(feeSetting.setting_value) / 100));
-              console.log(walletAmount);
-              
-              var objBalance = {
-                partner_id: upReserv.partner_id,
-                reservation_no: upReserv.reservation_no,
-                transaction_type: "C",
-                total_amount: walletAmount,
-                status: statusCode
-              }
 
-              var objParam = {
-                reservation_no: upReserv.reservation_no
-              }
+              // setting manual condition not send order fee and no wallet history
+              // var walletAmount =  upReserv.total_price - (upReserv.total_price * (parseInt(feeSetting.setting_value) / 100));
+              //   console.log(walletAmount);
+                
+              //   var objBalance = {
+              //     partner_id: upReserv.partner_id,
+              //     reservation_no: upReserv.reservation_no,
+              //     transaction_type: "C",
+              //     total_amount: walletAmount,
+              //     status: statusCode
+              //   }
 
-              const insertWallet = await wallethistory.findOrCreateWallet(objParam, objBalance);
+              // if (reservationType == "MANUAL_ORDER") {
+              //   console.log("ga kena order fee");
+
+              //   var objBalance = {
+              //     partner_id: upReserv.partner_id,
+              //     reservation_no: upReserv.reservation_no,
+              //     transaction_type: "C",
+              //     total_amount: upReserv.total_price,
+              //     status: statusCode
+              //   }
+              // } else {
+              //   console.log("ini kena order fee");
+
+              //   var walletAmount =  upReserv.total_price - (upReserv.total_price * (parseInt(feeSetting.setting_value) / 100));
+              //   console.log(walletAmount);
+                
+              //   var objBalance = {
+              //     partner_id: upReserv.partner_id,
+              //     reservation_no: upReserv.reservation_no,
+              //     transaction_type: "C",
+              //     total_amount: walletAmount,
+              //     status: statusCode
+              //   }
+              // }
+
+              // var objParam = {
+              //   reservation_no: upReserv.reservation_no
+              // }
+
+              // const insertWallet = await wallethistory.findOrCreateWallet(objParam, objBalance);
 
               var objParamPoint = {
                 user_id: upReserv.partner_id, 
