@@ -372,15 +372,15 @@ module.exports = {
         console.log("updated : " + updated);
         if (updated > 0)
           return {
-            success: true,
+            //success: true,
             message: "User activation successfull",
-            data: updated
+            //data: updated
           };
         else
           return {
-            success: false,
+            //success: false,
             message: "User activation failed",
-            data: updated
+            //data: updated
           };
       })
       .catch(err => {

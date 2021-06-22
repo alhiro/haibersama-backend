@@ -1,10 +1,12 @@
 const jwt = require("../lib/jwt");
 const auth = require("../services/haiuser");
-var nodemailer = require("nodemailer");
 const sequelizeTransaction = require("../config/sequelizeTransaction");
 const axios = require("axios");
 const utils = require("../lib/utils");
 const { VERIFY_URL, EMAIL_PASSWORD, EMAIL_USERNAME } = process.env;
+var nodemailer = require("nodemailer");
+var Hogan = require("hogan.js");
+var fs = require("fs");
 
 exports.getAll =  async function(req, res, next) {
   try {
@@ -108,36 +110,19 @@ exports.registerUser = async function(req, res, next) {
           }
         });
 
+        var templateInvoice = fs.readFileSync('./views/activation.html', 'utf-8');
+        var compileInvoice = Hogan.compile(templateInvoice);
+
         let mailoptions = {
-          from: '"<notify>" notify@haiorganizer.com',
+          from: '"Haio Notify" notify@haiorganizer.com',
           to: email,
-          subject: "verify your hai account",
-          html:
-            "<h4><b>Verify Account</b></h4>" +
-            "<p>To verify hai your account, click this link:</p>" +
-            "<a href=" +
-            VERIFY_URL +
-            "/api/" +
-            "auth/" +
-            "verify?" +
-            "email=" +
-            email +
-            "&" +
-            "token=" +
-            register.data.token +
-            ">" +
-            VERIFY_URL +
-            "/api/" +
-            "auth/" +
-            "verify?" +
-            "email=" +
-            email +
-            "&" +
-            "token=" +
-            register.data.token +
-            "</a>" +
-            "<br><br>" +
-            "<p>--Team</p>"
+          subject: `Hai ${register.data.name}, silahkan verifikasi akun Haio`,
+          html: compileInvoice.render({
+            userName: register.data.name,
+            verifyUrl: VERIFY_URL,
+            userEmail: email,
+            token: register.data.token
+          })
         };
         console.log("mailoptions :" + JSON.stringify(mailoptions));
 
@@ -208,41 +193,24 @@ exports.registerPartner = async function(req, res, next) {
         port: 465,
         secure: true,
         auth: {
-          user: "notify@haiorganizer.com",
-          pass: "shasmeen11!"
+          user: EMAIL_USERNAME,
+          pass: EMAIL_PASSWORD
         }
       });
 
+      var templateInvoice = fs.readFileSync('./views/activation.html', 'utf-8');
+      var compileInvoice = Hogan.compile(templateInvoice);
+
       let mailoptions = {
-        from: '"<notify>" notify@haiorganizer.com',
+        from: '"Haio Aktifasi" notify@haiorganizer.com',
         to: email,
-        subject: "verify your hai account",
-        html:
-          "<h4><b>Verify Account</b></h4>" +
-          "<p>To verify hai your account, click this link:</p>" +
-          "<a href=" +
-          VERIFY_URL +
-          "/api/" +
-          "auth/" +
-          "verify?" +
-          "email=" +
-          email +
-          "&" +
-          "token=" +
-          register.data.token +
-          ">" +
-          VERIFY_URL +
-          "/api/" +
-          "auth/" +
-          "verify?" +
-          "email=" +
-          email +
-          "&" +
-          "token=" +
-          register.data.token +
-          "</a>" +
-          "<br><br>" +
-          "<p>--Team</p>"
+        subject: `Hai ${register.data.name}, silahkan verifikasi akun Haio`,
+        html: compileInvoice.render({
+          userName: register.data.name,
+          verifyUrl: VERIFY_URL,
+          userEmail: email,
+          token: register.data.token
+        })
       };
       console.log("mailoptions :" + JSON.stringify(mailoptions));
 
@@ -320,15 +288,15 @@ exports.registerGoogle = async function(req, res, next) {
         port: 465,
         secure: true,
         auth: {
-          user: "notify@haiorganizer.com",
-          pass: "shasmeen11!"
+          user: EMAIL_USERNAME,
+          pass: EMAIL_PASSWORD
         }
       });
 
       let mailoptions = {
         from: '"<notify>" notify@haiorganizer.com',
         to: email,
-        subject: "verify your hai account",
+        subject: "Verifikasi Akun Haio",
         html:
           "<h4><b>Verify Account</b></h4>" +
           "<p>To verify hai your account, click this link:</p>" +

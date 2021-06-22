@@ -467,9 +467,9 @@ module.exports =
             {
               console.log("ini ke wallet");
               //hardcode 3 %
-              const feeSetting = await appSetting.findOne({
-                where: { setting_name: "ORDER_FEE" }
-              });
+              // const feeSetting = await appSetting.findOne({
+              //   where: { setting_name: "ORDER_FEE" }
+              // });
 
               // setting manual condition not send order fee and no wallet history
               // var walletAmount =  upReserv.total_price - (upReserv.total_price * (parseInt(feeSetting.setting_value) / 100));

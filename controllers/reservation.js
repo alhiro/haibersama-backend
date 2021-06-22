@@ -1,4 +1,5 @@
 const resv = require("../services/reservation");
+const partnerResv = require("../services/partner");
 const emailcounter = require("../services/emailcounter");
 const sequelizeTransaction = require("../config/sequelizeTransaction");
 const { VERIFY_URL, EMAIL_PASSWORD, EMAIL_USERNAME } = process.env;
@@ -59,7 +60,9 @@ exports.updateStatus = async function(req, res, next) {
 
           if(reservation.status_code == "ORDER_NEW" || reservation.status_code == "ORDER_DP_COMPLETED" || reservation.status_code == "ORDER_PAYMENT_COMPLETED")
           {
-            let getData = await resv.findReservation(reservation.reservation_no);        
+            let getData = await resv.findReservation(reservation.reservation_no);   
+            let dataUser = await partnerResv.getDetail(reservation.partner_id);  
+            //console.log(dataUser);     
   
             var smtpTransport = nodemailer.createTransport({
               host: "missandei.id.rapidplex.com",
@@ -129,6 +132,8 @@ exports.updateStatus = async function(req, res, next) {
               to: req.email,
               subject: "Invoice",
               html: compileInvoice.render({
+                partnerName: dataUser.data.partnername,
+                partnerAddress: dataUser.data.address,
                 packageName: reservation.package_name,
                 eventDate:  moment(reservation.event_date).utcOffset(0).format("DD-MM-YYYY"),
                 eventTime: reservation.event_time,
@@ -172,9 +177,11 @@ exports.updateStatusManual = async function(req, res, next) {
       if (data.success) {
         var reservation = data.data;
 
-        if(reservation.status_code == "ORDER_NEW" || reservation.status_code == "ORDER_DP_COMPLETED" || reservation.status_code == "ORDER_PAYMENT_COMPLETED")
+        if(reservation.status_code == "ORDER_NEW" || reservation.status_code == "ORDER_PARTNER_CONFIRM" || reservation.status_code == "ORDER_DP_COMPLETED" || reservation.status_code == "ORDER_PAYMENT_COMPLETED")
         {
-          let getData = await resv.findReservation(reservation.reservation_no);        
+          let getData = await resv.findReservation(reservation.reservation_no);
+          let dataUser = await partnerResv.getDetail(reservation.partner_id);  
+          //console.log(dataUser);
 
           var smtpTransport = nodemailer.createTransport({
             host: "missandei.id.rapidplex.com",
@@ -187,7 +194,7 @@ exports.updateStatusManual = async function(req, res, next) {
           });
 
           var statusPayment = "";
-          if (reservation.status_code == "ORDER_NEW") {
+          if (reservation.status_code == "ORDER_NEW" || reservation.status_code == "ORDER_PARTNER_CONFIRM") {
             statusPayment = "Belum Dibayar";
           } else if (reservation.status_code == "ORDER_DP_COMPLETED") {
             statusPayment = "Sudah DP";
@@ -223,7 +230,12 @@ exports.updateStatusManual = async function(req, res, next) {
 
           var detailUser = getData.data.reservation_contact;
 
-          remainingPayment = parseInt(totalDownPayment.replace(/[$,]/g, '')) - parseInt(totalPrice.replace(/[$,]/g, ''));
+          console.log('totalDownPayment ' + totalDownPayment);
+          if (totalDownPayment == 0 || totalDownPayment == null) {
+            remainingPayment = parseInt(totalPrice.replace(/[$,]/g, '')) - parseInt(totalPayment.replace(/[$,]/g, ''));
+          } else {
+            remainingPayment = parseInt(totalDownPayment.replace(/[$,]/g, '')) - parseInt(totalPrice.replace(/[$,]/g, ''));
+          }
 
           // var services = new Array();
           // getData.data.reservation_services.forEach(
@@ -243,10 +255,12 @@ exports.updateStatusManual = async function(req, res, next) {
           // );
 
           let mailoptions = {
-            from: '"Hai Info" notify@haiorganizer.com',
+            from: '"Haio Invoice" notify@haiorganizer.com',
             to: getData.data.reservation_contact.email,
-            subject: "Invoice",
+            subject: `Invoice #${reservation.reservation_no} dari partner ${dataUser.data.partnername}`,
             html: compileInvoice.render({
+              partnerName: dataUser.data.partnername,
+              partnerAddress: dataUser.data.address,
               packageName: reservation.package_name,
               eventDate: moment(reservation.event_date).utcOffset(0).format("DD-MM-YYYY"),
               eventTime: reservation.event_time,
@@ -537,7 +551,11 @@ exports.getSuccessReservationEmail = async function(req, res, next) {
      where += " AND rv.reservation_no = '" + reservationNo + "' "; 
           
      let reservation = await resv.findReservations(where);
- 
+     let getData = await resv.findReservation(reservationNo);   
+     var detailUser = getData.data.reservation_contact;
+     
+     let dataUser = await partnerResv.getDetail(userId); 
+
      if (reservation.success) {
        console.log(reservation);
        //create user by email n password
@@ -552,28 +570,74 @@ exports.getSuccessReservationEmail = async function(req, res, next) {
            pass: EMAIL_PASSWORD
          }
        });
+
+       //console.log('reservation[0] ' + JSON.stringify(getData.data.reservation_no));
  
-       var emailBody = 
-       "<h4><b>Invoice</b></h4>" +
-       "<p>This is your invoice list:</p>";
- 
-       emailBody += "<table>"; 
-       emailBody += "<th><td>Category</td><td>Reservation No</td><td>Reservation Date</td><td>Event Date</td><td>Total Price</td></th>";
-       reservation.data.forEach(reservation => {        
-         emailBody += "<tr><td>" + reservation.category + "</td><td>" + reservation.reservation_no + "</td><td>" + reservation.reservation_date + "</td><td>" + reservation.event_date + "</td><td>" + reservation.total_price + "</td></tr>";
-       });
-       
-       emailBody += "</table>" +
-       "<br><br>" +
-       "<p>--Team</p>";
- 
-       // console.log(emailBody);
- 
+       var statusPayment = "";
+       if (getData.data.status_code == "ORDER_NEW" || getData.data.status_code == "ORDER_PARTNER_CONFIRM") {
+         statusPayment = "Belum Dibayar";
+       } else if (getData.data.status_code == "ORDER_DP_COMPLETED") {
+         statusPayment = "Sudah DP";
+       } else if (getData.data.status_code == "ORDER_PAYMENT_COMPLETED") {
+         statusPayment = "Sudah Lunas";
+       }
+
+       var templateInvoice = fs.readFileSync('./views/invoice_manual.html', 'utf-8');
+       var compileInvoice = Hogan.compile(templateInvoice);
+
+       var zero = 0;
+       var totalPrice = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+       var totalDiscount = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+       var totalPayment = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+       var totalDownPayment = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+       var remainingPayment = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+
+       if (getData.data.total_price) {
+         totalPrice = getData.data.total_price.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+       }
+
+       if (getData.data.total_discount) {
+         totalDiscount = getData.data.total_discount.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+       }
+
+       if (getData.data.total_down_payment) {
+         totalDownPayment = getData.data.total_down_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+       }
+
+       if (getData.data.total_payment) {
+         totalPayment = getData.data.total_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+       }
+
+       console.log('totalDownPayment ' + totalDownPayment);
+       if (totalDownPayment == 0 || totalDownPayment == null) {
+         remainingPayment = parseInt(totalPrice.replace(/[$,]/g, '')) - parseInt(totalPayment.replace(/[$,]/g, ''));
+       } else {
+         remainingPayment = parseInt(totalDownPayment.replace(/[$,]/g, '')) - parseInt(totalPrice.replace(/[$,]/g, ''));
+       }
+
        let mailoptions = {
-         from: '"<notify>" notify@haiorganizer.com',
-         to: email,
-         subject: "Invoice",
-         html: emailBody
+         from: '"Haio Invoice" notify@haiorganizer.com',
+         to: getData.data.reservation_contact.email,
+         subject: `Invoice #${getData.data.reservation_no} dari partner ${dataUser.data.partnername}`,
+         html: compileInvoice.render({
+           partnerName: dataUser.data.partnername,
+           partnerAddress: dataUser.data.address,
+           packageName: getData.data.package_name,
+           eventDate: moment(getData.data.event_date).utcOffset(0).format("DD-MM-YYYY"),
+           eventTime: getData.data.event_time,
+           codeInvoice: getData.data.reservation_no,
+           invoiceDate: moment(getData.data.reservation_date).utcOffset(0).format("DD-MM-YYYY"),
+           customerName: detailUser.name,
+           customerAddress: detailUser.address,
+           completePayment: statusPayment,
+           totalPrice: totalPrice,
+           totalDiscount: totalDiscount,
+           totalPayment: totalPayment,
+           totalDownPayment: totalDownPayment,
+           remainingPayment: remainingPayment.toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+           description: getData.data.description,
+           // services: services
+         })
        };
        console.log("mailoptions :" + JSON.stringify(mailoptions));
  
@@ -617,6 +681,7 @@ exports.sendEmailToCustomer = async function(req, res, next) {
       status_code: statusCode
     };
     console.log(counterParams);
+
     var counter = await emailcounter.findCounter(counterParams);
     if(counter.success) {
       var dataCounter = counter.data;
