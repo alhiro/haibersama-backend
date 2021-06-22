@@ -645,6 +645,7 @@ module.exports =
                 WHERE date(r.event_date) = date(a.event_date)
                 and r.partner_id = a.partner_id
                 and r.transaction_status_code in ('ON_PROCESS')
+                order by r.event_time asc
               ) y
             ) d ON true
         LEFT   JOIN LATERAL (
