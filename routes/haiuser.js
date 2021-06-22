@@ -10,13 +10,18 @@ const bcrypt = require("bcrypt-nodejs");
 const multer = require('multer');
 // upload file path
 const FILE_PATH = 'imagehai';
+const FILE_VERF = 'dochai';
 const ENV = process.env;
 const now = Date.now();
 // configure multer
 
 var storage = multer.diskStorage({
   destination: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') {
+      cb(null, './public/' + FILE_VERF)
+    } else if (file.mimetype == 'image/png' || file.mimetype == 'image/jpg' || file.mimetype == 'image/jpeg') {
       cb(null, './public/' + FILE_PATH)
+    }
   },
   filename: (req, file, cb) => {
       cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname))
@@ -24,7 +29,23 @@ var storage = multer.diskStorage({
 });
 
 //will be using this for uplading
-const upload = multer({ storage: storage });
+const upload = multer({
+  storage: storage, 
+  limits: {
+    fileSize: 1024 * 2048, // 2 MB (max file size) & allow only 1 file per request
+    files: 1,
+  },
+  fileFilter: function (req, file, cb) {
+    let ext = path.extname(file.originalname);
+    console.log('ext file ' + ext);
+
+    if (ext !== '.pdf' && ext !== '.png' && ext !== '.jpg' && ext !== '.jpeg') {
+      req.fileValidationError = "Forbidden extension";
+      return cb(null, false, req.fileValidationError);
+    }
+    cb(null, true);
+  }
+});
 
 authRouter.get("/getAll", headerAuth.isUserAuthenticated,(req, res, next) => {
   authController.getAll(req, res);
@@ -88,7 +109,7 @@ authRouter.post("/updateProfile", headerAuth.isUserAuthenticated, upload.fields(
       console.log('verifiedDocument ' + JSON.stringify(verifiedFile));
     } else {
       const getFile = req.files.verified_document[0];
-      const verified_document = ENV.API_URL + '/ftp/' + FILE_PATH + '/' + getFile.filename;
+      const verified_document = ENV.API_URL + '/ftp/' + FILE_VERF + '/' + getFile.filename;
       verifiedFile.push(verified_document);
       console.log('verifiedDocument ' + JSON.stringify(verifiedFile));
     }

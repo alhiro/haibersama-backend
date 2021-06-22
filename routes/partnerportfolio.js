@@ -20,7 +20,23 @@ var storage = multer.diskStorage({
 });
 
 //will be using this for uplading
-const upload = multer({ storage: storage });
+const upload = multer({
+  storage: storage, 
+  limits: {
+    fileSize: 1024 * 2048, // 2 MB (max file size) & allow only 1 file per request
+    files: 1,
+  },
+  fileFilter: function (req, file, cb) {
+    let ext = path.extname(file.originalname);
+    console.log('ext file ' + ext);
+
+    if (ext !== '.png' && ext !== '.jpg' && ext !== '.jpeg') {
+      req.fileValidationError = "Forbidden extension";
+      return cb(null, false, req.fileValidationError);
+    }
+    cb(null, true);
+  }
+});
 
 partnerPortfolioRouter.get("/getportfolio", (req, res, next) => {
   partnerPortfolioController.getPortfolio(req, res);
