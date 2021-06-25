@@ -51,7 +51,7 @@ partnerCertificateRouter.get("/get", headerAuth.isUserAuthenticated, (req, res, 
   partnerCertificateController.getDetail(req, res);
 });
 
-partnerCertificateRouter.post("/add", headerAuth.isPartnerAuthenticated, upload.single('imageFile'), (req, res, next) => {
+partnerCertificateRouter.post("/add", headerAuth.isPartnerAuthenticated, upload.single('certificate'), (req, res, next) => {
   const imagefile = req.file;
   const partner_id = res.locals.auth.id;
   if (!imagefile) {
@@ -74,7 +74,7 @@ partnerCertificateRouter.post("/add", headerAuth.isPartnerAuthenticated, upload.
   }
 });
 
-partnerCertificateRouter.post("/update",  headerAuth.isPartnerAuthenticated, upload.single('imageFile'), (req, res, next) => {
+partnerCertificateRouter.post("/update",  headerAuth.isPartnerAuthenticated, upload.single('certificate'), (req, res, next) => {
   const imagefile = req.file;
   const partner_id = res.locals.auth.id;
 

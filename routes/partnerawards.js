@@ -51,7 +51,7 @@ partnerAwardsRouter.get("/get", headerAuth.isUserAuthenticated, (req, res, next)
   partnerAwardsController.getDetail(req, res);
 });
 
-partnerAwardsRouter.post("/add",  headerAuth.isPartnerAuthenticated, upload.single('imageFile'), (req, res, next) => {
+partnerAwardsRouter.post("/add",  headerAuth.isPartnerAuthenticated, upload.single('awards'), (req, res, next) => {
     const imagefile = req.file;
     const partner_id = res.locals.auth.id;
     if (!imagefile) {
@@ -76,7 +76,7 @@ partnerAwardsRouter.post("/add",  headerAuth.isPartnerAuthenticated, upload.sing
     }
   });
 
-partnerAwardsRouter.post("/update",  headerAuth.isPartnerAuthenticated, upload.single('imageFile'), (req, res, next) => {
+partnerAwardsRouter.post("/update",  headerAuth.isPartnerAuthenticated, upload.single('awards'), (req, res, next) => {
   const imagefile = req.file;
   const partner_id = res.locals.auth.id;
   

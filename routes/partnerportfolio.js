@@ -51,7 +51,7 @@ partnerPortfolioRouter.get("/get", headerAuth.isUserAuthenticated, (req, res, ne
   partnerPortfolioController.getDetail(req, res);
 });
 
-partnerPortfolioRouter.post("/add",  headerAuth.isPartnerAuthenticated, upload.single('imageFile'), (req, res, next) => {
+partnerPortfolioRouter.post("/add",  headerAuth.isPartnerAuthenticated, upload.single('portfolio'), (req, res, next) => {
   const imagefile = req.file;
   const partner_id = res.locals.auth.id;
   if (!imagefile) {
@@ -75,7 +75,7 @@ partnerPortfolioRouter.post("/add",  headerAuth.isPartnerAuthenticated, upload.s
   }
 });
 
-partnerPortfolioRouter.post("/update",  headerAuth.isPartnerAuthenticated, upload.single('imageFile'), (req, res, next) => {
+partnerPortfolioRouter.post("/update",  headerAuth.isPartnerAuthenticated, upload.single('portfolio'), (req, res, next) => {
   const imagefile = req.file;
   const partner_id = res.locals.auth.id;
 

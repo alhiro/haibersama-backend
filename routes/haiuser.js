@@ -10,21 +10,16 @@ const bcrypt = require("bcrypt-nodejs");
 const multer = require('multer');
 // upload file path
 const FILE_PATH = 'imagehai';
-const FILE_VERF = 'dochai';
 const ENV = process.env;
 const now = Date.now();
 // configure multer
 
 var storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    if (file.mimetype === 'application/pdf') {
-      cb(null, './public/' + FILE_VERF)
-    } else if (file.mimetype == 'image/png' || file.mimetype == 'image/jpg' || file.mimetype == 'image/jpeg') {
-      cb(null, './public/' + FILE_PATH)
-    }
+    cb(null, './public/' + FILE_PATH)
   },
   filename: (req, file, cb) => {
-      cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname))
+    cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname))
   }
 });
 
@@ -109,7 +104,7 @@ authRouter.post("/updateProfile", headerAuth.isUserAuthenticated, upload.fields(
       console.log('verifiedDocument ' + JSON.stringify(verifiedFile));
     } else {
       const getFile = req.files.verified_document[0];
-      const verified_document = ENV.API_URL + '/ftp/' + FILE_VERF + '/' + getFile.filename;
+      const verified_document = ENV.API_URL + '/ftp/' + FILE_PATH + '/' + getFile.filename;
       verifiedFile.push(verified_document);
       console.log('verifiedDocument ' + JSON.stringify(verifiedFile));
     }

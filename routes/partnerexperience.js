@@ -51,7 +51,7 @@ partnerExperienceRouter.get("/get", headerAuth.isUserAuthenticated, (req, res, n
   partnerExperienceController.getDetail(req, res);
 });
 
-partnerExperienceRouter.post("/add",  headerAuth.isPartnerAuthenticated, upload.single('imageFile'), (req, res, next) => {
+partnerExperienceRouter.post("/add",  headerAuth.isPartnerAuthenticated, upload.single('experience'), (req, res, next) => {
   const imagefile = req.file;
   const partner_id = res.locals.auth.id;
   
@@ -76,7 +76,7 @@ partnerExperienceRouter.post("/add",  headerAuth.isPartnerAuthenticated, upload.
   }
 });
 
-partnerExperienceRouter.post("/update",  headerAuth.isPartnerAuthenticated, upload.single('imageFile'), (req, res, next) => {
+partnerExperienceRouter.post("/update",  headerAuth.isPartnerAuthenticated, upload.single('experience'), (req, res, next) => {
   const imagefile = req.file;
   const partner_id = res.locals.auth.id;
 
