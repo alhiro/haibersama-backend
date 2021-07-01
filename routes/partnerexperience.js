@@ -97,4 +97,13 @@ partnerExperienceRouter.post("/update",  headerAuth.isPartnerAuthenticated, uplo
     partnerExperienceController.updateExperience(data, res);
   });
 
+  partnerExperienceRouter.delete("/delete", headerAuth.isPartnerAuthenticated, upload.single('experience'), (req, res, next) => {
+    const partner_id = res.locals.auth.id;
+    const data = { 
+      partner_id: partner_id,
+      id: req.body.id
+    };
+    partnerExperienceController.deleteExperience(data, res);
+  });
+
 module.exports = partnerExperienceRouter;

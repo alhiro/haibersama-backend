@@ -102,5 +102,28 @@ module.exports =
         throw (error)
       }
     },
+
+    deleteExperience: async (data) => {
+      try {
+        const { partner_id, id } = data;
+
+        return Experience.destroy({
+          where: {
+            id: id,
+            partner_id: partner_id
+          },
+        })
+          .then(async (deleted) => {
+            return { success: true, message: "Succesfully Deleted Experience", data: [] }
+          })
+          .catch((err) => {
+            console.log(err);
+            return { success: false, message: "Deleted Experience Failed", data: err }
+          });
+      } catch (error) {
+        console.log(error);
+        throw (error)
+      }
+    },
 }
   

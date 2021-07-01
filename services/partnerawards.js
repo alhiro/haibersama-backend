@@ -105,5 +105,28 @@ module.exports =
         throw (error)
       }
     },
+
+    deleteAward: async (data) => {
+      try {
+        const { partner_id, id } = data;
+
+        return Awards.destroy({
+          where: {
+            id: id,
+            partner_id: partner_id
+          },
+        })
+          .then(async (deleted) => {
+            return { success: true, message: "Succesfully Deleted Award", data: [] }
+          })
+          .catch((err) => {
+            console.log(err);
+            return { success: false, message: "Deleted Award Failed", data: err }
+          });
+      } catch (error) {
+        console.log(error);
+        throw (error)
+      }
+    },
 }
   

@@ -64,3 +64,13 @@ exports.updatePortfolio = async function(req, res, next) {
     return res.status(500).send({ data: err });
   }
 };
+
+exports.deletePortfolio = async function(req, res, next) {
+  try {
+    var result = await partnerportfolio.deletePortfolio(req);
+    return res.status(200).send(result);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send({ data: err });
+  }
+};

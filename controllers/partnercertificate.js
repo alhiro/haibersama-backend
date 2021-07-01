@@ -65,3 +65,13 @@ exports.updateCertificate = async function(req, res, next) {
     return res.status(500).send({ data: err });
   }
 };
+
+exports.deleteCertificate = async function(req, res, next) {
+  try {
+    var result = await partnercertificate.deleteCertificate(req);
+    return res.status(200).send(result);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send({ data: err });
+  }
+};

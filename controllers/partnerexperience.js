@@ -66,3 +66,13 @@ exports.updateExperience = async function(req, res, next) {
     return res.status(500).send({ data: err });
   }
 };
+
+exports.deleteExperience = async function(req, res, next) {
+  try {
+    var result = await partnerexperience.deleteExperience(req);
+    return res.status(200).send(result);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send({ data: err });
+  }
+};

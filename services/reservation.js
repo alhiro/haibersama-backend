@@ -40,6 +40,12 @@ module.exports =
           }
         }
 
+        console.log('package.partner_id');
+        console.log(package.partner_id);
+
+        console.log('partnerId');
+        console.log(partnerId);
+
         //check duplicate reservation user with event date, event time, partner id 
         const params = {
           user_id: userId,
@@ -281,12 +287,14 @@ module.exports =
             srv.description service,
             rv.name,
             rv.package_name,
+            rv.description,
             event_date, 
             event_time, 
             event_address, 
             total_price, 
             total_discount, 
             total_payment, 
+            total_down_payment,
             status_code, 
             ci.description status,
             duration, 

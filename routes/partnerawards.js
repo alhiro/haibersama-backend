@@ -98,5 +98,13 @@ partnerAwardsRouter.post("/update",  headerAuth.isPartnerAuthenticated, upload.s
   partnerAwardsController.updateAwards(data, res);  
 });
 
+partnerAwardsRouter.delete("/delete", headerAuth.isPartnerAuthenticated, upload.single('awards'), (req, res, next) => {
+  const partner_id = res.locals.auth.id;
+  const data = { 
+    partner_id: partner_id,
+    id: req.body.id
+  };
+  partnerAwardsController.deleteAward(data, res);
+});
 
 module.exports = partnerAwardsRouter;

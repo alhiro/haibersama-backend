@@ -96,4 +96,13 @@ partnerPortfolioRouter.post("/update",  headerAuth.isPartnerAuthenticated, uploa
     partnerPortfolioController.updatePortfolio(data, res);
   });
 
+  partnerPortfolioRouter.delete("/delete", headerAuth.isPartnerAuthenticated, upload.single('portfolio'), (req, res, next) => {
+    const partner_id = res.locals.auth.id;
+    const data = { 
+      partner_id: partner_id,
+      id: req.body.id
+    };
+    partnerPortfolioController.deletePortfolio(data, res);
+  });
+
 module.exports = partnerPortfolioRouter;

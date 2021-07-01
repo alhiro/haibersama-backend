@@ -60,8 +60,18 @@ exports.addAwards = async function(req, res, next) {
 
 exports.updateAwards = async function(req, res, next) {
   try {
-      let result = await partnerawards.updateAwards(req);
-      return res.status(200).send(result);    
+    let result = await partnerawards.updateAwards(req);
+    return res.status(200).send(result);    
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send({ data: err });
+  }
+};
+
+exports.deleteAward = async function(req, res, next) {
+  try {
+    var result = await partnerawards.deleteAward(req);
+    return res.status(200).send(result);
   } catch (err) {
     console.log(err);
     return res.status(500).send({ data: err });

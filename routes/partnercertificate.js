@@ -94,4 +94,13 @@ partnerCertificateRouter.post("/update",  headerAuth.isPartnerAuthenticated, upl
     partnerCertificateController.updateCertificate(data, res);
   });
 
+  partnerCertificateRouter.delete("/delete", headerAuth.isPartnerAuthenticated, upload.single('certificate'), (req, res, next) => {
+    const partner_id = res.locals.auth.id;
+    const data = { 
+      partner_id: partner_id,
+      id: req.body.id
+    };
+    partnerCertificateController.deleteCertificate(data, res);
+  });
+
 module.exports = partnerCertificateRouter;

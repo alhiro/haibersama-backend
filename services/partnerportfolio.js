@@ -98,5 +98,28 @@ module.exports =
         throw (error)
       }
     },
+
+    deletePortfolio: async (data) => {
+      try {
+        const { partner_id, id } = data;
+
+        return Portfolio.destroy({
+          where: {
+            id: id,
+            partner_id: partner_id
+          },
+        })
+          .then(async (deleted) => {
+            return { success: true, message: "Succesfully Deleted Portfolio", data: [] }
+          })
+          .catch((err) => {
+            console.log(err);
+            return { success: false, message: "Deleted Portfolio Failed", data: err }
+          });
+      } catch (error) {
+        console.log(error);
+        throw (error)
+      }
+    },
 }
   
