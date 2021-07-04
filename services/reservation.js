@@ -308,7 +308,7 @@ module.exports =
           left join info_code ci on ci.code = rv.status_code
           left join info_code rt on rt.code = rv.reservation_type
           `+where+`
-          order by rv.id desc;`,
+          order by event_date asc;`,
         {
             raw: true,
             type: sequelize.QueryTypes.SELECT
@@ -769,34 +769,60 @@ module.exports =
     },
     
     findReservationSummary: async (partnerId) => {
-      // "--CREATE EXTENSION IF NOT EXISTS tablefunc;"
         var reservations = await sequelize.query(
-          `SELECT 
-            partner_id, 
-            coalesce("NEW", 0) "NEW", 
-            coalesce("ON_PROCESS", 0) "ON_PROCESS", 
-            coalesce("SUCCESS", 0) "SUCCESS", 
-            coalesce("FAILED", 0) "FAILED", 
-            coalesce("CANCEL", 0) "CANCEL"
-                    FROM   crosstab(
-                      'select partner_id, code status, coalesce(total_order, 0) total_order
-                        from info_code ic
-                        left join lateral (
-                          select rv.partner_id, count(reservation_no) total_order
-                          from reservation rv
-                          where rv.transaction_status_code = ic.code
-                          AND rv.partner_id = ` + partnerId + `
-                          group by rv.partner_id
-                        ) a on true
-                        where code_type = ''TRANSACTION_STATUS''' 
-                        ) AS ct (partner_id int, "NEW" bigint, "ON_PROCESS" bigint, "SUCCESS" bigint, "FAILED" bigint, "CANCEL" bigint )
-                        WHERE partner_id = ` + partnerId + `;`,
+          `SELECT
+                coalesce(all_order, 0) "ALL_ORDER",
+                coalesce(order_new, 0) "ORDER_NEW",
+                coalesce(order_partner_confirm, 0) "ORDER_PARTNER_CONFIRM",
+                coalesce(order_dp_completed, 0) "ORDER_DP_COMPLETED",
+                coalesce(order_payment_completed, 0) "ORDER_PAYMENT_COMPLETED",
+                coalesce(order_completed, 0) "ORDER_COMPLETED"
+                FROM hai_user part
+                left join lateral (
+                  SELECT 
+                    count(reservation_no) all_order
+                  from reservation oal
+                  where oal.partner_id = part.id
+                ) sum0 on true
+                left join lateral (
+                  SELECT 
+                    count(reservation_no) order_new
+                  from reservation orn
+                  where orn.partner_id = part.id
+                  and orn.status_code = 'ORDER_NEW'
+                ) sum1 on true
+                left join lateral (
+                  SELECT count(reservation_no) order_partner_confirm
+                  from reservation opc
+                  where opc.partner_id = part.id
+                  and opc.status_code = 'ORDER_PARTNER_CONFIRM'
+                ) sum2 on true
+                left join lateral (
+                  SELECT count(reservation_no) order_dp_completed
+                  from reservation odc
+                  where odc.partner_id = part.id
+                  and odc.status_code = 'ORDER_DP_COMPLETED'
+                ) sum3 on true
+                left join lateral (
+                  SELECT count(reservation_no) order_payment_completed
+                  from reservation oyc
+                  where oyc.partner_id = part.id
+                  and oyc.status_code = 'ORDER_PAYMENT_COMPLETED'
+                ) sum4 on true
+                left join lateral (
+                  SELECT count(reservation_no) order_completed
+                  from reservation oc
+                  where oc.partner_id = part.id
+                  and oc.status_code = 'ORDER_COMPLETED'
+                ) sum5 on true
+              WHERE part.type = 2
+              and part.id = `+partnerId+`;`,
           {
               raw: true,
               type: sequelize.QueryTypes.SELECT
           }
       );
-          console.log(reservations);
+          // console.log(reservations);
       if(reservations.length > 0){
         return (!reservations) ? { success: false, message: "Summary Not Found", data: {} } : { success: true, message: "Summary Found", data: reservations[0] }
       } else {      

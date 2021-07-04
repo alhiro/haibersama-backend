@@ -43,19 +43,25 @@ module.exports =
       });
     },
 
-    findOrCreate: async (params, data) => {
+    findOrCreateCounter: async (params, data) => {
       try {
+        console.log('data counter email');
         console.log(data);
         const { reservation_no, status_code, counter } = data;
 
         var objData = {
           reservation_no: reservation_no,
-          counter: counter,
-          status_code: status_code
+          status_code: status_code,
+          counter: counter
         };
         
-        const result = await Counter.findOrCreate({ where: params, defaults: objData })
-  
+        const result = await Counter.findOrCreate(
+          { 
+            where: params, 
+            defaults: objData 
+          }
+        )
+
         if (!result[1]) {
           throw ({ success: false, message: "Email Counter already exists", data: {} })
         }
