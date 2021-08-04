@@ -304,13 +304,6 @@ exports.updateStatusManual = async function(req, res, next) {
             }
             //smtpTransport.close();
           });
-        } else {
-          return res.status(401).send({
-            code: 401,
-            success: false,
-            message: "Failed to send email",
-            data: {}
-          });
         }
       } 
 
@@ -859,12 +852,7 @@ exports.sendEmailToCustomer = async function (req, res, next) {
         }
      }
 
-    return res.status(200).send({
-      code: 200,
-      success: true,
-      message: "Success send email for reservation number " + reservationNo,
-      data: {}
-    });
+    return res.status(200).send(data);
   } catch (err) {
     console.log(err);
     return res.status(500).send({ data: err });

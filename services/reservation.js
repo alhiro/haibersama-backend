@@ -778,6 +778,7 @@ module.exports =
                 coalesce(order_partner_confirm, 0) "ORDER_PARTNER_CONFIRM",
                 coalesce(order_dp_completed, 0) "ORDER_DP_COMPLETED",
                 coalesce(order_payment_completed, 0) "ORDER_PAYMENT_COMPLETED",
+                coalesce(order_dp_completed, 0) + coalesce(order_payment_completed, 0) "ORDER_PROCESS",
                 coalesce(order_completed, 0) "ORDER_COMPLETED"
                 FROM hai_user part
                 left join lateral (
