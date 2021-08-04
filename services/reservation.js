@@ -286,6 +286,8 @@ module.exports =
             service_id, 
             srv.description service,
             rv.name,
+            rc.email,
+            rc.address,
             rv.package_name,
             rv.description,
             event_date, 
@@ -307,8 +309,9 @@ module.exports =
           inner join service srv on srv.id = rv.service_id
           left join info_code ci on ci.code = rv.status_code
           left join info_code rt on rt.code = rv.reservation_type
+          left join reservation_contact rc on rc.reservation_id = rv.id
           `+where+`
-          order by event_date asc;`,
+          order by event_date desc;`,
         {
             raw: true,
             type: sequelize.QueryTypes.SELECT
@@ -335,7 +338,6 @@ module.exports =
       //     return { success: false, message: "Reservation Not Found", data: err } 
       //   });
     },
-
     
     updateStatusReservation: async (req) => {
       try {
@@ -752,7 +754,7 @@ module.exports =
         left join info_code rt on rt.code = rv.reservation_type
         WHERE cat.description = a.category 
         `+where+`
-          order by rv.id desc
+          order by event_date desc
           ) x
         ) c ON true;`,
         {
@@ -828,6 +830,75 @@ module.exports =
       } else {      
         return { success: false, message: "Summary Not Found", data: err } 
       }
+    },
+
+    findReminder: async (where) => {
+      var reservations = await sequelize.query(
+        `SELECT 
+            rv.id, 
+            reservation_no, 
+            reservation_date, 
+            user_id, 
+            usr.name user_name,
+            partner_id, 
+            prt.name partner_name,
+            prt.picture partner_picture,
+            rv.category_id, 
+            cat.description category,
+            service_id, 
+            srv.description service,
+            rv.name,
+            rc.email,
+            rc.address,
+            rv.package_name,
+            rv.description,
+            event_date, 
+            event_time, 
+            event_address, 
+            total_price, 
+            total_discount, 
+            total_payment, 
+            total_down_payment,
+            status_code, 
+            ci.description status,
+            duration, 
+            reservation_type,
+            rt.description reservation_type_desc
+          FROM public.reservation rv
+          inner join hai_user prt on prt.id = rv.partner_id
+          left join hai_user usr on usr.id = rv.user_id
+          inner join category cat on cat.id = rv.category_id
+          inner join service srv on srv.id = rv.service_id
+          left join info_code ci on ci.code = rv.status_code
+          left join info_code rt on rt.code = rv.reservation_type
+          left join reservation_contact rc on rc.reservation_id = rv.id
+          `+where+`
+          order by event_time asc;`,
+        {
+            raw: true,
+            type: sequelize.QueryTypes.SELECT
+        }
+    );
+
+    if(reservations.length > 0){
+      return (!reservations) ? { success: false, message: "Reminder Not Found", data: {} } : { success: true, message: "Reminder Found", data: reservations }
+    } else {      
+      return { success: false, message: "Reminder Not Found", data: {} } 
+    }
+      // const {limit, offset} = paging;      
+      // return await Reservation.findAll({ 
+      //   where: params,
+      //   // limit: limit, 
+      //   // offset: offset,
+      //   order: [["reservation_no", "DESC"]]
+      //  })
+      //   .then((reservations) => {
+      //     return (!reservations) ? { success: false, message: "Reservation Not Found", data: {} } : { success: true, message: "Reservation Found", data: reservations }
+      //   })
+      //   .catch((err) => { 
+      //     console.log(err);
+      //     return { success: false, message: "Reservation Not Found", data: err } 
+      //   });
     },
 
   }

@@ -56,7 +56,7 @@ exports.getPartnerReminder = async function (req, res, next) {
     where += " AND rv.transaction_status_code = 'ON_PROCESS' ";
     where += " AND DATE(rv.event_date) = DATE(now() + interval '1' day) ";
     
-    let data = await resv.findReservations(where);
+    let data = await resv.findReminder(where);
     data.code = data.success ? 200 : 500;
     return res.status(200).send(data);
 
@@ -75,7 +75,7 @@ exports.getPartnerReminderMore = async function (req, res, next) {
     where += " AND rv.transaction_status_code = 'ON_PROCESS' ";
     where += " AND DATE(rv.event_date) BETWEEN DATE(NOW()) AND DATE(now() + interval '1' month)";
     
-    let data = await resv.findReservations(where);
+    let data = await resv.findReminder(where);
     data.code = data.success ? 200 : 500;
     return res.status(200).send(data);
 
