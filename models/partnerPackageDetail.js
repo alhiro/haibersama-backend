@@ -59,7 +59,7 @@ const PartnerPackageDetail = dbSeq.define('partner_package_detail', {
     allowNull: true
   },
   terms: {
-    type: Sequelize.STRING(1000),
+    type: Sequelize.STRING(5000),
     allowNull: false
   },
   created_by: {

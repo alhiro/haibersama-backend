@@ -57,7 +57,7 @@ const PartnerPackageHeader = dbSeq.define('partner_package_header', {
     allowNull: true
   },
   terms: {
-    type: Sequelize.STRING(300),
+    type: Sequelize.STRING(5000),
     allowNull: false
   },
   created_at: {

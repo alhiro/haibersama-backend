@@ -238,15 +238,14 @@ exports.updateStatusManual = async function(req, res, next) {
 
           var detailUser = getData.data.reservation_contact;
 
-          console.log('totalDownPayment ' + totalDownPayment);
-          if (totalDownPayment == 0 || totalDownPayment == null) {
-            remainingPayment = parseInt(totalPrice.replace(/[$,]/g, '')) - parseInt(totalPayment.replace(/[$,]/g, ''));
-          } else {
-            remainingPayment = parseInt(totalDownPayment.replace(/[$,]/g, '')) - parseInt(totalPrice.replace(/[$,]/g, ''));
-          }
+          remainingPayment = parseInt(totalPayment.replace(/[$,]/g, '')) - (parseInt(totalDiscount.replace(/[$,]/g, '')) + parseInt(totalDownPayment.replace(/[$,]/g, '')));
 
           if (getData.data.status_code == "ORDER_PAYMENT_COMPLETED") {
             remainingPayment = 0;
+          }
+
+          if (totalDownPayment == 0 || totalDownPayment == null) {
+            totalDownPayment = parseFloat(totalDownPayment).toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
           }
 
           // var services = new Array();
@@ -793,17 +792,16 @@ exports.sendEmailToCustomer = async function (req, res, next) {
 
           var detailUser = getData.data.reservation_contact;
 
-          console.log('totalDownPayment ' + totalDownPayment);
-          if (totalDownPayment == 0 || totalDownPayment == null) {
-            remainingPayment = parseInt(totalPrice.replace(/[$,]/g, '')) - parseInt(totalPayment.replace(/[$,]/g, ''));
-          } else {
-            remainingPayment = parseInt(totalDownPayment.replace(/[$,]/g, '')) - parseInt(totalPrice.replace(/[$,]/g, ''));
-          }
+          remainingPayment = parseInt(totalPayment.replace(/[$,]/g, '')) - (parseInt(totalDiscount.replace(/[$,]/g, '')) + parseInt(totalDownPayment.replace(/[$,]/g, '')));
 
           if (getData.data.status_code == "ORDER_PAYMENT_COMPLETED") {
             remainingPayment = 0;
           }
 
+          if (totalDownPayment == 0 || totalDownPayment == null) {
+            totalDownPayment = parseFloat(totalDownPayment).toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          }
+          
           let mailoptions = {
             from: '"Haio Invoice" notify@haiorganizer.com',
             to: getData.data.reservation_contact.email,
