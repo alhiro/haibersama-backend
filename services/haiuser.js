@@ -373,7 +373,7 @@ module.exports = {
         if (updated > 0)
           return {
             //success: true,
-            message: "User activation successfull",
+            message: "Selamat akun sudah berhasil diaktifkan. Silahkan login di aplikasi ya :)",
             //data: updated
           };
         else

@@ -374,10 +374,10 @@ exports.verify = async function(req, res, next) {
       console.log(users["data"]["password"]);
       delete users["data"]["password"];
       return res.status(401).send({
-        code: 401,
-        success: false,
-        message: "That Username is already active",
-        data: users.data
+        // code: 401,
+        // success: false,
+        message: "Akun sudah aktif ya. Silahkan login di aplikasi. Terima kasih dan selamat bergabung :)",
+        // data: users.data
       });
     }
     //console.log(users);
