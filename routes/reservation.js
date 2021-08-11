@@ -201,6 +201,7 @@ reservationRouter.post("/sendemailtocustomer", headerAuth.isPartnerAuthenticated
     reservationNo: req.body.reservationNo,
     statusCode: req.body.statusCode,
     counter: 1,
+    totalDiscount: req.body.totalDiscount,
     email: email,
     userId: id
   };

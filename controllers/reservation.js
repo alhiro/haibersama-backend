@@ -756,11 +756,11 @@ exports.sendEmailToCustomer = async function (req, res, next) {
           //console.log('reservation[0] ' + JSON.stringify(getData.data.reservation_no));
     
           var statusPayment = "";
-          if (getData.data.status_code == "ORDER_NEW" || getData.data.status_code == "ORDER_PARTNER_CONFIRM") {
+          if (reservation.status_code == "ORDER_NEW" || reservation.status_code == "ORDER_PARTNER_CONFIRM") {
             statusPayment = "Belum Dibayar";
-          } else if (getData.data.status_code == "ORDER_DP_COMPLETED") {
+          } else if (reservation.status_code == "ORDER_DP_COMPLETED") {
             statusPayment = "Sudah DP";
-          } else if (getData.data.status_code == "ORDER_PAYMENT_COMPLETED") {
+          } else if (reservation.status_code == "ORDER_PAYMENT_COMPLETED") {
             statusPayment = "Sudah Lunas";
           }
 
@@ -774,20 +774,20 @@ exports.sendEmailToCustomer = async function (req, res, next) {
           var totalDownPayment = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
           var remainingPayment = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
 
-          if (getData.data.total_price) {
-            totalPrice = getData.data.total_price.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          if(reservation.total_price){
+            totalPrice = reservation.total_price.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
           }
 
-          if (getData.data.total_discount) {
-            totalDiscount = getData.data.total_discount.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          if(reservation.total_discount){
+            totalDiscount = reservation.total_discount.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          }          
+
+          if(reservation.total_down_payment){
+            totalDownPayment = reservation.total_down_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
           }
 
-          if (getData.data.total_down_payment) {
-            totalDownPayment = getData.data.total_down_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
-          }
-
-          if (getData.data.total_payment) {
-            totalPayment = getData.data.total_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          if(reservation.total_payment){
+            totalPayment = reservation.total_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
           }
 
           var detailUser = getData.data.reservation_contact;
@@ -805,15 +805,15 @@ exports.sendEmailToCustomer = async function (req, res, next) {
           let mailoptions = {
             from: '"Haio Invoice" notify@haiorganizer.com',
             to: getData.data.reservation_contact.email,
-            subject: `Invoice #${getData.data.reservation_no} dari partner ${dataUser.data.partnername}`,
+            subject: `Invoice #${reservation.reservation_no} dari partner ${dataUser.data.partnername}`,
             html: compileInvoice.render({
               partnerName: dataUser.data.partnername,
               partnerAddress: dataUser.data.address,
-              packageName: getData.data.package_name,
-              eventDate: moment(getData.data.event_date).utcOffset(0).format("DD-MM-YYYY"),
-              eventTime: getData.data.event_time,
-              codeInvoice: getData.data.reservation_no,
-              invoiceDate: moment(getData.data.reservation_date).utcOffset(0).format("DD-MM-YYYY"),
+              packageName: reservation.package_name,
+              eventDate: moment(reservation.event_date).utcOffset(0).format("DD-MM-YYYY"),
+              eventTime: reservation.event_time,
+              codeInvoice: reservation.reservation_no,
+              invoiceDate: moment(reservation.reservation_date).utcOffset(0).format("DD-MM-YYYY"),
               customerName: detailUser.name,
               customerAddress: detailUser.address,
               completePayment: statusPayment,
@@ -822,7 +822,7 @@ exports.sendEmailToCustomer = async function (req, res, next) {
               totalPayment: totalPayment,
               totalDownPayment: totalDownPayment,
               remainingPayment: remainingPayment.toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
-              description: getData.data.description,
+              description: reservation.description,
               bankName: detailBank.bank_name,
               accountBank: detailBank.account_name,
               rekBank: detailBank.account_no,

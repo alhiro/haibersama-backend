@@ -429,7 +429,7 @@ module.exports =
 
     updateStatusReservationManual: async (req) => {
       try {
-        const { reservationNo, reservationType, statusCode, totalDp, userId } = req;
+        const { reservationNo, reservationType, statusCode, totalDp, totalDiscount, userId } = req;
         
         let transactionStatusCode = "NEW";
 
@@ -462,6 +462,10 @@ module.exports =
 
         if(totalDp){
           objReservation.total_down_payment = totalDp;
+        }
+
+        if(totalDiscount){
+          objReservation.total_discount = totalDiscount;
         }
 
         console.log(JSON.stringify(objReservation), "objReservation")
