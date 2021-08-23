@@ -97,14 +97,14 @@ module.exports = {
       if (insertPackage[1]){
         return {
           success: true,
-          message: "Insert Package Successful",
+          message: "Paket Jasa/Produk Berhasil Dibuat",
           data: insertPackage[0].dataValues
         }
       }
       else{
         return {
           success: false,
-          message: "Insert Package Failed",
+          message: "Paket Jasa/Produk Gagal Dibuat",
           data: {}
         }
       }
@@ -200,8 +200,8 @@ module.exports = {
             // ], 
           });
 
-          return { success: true, message: "Package Successfully Updated", data: package } })
-      .catch((err) => { return { success: false, message: "Update Package Failed", data: err } });
+          return { success: true, message: "Paket Jasa/Produk Berhasil Diubah", data: package } })
+      .catch((err) => { return { success: false, message: "Paket Jasa/Produk Gagal Diubah", data: err } });
 
     } catch (error) {
       console.log(error);
@@ -275,8 +275,8 @@ module.exports = {
             // ], 
           });
 
-          return { success: true, message: "Package Detail Successfully Added", data: package } })
-      .catch((err) => { return { success: false, message: "Update Package Failed", data: err } });
+          return { success: true, message: "Paket Detail Jasa/Produk Berhasil Dibuat", data: package } })
+      .catch((err) => { return { success: false, message: "Paket Detail Jasa/Produk Gagal Dibuat", data: err } });
 
     } catch (error) {
       console.log(error);
@@ -302,11 +302,11 @@ module.exports = {
         // ], 
     })
     .then((data) => {
-      return (!data) ? { success: false, message: "Package Not Found", data: {} } : { success: true, message: "Package Found", data: data }
+      return (!data) ? { success: false, message: "Paket Jasa/Produk Belum Ada!", data: {} } : { success: true, message: "Package Found", data: data }
     })
     .catch((err) => { 
       console.log(err);
-      return { success: false, message: "Package Not Found", data: err } 
+      return { success: false, message: "Paket Jasa/Produk Belum Ada!, Ada Kesalahan Server", data: err } 
     });
   },
 
@@ -317,11 +317,11 @@ module.exports = {
       }
     })
       .then((data) => {
-        return (!data) ? { success: false, message: "Package Not Found", data: {} } : { success: true, message: "Package Found", data: {} }
+        return (!data) ? { success: false, message: "Paket Jasa/Produk Tidak Ditemukan", data: {} } : { success: true, message: "Package Found", data: {} }
       })
       .catch((err) => {
         console.log(err);
-        return { success: false, message: "Package Not Found", data: err }
+        return { success: false, message: "Paket Jasa/Produk Tidak Ditemukan, Ada Kesalahan Server", data: err }
       });
   },
 
@@ -332,11 +332,11 @@ module.exports = {
       }
     })
       .then((data) => {
-        return (!data) ? { success: false, message: "Package Not Found", data: {} } : { success: true, message: "Package Found", data: {} }
+        return (!data) ? { success: false, message: "Paket Detail Jasa/Produk Tidak Ditemukan", data: {} } : { success: true, message: "Package Found", data: {} }
       })
       .catch((err) => {
         console.log(err);
-        return { success: false, message: "Package Not Found", data: err }
+        return { success: false, message: "Paket Detail Jasa/Produk Tidak Ditemukan, Ada Kesalahan Server", data: err }
       });
   },  
 };

@@ -177,7 +177,7 @@ module.exports =
             {
               return {
                 success: false,
-                message: "Failed to request token"
+                message: "Gagal Mendapatkan Token"
               };  
             }
           } 
@@ -236,13 +236,13 @@ module.exports =
           if (!insertPayment) {
             throw {
               success: false,
-              message: "Failed to create payment",
+              message: "Gagal Membuat Pembayaran",
               data: {}
             };        
            } else {
             return {
               success: true,
-              message: "Success to create payment",
+              message: "Berhasil Membuat Pembayaran",
               data: transactionResult
             }; 
           }
@@ -317,7 +317,7 @@ module.exports =
               {
                 return {
                   success: false,
-                  message: "Failed to request token"
+                  message: "Gagal Mendapatkan Token"
                 };  
               }
             } 
@@ -353,13 +353,13 @@ module.exports =
             if (!insertDetailPayment[1]) {
               throw {
                 success: false,
-                message: "Failed to create payment",
+                message: "Gagal Membuat Pembayaran",
                 data: {}
               };        
             } else {
               return {
                 success: true,
-                message: "Success to create payment",
+                message: "Berhasil Membuat Pembayaran",
                 data: transactionResult
               }; 
             }
@@ -425,7 +425,7 @@ module.exports =
                 {
                   return {
                     success: false,
-                    message: "Failed to request token"
+                    message: "Gagal Mendapatkan Token"
                   };  
                 }
               } 
@@ -439,14 +439,14 @@ module.exports =
 
               return PaymentDetail.update(existDetailFound, {where: {id: existDetailFound.id}} )
               .then(async (updated) => { 
-                  return { success: true, message: "Success to create midtrans token", data: transactionResult } })
-              .catch((err) => { return { success: false, message: "Failed to create midtrans token", data: err } });
+                  return { success: true, message: "Berhasil Membuat Token Midtrans", data: transactionResult } })
+              .catch((err) => { return { success: false, message: "Gagal Membuat Token Midtrans", data: err } });
             }
             else
             {
               return {
                 success: true,
-                message: "Success to get midtrans token",
+                message: "Berhasil Mendapatkan Token Midtrans",
                 data: {
                   token: existDetailFound.token,
                   redirect_url: existDetailFound.redirect_url,
@@ -565,9 +565,9 @@ module.exports =
 
           Reservation.update(upOrder, {where: {reservation_no: reservationNo}} );
 
-          return { success: true, message: "Success", data: upDetail };
+          return { success: true, message: "Berhasil Ubah Pembayaran", data: upDetail };
         })
-        .catch((err) => { return { success: false, message: "Update Payment Failed", data: err } });
+        .catch((err) => { return { success: false, message: "Gagal Ubah Pembayaran", data: err } });
 
 
       } catch (error) {
@@ -591,8 +591,8 @@ module.exports =
 
             const updateDetail = await PaymentDetail.create(detail);
 
-            return { success: true, message: "Payment Successfully Updated", data: updatePayment } })
-        .catch((err) => { return { success: false, message: "Update Payment Failed", data: err } });
+            return { success: true, message: "Detail Pembayaran Berhasil Diubah", data: updatePayment } })
+        .catch((err) => { return { success: false, message: "Detail Pembayaran Gagal Diubah", data: err } });
       } catch (error) {
         throw (error)
       }

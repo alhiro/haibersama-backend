@@ -5,10 +5,10 @@ exports.createPayment = async function(req, res, next) {
 
         if(!req.reservationNo)
         {
-          return res.status(400).send({ code: 400, success: false, message: "Invalid reservation no.", data: {} });
+          return res.status(400).send({ code: 400, success: false, message: "Nomor Reservasi Tidak Valid", data: {} });
         }else if(!req.paymentType)
         {
-          return res.status(400).send({ code: 400, success: false, message: "Please input payment type. (DOWN_PAYMENT, REPAYMENT, FULL_PAYMENT).", data: {} });
+          return res.status(400).send({ code: 400, success: false, message: "Silahkan Masukkan Jenis Pembayaran (DOWN_PAYMENT, REPAYMENT, FULL_PAYMENT).", data: {} });
         }
 
         let response = await paymentmidtrans.findOrCreatePayment(req);

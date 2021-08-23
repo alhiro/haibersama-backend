@@ -9,10 +9,10 @@ exports.createPayment = async function(req, res, next) {
 
         if(!req.reservationNo)
         {
-          return res.status(400).send({ code: 400, success: false, message: "Invalid reservation no.", data: {} });
+          return res.status(400).send({ code: 400, success: false, message: "Nomor Reservasi Tidak Valid", data: {} });
         }else if(!req.paymentChannelCode)
         {
-          return res.status(400).send({ code: 400, success: false, message: "Invalid payment channel code", data: {} });
+          return res.status(400).send({ code: 400, success: false, message: "Kode Channel Pembayaran Tidak Valid", data: {} });
         }
 
         let response = await payment.findOrCreatePayment(req);
@@ -45,7 +45,7 @@ exports.getPaymentInfo = async function(req, res, next) {
 
         if(userId != reservationData.data.user_id)
         {
-          return res.status(400).send({ code: 400, success: false, message: "Invalid User Id.", data: {} });
+          return res.status(400).send({ code: 400, success: false, message: "Id Pengguna Tidak Valid", data: {} });
         }
             
         let data = await payment.findPaymentInfo(reservationNo);

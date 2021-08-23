@@ -19,7 +19,7 @@ exports.getAll =  async function(req, res, next) {
   } catch (err) {
     return res
       .status(500)
-      .send({ code: 500, success: false, message: "Error", data: { err } });
+      .send({ code: 500, success: false, message: "Error Data User", data: { err } });
   }
 }
 
@@ -42,7 +42,7 @@ exports.login = async function(req, res, next) {
       return res.status(401).send({
         code: 401,
         success: false,
-        message: "That Username is currently inactive",
+        message: "Nama Pengguna Saat Ini Tidak Aktif",
         data: {}
       });
     } else {
@@ -61,7 +61,7 @@ exports.login = async function(req, res, next) {
           return res.status(400).send({
             code: 400,
             success: false,
-            message: "Invalid Username / Password",
+            message: "Nama Pengguna / Kata Sandi Tidak Benar",
             data: {}
           });
         });
@@ -86,7 +86,7 @@ exports.registerUser = async function(req, res, next) {
       return res.status(401).send({
         code: 401,
         success: false,
-        message: "Email is empty",
+        message: "Emailnya Kosong",
         data: {}
       });    
     } else {
@@ -141,7 +141,7 @@ exports.registerUser = async function(req, res, next) {
         return res.status(401).send({
           code: 401,
           success: false,
-          message: "That Email is already registered",
+          message: "Email Sudah Terdaftar",
           data: {}
         });
       }
@@ -228,7 +228,7 @@ exports.registerPartner = async function(req, res, next) {
       return res.status(401).send({
         code: 401,
         success: false,
-        message: "That Email is already registered",
+        message: "Email Sudah Terdaftar",
         data: {}
       });
     }
@@ -340,7 +340,7 @@ exports.registerGoogle = async function(req, res, next) {
       return res.status(401).send({
         code: 401,
         success: false,
-        message: "That Email is already registered",
+        message: "Email Sudah Terdaftar",
         data: {}
       });
     }

@@ -15,11 +15,11 @@ module.exports =
         order: [["portfolio_date", "DESC"]]
        })
         .then((portfolio) => {
-          return (!portfolio) ? { success: false, message: "Partner Portfolio Not Found", data: {} } : { success: true, message: "Partner Portfolio Found", data: portfolio }
+          return (!portfolio) ? { success: false, message: "Partner Portfolio Belum Ada!", data: {} } : { success: true, message: "Partner Portfolio Found", data: portfolio }
         })
         .catch((err) => { 
           console.log(err);
-          return { success: false, message: "Partner Portfolio Not Found", data: err } 
+          return { success: false, message: "Partner Portfolio Belum Ada, Ada Kesalahan Server!", data: err } 
         });
       },
 
@@ -37,11 +37,11 @@ module.exports =
               ], 
           })
           .then((data) => {
-            return (!data) ? { success: false, message: "Portfolio Not Found", data: {} } : { success: true, message: "Portfolio Found", data: data }
+            return (!data) ? { success: false, message: "Partner Portfolio Tidak Ditemukan!", data: {} } : { success: true, message: "Portfolio Found", data: data }
           })
           .catch((err) => { 
             console.log(err);
-            return { success: false, message: "Portfolio Not Found", data: err } 
+            return { success: false, message: "Partner Portfolio Tidak Ditemukan, Ada Kesalahan Server!", data: err } 
           });
     },
 
@@ -62,10 +62,10 @@ module.exports =
   
         // check name already registered or not
         if (!portfolio[1]) {
-          throw ({ success: false, message: "Partner portfolio already exists", data: {} })
+          throw ({ success: false, message: "Partner Portfolio Sudah Ada", data: {} })
         }
         
-        return { success: true, message: "Partner Portfolio Successfully Created", data: portfolio[0].dataValues }
+        return { success: true, message: "Partner Portfolio Berhasil Dibuat", data: portfolio[0].dataValues }
       } catch (error) {
         console.log(error)
         throw (error)
@@ -91,8 +91,8 @@ module.exports =
         .then(async (updated) => { 
             const result = await Portfolio.findOne({ where: { id: id } })
             
-            return { success: true, message: "Partner Portfolio Successfully Updated", data: result.dataValues } })
-        .catch((err) => { return { success: false, message: "Update Partner Portfolio Failed", data: err } });
+            return { success: true, message: "Partner Portfolio Berhasil Diubah", data: result.dataValues } })
+        .catch((err) => { return { success: false, message: "Partner Portfolio Gagal Diubah", data: err } });
       } catch (error) {
         console.log(error)
         throw (error)
@@ -110,11 +110,11 @@ module.exports =
           },
         })
           .then(async (deleted) => {
-            return { success: true, message: "Succesfully Deleted Portfolio", data: [] }
+            return { success: true, message: "Partner Portfolio Berhasil Dihapus", data: [] }
           })
           .catch((err) => {
             console.log(err);
-            return { success: false, message: "Deleted Portfolio Failed", data: err }
+            return { success: false, message: "Partner Portfolio Gagal Dihapus", data: err }
           });
       } catch (error) {
         console.log(error);

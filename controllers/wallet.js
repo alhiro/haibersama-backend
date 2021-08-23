@@ -7,17 +7,17 @@ exports.getHistories = async function(req, res, next) {
   const { userId, date_from, date_to } = req;
   try {
     if(!date_from){
-      return res.status(400).send({ code: 400, success: false, message: "Please input date from.", data: {} });
+      return res.status(400).send({ code: 400, success: false, message: "Silahkan Masukan Tanggal Dari.", data: {} });
     }
 
     if(!date_to){
-      return res.status(400).send({ code: 400, success: false, message: "Please input date to.", data: {} });
+      return res.status(400).send({ code: 400, success: false, message: "Silahkan Masukan Tanggal ke.", data: {} });
     }
 
     var services = await ser.getList(req);
     return res
       .status(200)
-      .json({ status: 200, data: services, message: "Succesfully Retrieved" });
+      .json({ status: 200, data: services, message: "Riwayat Transaksi Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)
@@ -31,17 +31,17 @@ exports.getHistoriesGroupByDate = async function(req, res, next) {
   const { userId, date_from, date_to } = req;
   try {
     if(!date_from){
-      return res.status(400).send({ code: 400, success: false, message: "Please input date from.", data: {} });
+      return res.status(400).send({ code: 400, success: false, message: "Silahkan Masukan Tanggal Dari.", data: {} });
     }
 
     if(!date_to){
-      return res.status(400).send({ code: 400, success: false, message: "Please input date to.", data: {} });
+      return res.status(400).send({ code: 400, success: false, message: "Silahkan Masukan Tanggal Ke.", data: {} });
     }
 
     var services = await ser.getHistoriesGroupByDate(req);
     return res
       .status(200)
-      .json({ status: 200, data: services, message: "Succesfully Retrieved" });
+      .json({ status: 200, data: services, message: "Riwayat Transaksi Berdasarkan Group Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)
@@ -61,7 +61,7 @@ exports.getbalance = async function(req, res, next) {
     var services = await ser.getBalance(param);
     return res
       .status(200)
-      .json({ status: 200, data: services, message: "Succesfully Retrieved" });
+      .json({ status: 200, data: services, message: "Riwayat Saldo Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)
@@ -82,7 +82,7 @@ exports.withdraw = async function(req, res, next) {
     var services = await ser.withdraw(req);
     return res
       .status(200)
-      .json({ status: 200, data: services, message: "Succesfully Withdraw" });
+      .json({ status: 200, data: services, message: "Penarikan Dana Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)

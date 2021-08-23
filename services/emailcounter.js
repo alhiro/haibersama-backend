@@ -7,11 +7,11 @@ module.exports =
         where: params
        })
         .then((counter) => {
-          return (!counter) ? { success: false, message: "Email Counter Not Found", data: {} } : { success: true, message: "Email Counter Found", data: counter }
+          return (!counter) ? { success: false, message: "Email Counter Belum Ada!", data: {} } : { success: true, message: "Email Counter Found", data: counter }
         })
         .catch((err) => { 
           console.log(err);
-          return { success: false, message: "Email Counter Not Found", data: err } 
+          return { success: false, message: "Email Counter Belum Ada, Ada Kesalahan Server!", data: err } 
         });
       },
 
@@ -22,11 +22,11 @@ module.exports =
               }
           })
           .then((data) => {
-            return (!data) ? { success: false, message: "Counter Not Found", data: {} } : { success: true, message: "Counter Found", data: data }
+            return (!data) ? { success: false, message: "Counter Belum Ada!", data: {} } : { success: true, message: "Counter Found", data: data }
           })
           .catch((err) => { 
             console.log(err);
-            return { success: false, message: "Counter Not Found", data: err } 
+            return { success: false, message: "Counter Belum Ada, Ada Kesalahan Server!", data: err } 
           });
     },
 
@@ -35,11 +35,11 @@ module.exports =
           where: params
       })
       .then((data) => {
-        return (!data) ? { success: false, message: "Counter Not Found", data: {} } : { success: true, message: "Counter Found", data: data }
+        return (!data) ? { success: false, message: "Counter Tidak Ditemukan!", data: {} } : { success: true, message: "Counter Found", data: data }
       })
       .catch((err) => { 
         console.log(err);
-        return { success: false, message: "Counter Not Found", data: err } 
+        return { success: false, message: "Counter Tidak Ditemukan, Ada Kesalahan Server!", data: err } 
       });
     },
 
@@ -62,11 +62,12 @@ module.exports =
           }
         )
 
+        // check reservation_no already registered or not
         if (!result[1]) {
-          throw ({ success: false, message: "Email Counter already exists", data: {} })
+          throw ({ success: false, message: "Email Counter Sudah Ada", data: {} })
         }
         
-        return { success: true, message: "Email Counter Successfully Created", data: result[0].dataValues }
+        return { success: true, message: "Email Counter Berhasil Dibuat", data: result[0].dataValues }
       } catch (error) {
         
         console.log(error);
@@ -87,10 +88,10 @@ module.exports =
         .then(async (updated) => { 
             const result = await Counter.findOne({ where: { id: id } });
             
-            return { success: true, message: "Email Counter Successfully Updated", data: result.dataValues } })
+            return { success: true, message: "Email Counter Berhasil Diubah", data: result.dataValues } })
         .catch((err) => { 
           console.log(error);
-          return { success: false, message: "Update Email Counter Failed", data: err } });
+          return { success: false, message: "Email Counter Gagal Diubah", data: err } });
       } catch (error) {
         console.log(error);
         throw (error)

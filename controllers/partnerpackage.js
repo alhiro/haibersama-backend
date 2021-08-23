@@ -10,7 +10,7 @@ exports.getAllPackage = async function (req, res, next) {
   try {
 
         var packages = await package.getAll();
-        return res.status(200).json({ status: 200, data: packages, message: "Succesfully retrived packages" });
+        return res.status(200).json({ status: 200, data: packages, message: "Semua Jasa/Produk Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)
@@ -57,7 +57,7 @@ exports.addPackage = async function(req, res, next) {
     try {
           var params = { partner_id: partner_id };
           var packages = await package.getList(params);
-          return res.status(200).json({ status: 200, data: packages, message: "Succesfully Partner Packages Retrieved" });
+          return res.status(200).json({ status: 200, data: packages, message: "Daftar Jasa/Produk Partner Berhasil Diambil" });
     } catch (err) {
       return res
         .status(500)
@@ -70,7 +70,7 @@ exports.addPackage = async function(req, res, next) {
     const id = parseInt(req.query.id);
     try {
           var packages = await package.getPackage(id);
-          return res.status(200).json({ status: 200, data: packages, message: "Succesfully Partner Packages Retrieved" });
+          return res.status(200).json({ status: 200, data: packages, message: "Jasa/Produk Partner Berhasil Diambil" });
     } catch (err) {
       return res
         .status(500)
@@ -83,7 +83,7 @@ exports.addPackage = async function(req, res, next) {
     const id = parseInt(req.query.id);
     try {
           var packages = await package.destroyPackage(id);
-          return res.status(200).json({ status: 200, data: packages, message: "Succesfully Deleted Partner Packages" });
+          return res.status(200).json({ status: 200, data: packages, message: "Jasa/Produk Partner Berhasil Dihapus" });
     } catch (err) {
       return res
         .status(500)
@@ -96,7 +96,7 @@ exports.addPackage = async function(req, res, next) {
     const id = parseInt(req.query.id);
     try {
           var packages = await package.destroyPackageDetail(id);
-          return res.status(200).json({ status: 200, data: packages, message: "Succesfully Deleted Partner Packages" });
+          return res.status(200).json({ status: 200, data: packages, message: "Detail Jasa/Produk Partner Berhasil Dihapus" });
     } catch (err) {
       return res
         .status(500)

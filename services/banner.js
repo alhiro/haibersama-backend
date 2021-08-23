@@ -25,9 +25,9 @@ module.exports =
     findBanner: async (params) => {
       return await Banner.findOne({ where: params })
         .then((banners) => {
-          return (!banners) ? { success: false, message: "Banner Not Found", data: {} } : { success: true, message: "Banner Found", data: banners }
+          return (!banners) ? { success: false, message: "Banner Belum Ada!", data: {} } : { success: true, message: "Banner Found", data: banners }
         })
-        .catch((err) => { return { success: false, message: "Banner Not Found", data: err } });
+        .catch((err) => { return { success: false, message: "Banner Belum Ada, Ada Kesalahan Server!", data: err } });
     },
 
     findOrCreateBanner: async (params, req) => {
@@ -44,10 +44,10 @@ module.exports =
   
         // check title already registered or not
         if (!insertBanner[1]) {
-          throw ({ success: false, message: "That Banner already exists", data: {} })
+          throw ({ success: false, message: "Banner Dengan Nama Yang Sama Sudah Ada", data: {} })
         }
         
-        return { success: true, message: "Banner Successfully Created", data: insertBanner[0].dataValues }
+        return { success: true, message: "Banner Berhasil Dibuat", data: insertBanner[0].dataValues }
       } catch (error) {
         console.log(error);
         throw (error)
@@ -71,8 +71,8 @@ module.exports =
           .then(async (updated) => { 
               const upService = await Banner.findOne({ where: { id: id } })
               console.log(JSON.stringify(upService), "upService")
-              return { success: true, message: "Banner Successfully Updated", data: upService } })
-          .catch((err) => { return { success: false, message: "Update Banner Failed", data: err } });
+              return { success: true, message: "Banner Berhasil Diubah", data: upService } })
+          .catch((err) => { return { success: false, message: "Banner Gagal Diubah", data: err } });
         } catch (error) {
           throw (error)
         }

@@ -33,9 +33,9 @@ module.exports =
     findCategory: async (params) => {
       return await Category.findOne({ where: params })
         .then((categories) => {
-          return (!categories) ? { success: false, message: "Category Not Found", data: {} } : { success: true, message: "Category Found", data: categories }
+          return (!categories) ? { success: false, message: "Kategori Belum Ada!", data: {} } : { success: true, message: "Category Found", data: categories }
         })
-        .catch((err) => { return { success: false, message: "Category Not Found", data: err } });
+        .catch((err) => { return { success: false, message: "Kategori Belum Ada, Ada Kesalahan Server!", data: err } });
     },
 
     findOrCreateCategory: async (params, req) => {
@@ -51,10 +51,10 @@ module.exports =
   
         // check name already registered or not
         if (!insertCategory[1]) {
-          throw ({ success: false, message: "That Category already exists", data: {} })
+          throw ({ success: false, message: "Kategori Dengan Nama Yang Sama Sudah Ada", data: {} })
         }
         
-        return { success: true, message: "Category Successfully Created", data: insertCategory[0].dataValues }
+        return { success: true, message: "Kategori Berhasil Dibuat", data: insertCategory[0].dataValues }
       } catch (error) {
         throw (error)
       }
@@ -76,8 +76,8 @@ module.exports =
           .then(async (updated) => { 
               const upService = await Category.findOne({ where: { id: id } })
               console.log(JSON.stringify(upService), "upService")
-              return { success: true, message: "Category Successfully Updated", data: upService } })
-          .catch((err) => { return { success: false, message: "Update Category Failed", data: err } });
+              return { success: true, message: "Kategori Berhasil Diubah", data: upService } })
+          .catch((err) => { return { success: false, message: "Kategori Gagal Diubah", data: err } });
         } catch (error) {
           throw (error)
         }

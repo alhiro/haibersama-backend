@@ -5,7 +5,7 @@ exports.getAllCategories = async function (req, res, next) {
   try {
     var categories = await cat.getAll();
     return res.status(200).json(
-      { status: 200, data: categories, message: "Succesfully Categories Retrieved" }
+      { status: 200, data: categories, message: "Semua Kategori Berhasil Diambil" }
     );
   } catch (err) {
     return res

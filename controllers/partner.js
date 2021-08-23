@@ -9,7 +9,7 @@ exports.getDetail = async function (req, res, next) {
   try {
         var partnerDetail = await partner.getDetail(partner_id);
         console.log("controller test test");
-        return res.status(200).json({ status: 200, data: partnerDetail.data, message: "Succesfully Partner Retrieved" });
+        return res.status(200).json({ status: 200, data: partnerDetail.data, message: "Detail Partner Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)
@@ -25,7 +25,7 @@ exports.getPartner = async function (req, res, next) {
   try {
         var partnerDetail = await partner.getPartner(partner_id);
         console.log("controller test test");
-        return res.status(200).json({ status: 200, data: partnerDetail, message: "Succesfully Partner Retrieved" });
+        return res.status(200).json({ status: 200, data: partnerDetail, message: "Data Partner Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)
@@ -38,7 +38,7 @@ exports.searchPartner = async function (req, res, next) {
   try {
         var partners = await partner.getSearchPartner(body);
         console.log("controller search");
-        return res.status(200).json({ status: 200, data: partners, message: "Succesfully Partner Retrieved" });
+        return res.status(200).json({ status: 200, data: partners, message: "Pencarian Partner Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)
@@ -50,7 +50,7 @@ exports.provinces = async function (req, res, next) {
   try {
     var provinc = await partner.getProvinces();
     return res.status(200).json(
-      { status: 200, message: "Succesfully Provinces Retrieved", data: provinc}
+      { status: 200, message: "Provinsi Berhasil Diambil", data: provinc}
     );
   } catch (err) {
     return res
@@ -65,7 +65,7 @@ exports.city = async function (req, res, next) {
   try {
     var cities = await partner.getCity();
     return res.status(200).json(
-      { status: 200, message: "Succesfully City Retrieved", data: cities}
+      { status: 200, message: "Kota Berhasil Diambil", data: cities}
     );
   } catch (err) {
     return res

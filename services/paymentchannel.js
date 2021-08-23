@@ -62,7 +62,7 @@ module.exports =
         }
       ).then(payment => {
         //console.log(payment);
-          return (!payment) ? { success: false, message: "Payment Channel Not Found", data: {} } : { success: true, message: "PaymentChannel Found", data: payment }
+          return (!payment) ? { success: false, message: "Channel Pembayaran Tidak Ditemukan", data: {} } : { success: true, message: "Channel Pembayaran Ditemukan", data: payment }
           
       })
     },
@@ -87,10 +87,10 @@ module.exports =
   
         // check name already registered or not
         if (!insertPaymentChannel[1]) {
-          throw ({ success: false, message: "That PaymentChannel already exists", data: {} })
+          throw ({ success: false, message: "Channel Pembayaran Sudah Ada", data: {} })
         }
         
-        return { success: true, message: "PaymentChannel Successfully Created", data: insertPaymentChannel[0].dataValues }
+        return { success: true, message: "Channel Pembayaran Berhasil Dibuat", data: insertPaymentChannel[0].dataValues }
       } catch (error) {
         throw (error)
       }
@@ -119,8 +119,8 @@ module.exports =
           .then(async (updated) => { 
               const upService = await PaymentChannel.findOne({ where: { id: id } })
               console.log(JSON.stringify(upService), "upService")
-              return { success: true, message: "PaymentChannel Successfully Updated", data: upService } })
-          .catch((err) => { return { success: false, message: "Update PaymentChannel Failed", data: err } });
+              return { success: true, message: "Channel Pembayaran Berhasil Diubah", data: upService } })
+          .catch((err) => { return { success: false, message: "Channel Pembayaran Gagal Diubah", data: err } });
         } catch (error) {
           throw (error)
         }

@@ -8,7 +8,7 @@ exports.getPortfolio = async function(req, res, next) {
     var portfolio = await partnerportfolio.getList(params);
     return res
       .status(200)
-      .json({ status: 200, data: portfolio.data, message: "Succesfully Retrieved" });
+      .json({ status: 200, data: portfolio.data, message: "Partner Portfolio Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)
@@ -23,7 +23,7 @@ exports.getAllPortfolio = async function(req, res, next) {
     var portfolio = await partnerportfolio.getList(params);
     return res
       .status(200)
-      .json({ status: 200, data: portfolio.data, message: "Succesfully Retrieved" });
+      .json({ status: 200, data: portfolio.data, message: "Semua Partner Portfolio Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)
@@ -37,7 +37,7 @@ exports.getDetail = async function(req, res, next) {
     var portfolio = await partnerportfolio.getDetail(id);
     return res
       .status(200)
-      .json({ status: 200, data: portfolio, message: "Succesfully Retrieved" });
+      .json({ status: 200, data: portfolio, message: "Detail Partner Portfolio Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)

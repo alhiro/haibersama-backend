@@ -15,11 +15,11 @@ module.exports =
         order: [["awards_date", "DESC"]]
        })
         .then((awards) => {
-          return (!awards) ? { success: false, message: "Partner Awards Not Found", data: {} } : { success: true, message: "Partner Awards Found", data: awards }
+          return (!awards) ? { success: false, message: "Partner Award Belum Ada!", data: {} } : { success: true, message: "Partner Awards Found", data: awards }
         })
         .catch((err) => { 
           console.log(err);
-          return { success: false, message: "Partner Awards Not Found", data: err } 
+          return { success: false, message: "Partner Award Belum Ada, Ada Kesalahaan Server!", data: err } 
         });
       },
 
@@ -37,11 +37,11 @@ module.exports =
               // ], 
           })
           .then((data) => {
-            return (!data) ? { success: false, message: "Award Not Found", data: {} } : { success: true, message: "Award Found", data: data }
+            return (!data) ? { success: false, message: "Partner Award Detail Belum Ada", data: {} } : { success: true, message: "Award Found", data: data }
           })
           .catch((err) => { 
             console.log(err);
-            return { success: false, message: "Award Not Found", data: err } 
+            return { success: false, message: "Partner Award Detail Belum Ada, Ada Kesalahaan Server", data: err } 
           });
     },
 
@@ -65,10 +65,10 @@ module.exports =
   
         // check name already registered or not
         if (!awards[1]) {
-          throw ({ success: false, message: "Partner awards already exists", data: {} })
+          throw ({ success: false, message: "Partner Award Sudah Ada", data: {} })
         }
         
-        return { success: true, message: "Partner Award Successfully Created", data: awards[0].dataValues }
+        return { success: true, message: "Partner Award Berhasil Dibuat", data: awards[0].dataValues }
       } catch (error) {
         
         console.log(error);
@@ -96,10 +96,10 @@ module.exports =
         .then(async (updated) => { 
             const result = await Awards.findOne({ where: { id: id } });
             
-            return { success: true, message: "Partner Awards Successfully Updated", data: result.dataValues } })
+            return { success: true, message: "Partner Award Berhasil Diubah", data: result.dataValues } })
         .catch((err) => { 
           console.log(error);
-          return { success: false, message: "Update Partner Awards Failed", data: err } });
+          return { success: false, message: "Partner Award Gagal Diubah", data: err } });
       } catch (error) {
         console.log(error);
         throw (error)
@@ -117,11 +117,11 @@ module.exports =
           },
         })
           .then(async (deleted) => {
-            return { success: true, message: "Succesfully Deleted Award", data: [] }
+            return { success: true, message: "Partner Award Berhasil Dihapus", data: [] }
           })
           .catch((err) => {
             console.log(err);
-            return { success: false, message: "Deleted Award Failed", data: err }
+            return { success: false, message: "Partner Award Gagal Dihapus", data: err }
           });
       } catch (error) {
         console.log(error);

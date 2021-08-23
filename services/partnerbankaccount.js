@@ -7,11 +7,11 @@ module.exports =
         where: params
        })
         .then((Account) => {
-          return (!Account) ? { success: false, message: "Partner Bank Account Not Found", data: {} } : { success: true, message: "Partner Bank Account Found", data: Account }
+          return (!Account) ? { success: false, message: "Partner Bank Belum Ada", data: {} } : { success: true, message: "Partner Bank Account Found", data: Account }
         })
         .catch((err) => { 
           console.log(err);
-          return { success: false, message: "Partner Bank Account Not Found", data: err } 
+          return { success: false, message: "Partner Bank Belum Ada, Ada Kesalahan Server", data: err } 
         });
       },
 
@@ -22,11 +22,11 @@ module.exports =
               }
           })
           .then((data) => {
-            return (!data) ? { success: false, message: "Bank Account Not Found", data: {} } : { success: true, message: "Bank Account Found", data: data }
+            return (!data) ? { success: false, message: "Partner Bank Tidak Ditemukan", data: {} } : { success: true, message: "Bank Account Found", data: data }
           })
           .catch((err) => { 
             console.log(err);
-            return { success: false, message: "Bank Account Not Found", data: err } 
+            return { success: false, message: "Partner Bank Tidak Ditemukan, Ada Kesalahan Server", data: err } 
           });
     },
 
@@ -52,10 +52,10 @@ module.exports =
   
         // check bank_code already registered or not
         if (!Account[1]) {
-          throw ({ success: false, message: "Partner Bank Account already exists", data: {} })
+          throw ({ success: false, message: "Partner Bank Sudah Ada", data: {} })
         }
         
-        return { success: true, message: "Partner Bank Account Successfully Created", data: Account[0].dataValues }
+        return { success: true, message: "Partner Bank Berhasil Dibuat", data: Account[0].dataValues }
       } catch (error) {
         
         console.log(error);
@@ -79,8 +79,8 @@ module.exports =
         .then(async (updated) => { 
             const result = await partnerbankaccount.findOne({ where: { id: id } })
             
-            return { success: true, message: "Partner Bank Account Successfully Updated", data: result.dataValues[1] } })
-        .catch((err) => { return { success: false, message: "Update Partner Bank Account Failed", data: err } });
+            return { success: true, message: "Partner Bank Berhasil Diubah", data: result.dataValues[1] } })
+        .catch((err) => { return { success: false, message: "Partner Bank Gagal Diubah", data: err } });
       } catch (error) {
         console.log(error);
         throw (error)

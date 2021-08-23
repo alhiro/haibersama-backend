@@ -6,7 +6,7 @@ const resv = require("../services/reservation");
 exports.getBanners = async function (req, res, next) {
   try {
         var banners = await dashboard.getBanners();
-        return res.status(200).json({ status: 200, data: banners, message: "Succesfully Banners Retrieved" });
+        return res.status(200).json({ status: 200, data: banners, message: "Banner Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)
@@ -17,7 +17,7 @@ exports.getBanners = async function (req, res, next) {
 exports.getHotPortfolios = async function (req, res, next) {
   try {
         var portfolios = await dashboard.getHotPortfolios();
-        return res.status(200).json({ status: 200, data: portfolios, message: "Succesfully Hot Portfolios Retrieved" });
+        return res.status(200).json({ status: 200, data: portfolios, message: "Hot Portfolio Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)
@@ -28,7 +28,7 @@ exports.getHotPortfolios = async function (req, res, next) {
 exports.getNewPortfolios = async function (req, res, next) {
   try {
         var portfolios = await dashboard.getNewPortfolios();
-        return res.status(200).json({ status: 200, data: portfolios, message: "Succesfully New Portfolios Retrieved" });
+        return res.status(200).json({ status: 200, data: portfolios, message: "New Portfolio Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)
@@ -39,7 +39,7 @@ exports.getNewPortfolios = async function (req, res, next) {
 exports.getAllCategories = async function (req, res, next) {
   try {
         var categories = await category.getAll();
-        return res.status(200).json({ status: 200, data: categories, message: "Succesfully Categories Retrieved" });
+        return res.status(200).json({ status: 200, data: categories, message: "Semua Kategori Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)

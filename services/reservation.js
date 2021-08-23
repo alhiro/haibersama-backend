@@ -26,7 +26,7 @@ module.exports =
         if(package === null){
           return {
             success: false,
-            message: "Package not found"
+            message: "Jasa/Produk Tidak Ditemukan"
           };
         }
 
@@ -34,7 +34,7 @@ module.exports =
           if(package.partner_id != partnerId){
             return {
               success: false,
-              message: "Partner tidak bisa menggunakan package yang dipilih.",
+              message: "Partner Tidak Bisa Menggunakan Jasa/Produk Yang Dipilih.",
               data: {}
             };
           }
@@ -61,7 +61,7 @@ module.exports =
         if(isDuplicate != null){
           return {
             success: false,
-            message: "Sudah ada order dengan user, partner, tanggal event, jam event dan alamat event yang sama",
+            message: "Sudah Ada Order Dengan User, Partner, Tanggal Event, Jam Event Dan Alamat Event Yang Sama",
             data: {}
           };
         }
@@ -79,7 +79,7 @@ module.exports =
         if(isPartnerIsBooked){
           return {
             success: false,
-            message: "Partner is not available.",
+            message: "Partner Tidak Tersedia",
             data: {}
           };
         }
@@ -112,7 +112,7 @@ module.exports =
           if(packageDetails === null){
             return {
               success: false,
-              message: "Package details not found"
+              message: "Detail Jasa/Produk Tidak Ditemukan"
             };
           }
 
@@ -223,20 +223,20 @@ module.exports =
           if (!insertReservation[1]) {
             throw {
               success: false,
-              message: "Failed to create reservation",
+              message: "Reservasi Gagal Dibuat",
               data: {}
             };
           } else {
             return {
               success: true,
-              message: "Reservation Successfully Created",
+              message: "Reservasi Berhasil Dibuat",
               data: insertReservation[0].dataValues
             };
           }
         } else {
           return {
             success: false,
-            message: "Reservation is already exist",
+            message: "Reservasi Sudah Ada",
             data: {}
           };
         }
@@ -265,9 +265,9 @@ module.exports =
         ]
       })
         .then((reservations) => {
-          return (!reservations) ? { success: false, message: "Reservation Not Found", data: {} } : { success: true, message: "Reservation Found", data: reservations }
+          return (!reservations) ? { success: false, message: "Reservasi Tidak Ditemukan!", data: {} } : { success: true, message: "Reservation Found", data: reservations }
         })
-        .catch((err) => { return { success: false, message: "Reservation Not Found", data: {}, error: err } });
+        .catch((err) => { return { success: false, message: "Reservasi Tidak Ditemukan, Ada Kesalahan Server!", data: {}, error: err } });
     },
     
     findReservations: async (where) => {
@@ -319,9 +319,9 @@ module.exports =
     );
 
     if(reservations.length > 0){
-      return (!reservations) ? { success: false, message: "Reservation Not Found", data: {} } : { success: true, message: "Reservation Found", data: reservations }
+      return (!reservations) ? { success: false, message: "Reservasi Tidak Ditemukan", data: {} } : { success: true, message: "Reservasi Ditemukan", data: reservations }
     } else {      
-      return { success: false, message: "Reservation Not Found", data: {} } 
+      return { success: false, message: "Reservasi Tidak Ditemukan", data: {} } 
     }
       // const {limit, offset} = paging;      
       // return await Reservation.findAll({ 
@@ -420,8 +420,8 @@ module.exports =
               const pointinput = await pointprocess.setPoint(objParamPoint);
             }
 
-            return { success: true, message: "Reservation Successfully Updated", data: upReserv } })
-        .catch((err) => { return { success: false, message: "Update Reservation Failed", data: err } });
+            return { success: true, message: "Reservasi Berhasil Diubah", data: upReserv } })
+        .catch((err) => { return { success: false, message: "Reservasi Gagal Diubah", data: err } });
       } catch (error) {
         throw (error)
       }
@@ -538,8 +538,8 @@ module.exports =
               const pointinput = await pointprocess.setPoint(objParamPoint);
             }
 
-            return { success: true, message: "Email Invoice Successfully Send", data: upReserv } })
-        .catch((err) => { return { success: false, message: "Send Email Invoice Failed", data: err } });
+            return { success: true, message: "Invoice Berhasil Dikirim Ke Email", data: upReserv } })
+        .catch((err) => { return { success: false, message: "Invoice Gagal Dikirim Ke Email", data: err } });
       } catch (error) {
         throw (error)
       }
@@ -768,9 +768,9 @@ module.exports =
     );
 
     if(reservations.length > 0){
-      return (!reservations) ? { success: false, message: "Reservation Not Found", data: {} } : { success: true, message: "Reservation Found", data: reservations[0].d }
+      return (!reservations) ? { success: false, message: "Reservasi Tidak Ditemukan!", data: {} } : { success: true, message: "Reservasi Berhasil Ditemukan", data: reservations[0].d }
     } else {      
-      return { success: false, message: "Reservation Not Found", data: err } 
+      return { success: false, message: "Reservasi Tidak Ditemukan, Ada Kesalahan Server!", data: err } 
     }
     },
     
@@ -831,9 +831,9 @@ module.exports =
       );
           // console.log(reservations);
       if(reservations.length > 0){
-        return (!reservations) ? { success: false, message: "Summary Not Found", data: {} } : { success: true, message: "Summary Found", data: reservations[0] }
+        return (!reservations) ? { success: false, message: "Statistik Reservasi Tidak Ditemukan!", data: {} } : { success: true, message: "Statistik Reservasi Berhasil Ditemukan", data: reservations[0] }
       } else {      
-        return { success: false, message: "Summary Not Found", data: err } 
+        return { success: false, message: "Statistik Reservasi Tidak Ditemukan, Ada Kesalahan Server!", data: err } 
       }
     },
 
@@ -886,9 +886,9 @@ module.exports =
     );
 
     if(reservations.length > 0){
-      return (!reservations) ? { success: false, message: "Reminder Not Found", data: {} } : { success: true, message: "Reminder Found", data: reservations }
+      return (!reservations) ? { success: false, message: "Reminder Tidak Ditemukan!", data: {} } : { success: true, message: "Reminder Berhasil Ditemukan", data: reservations }
     } else {      
-      return { success: false, message: "Reminder Not Found", data: {} } 
+      return { success: false, message: "Reminder Tidak Ditemukan, Ada Kesalahan Server!", data: {} } 
     }
       // const {limit, offset} = paging;      
       // return await Reservation.findAll({ 

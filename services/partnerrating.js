@@ -11,11 +11,11 @@ module.exports =
         order: [["created_at", "DESC"]]
        })
         .then((rating) => {
-          return (!rating) ? { success: false, message: "Partner Rating Not Found", data: {} } : { success: true, message: "Partner Rating Found", data: rating }
+          return (!rating) ? { success: false, message: "Partner Rating Belum Ada!", data: {} } : { success: true, message: "Partner Rating Found", data: rating }
         })
         .catch((err) => { 
           console.log(err);
-          return { success: false, message: "Partner Rating Not Found", data: err } 
+          return { success: false, message: "Partner Rating Belum Ada, Ada Kesalahan Server!", data: err } 
         });
       },
 
@@ -29,10 +29,10 @@ module.exports =
         });
 
         if(!order){          
-          return { success: false, message: "Reservation Not Found", data: {} } 
+          return { success: false, message: "Partner Rating Tidak Ditemukan (Info Reservasi Belum Ada)", data: {} } 
         } else {
           if(order.user_id != userId){ 
-            return { success: false, message: "User not match", data: {} } 
+            return { success: false, message: "Partner Rating Tidak Sesuai!", data: {} } 
           }
         }
 
@@ -51,10 +51,10 @@ module.exports =
   
         // check name already registered or not
         if (!result[1]) {
-          throw ({ success: false, message: "Partner rating already exists", data: {} })
+          throw ({ success: false, message: "Partner Rating Sudah Ada", data: {} })
         }
         
-        return { success: true, message: "Partner Rating Successfully Created", data: result[0].dataValues }
+        return { success: true, message: "Partner Rating Berhasil Dibuat", data: result[0].dataValues }
       } catch (error) {
         console.log(error)
         throw (error)
@@ -79,10 +79,10 @@ module.exports =
         });
 
         if(order == null){          
-          return { success: false, message: "Review Not Found", data: {} } 
+          return { success: false, message: "Review Tidak Ditemukan!", data: {} } 
         }else{
           if(order.partner_id != partnerId){
-            return { success: false, message: "Partner not match", data: {} } 
+            return { success: false, message: "Partner Tidak Sesuai!", data: {} } 
           }
         }
 
@@ -90,8 +90,8 @@ module.exports =
         .then(async (updated) => { 
             const result = await Rating.findOne({ where: { id: id } })
             
-            return { success: true, message: "Reply Rating Successfully", data: result } })
-        .catch((err) => { return { success: false, message: "Reply Rating Failed", data: err } });
+            return { success: true, message: "Review Rating Berhasil Dibuat", data: result } })
+        .catch((err) => { return { success: false, message: "Review Rating Gagal Dibuat", data: err } });
       } catch (error) {
         console.log(error)
         throw (error)

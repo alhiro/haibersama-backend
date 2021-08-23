@@ -34,9 +34,9 @@ module.exports =
     findService: async (params) => {
       return await Service.findOne({ where: params })
         .then((services) => {
-          return (!services) ? { success: false, message: "Service Not Found", data: {} } : { success: true, message: "Service Found", data: services }
+          return (!services) ? { success: false, message: "Jasa Tidak Ditemukan!", data: {} } : { success: true, message: "Jasa Berhasil Ditemukan", data: services }
         })
-        .catch((err) => { return { success: false, message: "Service Not Found", data: err } });
+        .catch((err) => { return { success: false, message: "Jasa Tidak Ditemukan, Ada Kesalahan Server!", data: err } });
     },
 
     findOrCreateService: async (params, serviceData) => {
@@ -58,10 +58,10 @@ module.exports =
 
           return await Service.create(objService)
           .then(async (data) => {
-            return { success: true, message: "Service Successfully Created", data: insertService[0].dataValues }
+            return { success: true, message: "Jasa Berhasil Dibuat", data: insertService[0].dataValues }
           })
           .catch((err) => {
-            return { success: false, message: "Create Service Failed", data: err }
+            return { success: false, message: "Jasa Gagal Dibuat", data: err }
           });
         } catch (error) {
           throw (error)
@@ -87,9 +87,9 @@ module.exports =
             .then(async (updated) => { 
               const upService = await Service.findOne({ where: { id: id } })
               console.log(JSON.stringify(upService), "upService")
-              return { success: true, message: "Service Successfully Updated", data: upService } })
+              return { success: true, message: "Jasa Berhasil Diubah", data: upService } })
             .catch((err) => { 
-              return { success: false, message: "Update Service Failed", data: err } 
+              return { success: false, message: "Jasa Gagal Diubah", data: err } 
             });
           } catch (error) {
             throw (error)

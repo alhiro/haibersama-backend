@@ -10,7 +10,7 @@ exports.getAllServices = async function(req, res, next) {
     var services = await ser.getAll();
     return res
       .status(200)
-      .json({ status: 200, data: services, message: "Succesfully Retrieved" });
+      .json({ status: 200, data: services, message: "Semua Jasa/Produk Layanan Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)

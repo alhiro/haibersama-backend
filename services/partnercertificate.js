@@ -15,11 +15,11 @@ module.exports =
         order: [["certificate_date", "DESC"]]
        })
         .then((certificate) => {
-          return (!certificate) ? { success: false, message: "Partner Certificate Not Found", data: {} } : { success: true, message: "Partner Certificate Found", data: certificate }
+          return (!certificate) ? { success: false, message: "Partner Sertifikat Belum Ada!", data: {} } : { success: true, message: "Partner Certificate Found", data: certificate }
         })
         .catch((err) => { 
           console.log(err);
-          return { success: false, message: "Partner Certificate Not Found", data: err } 
+          return { success: false, message: "Partner Sertifikat Belum Ada, Ada Kesalahan Server!", data: err } 
         });
       },
 
@@ -37,11 +37,11 @@ module.exports =
               ], 
           })
         .then((data) => {
-          return (!data) ? { success: false, message: "Certificate Not Found", data: {} } : { success: true, message: "Certificate Found", data: data }
+          return (!data) ? { success: false, message: "Partner Sertifikat Tidak Ditemukan!", data: {} } : { success: true, message: "Certificate Found", data: data }
         })
         .catch((err) => { 
           console.log(err);
-          return { success: false, message: "Certificate Not Found", data: err } 
+          return { success: false, message: "Partner Sertifikat Tidak Ditemukan, Ada Kesalahan Server!", data: err } 
         });
     },
 
@@ -61,10 +61,10 @@ module.exports =
         const certificate = await Certificate.findOrCreate({ where: params, defaults: objData })
   
         if (!certificate[1]) {
-          throw ({ success: false, message: "Partner certificate already exists", data: {} })
+          throw ({ success: false, message: "Partner Sertifikat Sudah Ada", data: {} })
         }
         
-        return { success: true, message: "Partner Certificate Successfully Created", data: certificate[0].dataValues }
+        return { success: true, message: "Partner Sertifikat Berhasil Dibuat", data: certificate[0].dataValues }
       } catch (error) {
         console.log(error)
         throw (error)
@@ -90,8 +90,8 @@ module.exports =
         .then(async (updated) => { 
             const result = await Certificate.findOne({ where: { id: id } })
             
-            return { success: true, message: "Partner Certificate Successfully Updated", data: result.dataValues } })
-        .catch((err) => { return { success: false, message: "Update Partner Certificate Failed", data: err } });
+            return { success: true, message: "Partner Sertifikat Berhasil Diubah", data: result.dataValues } })
+        .catch((err) => { return { success: false, message: "Partner Sertifikat Gagal Diubah", data: err } });
       } catch (error) {
         console.log(error)
         throw (error)
@@ -109,11 +109,11 @@ module.exports =
           },
         })
           .then(async (deleted) => {
-            return { success: true, message: "Succesfully Deleted Certificate", data: [] }
+            return { success: true, message: "Partner Sertifikat Berhasil Dihapus", data: [] }
           })
           .catch((err) => {
             console.log(err);
-            return { success: false, message: "Deleted Certificate Failed", data: err }
+            return { success: false, message: "Partner Sertifikat Gagal Dihapus", data: err }
           });
       } catch (error) {
         console.log(error);

@@ -55,7 +55,7 @@ module.exports = {
         console.log("updated : ", updated[1].dataValues)
         return {
           success: true,
-          message: "Login Successful",
+          message: "Berhasil Login",
           data: {
             type: updated[1].dataValues.type == 1 ? "user" : "partner",
             token,
@@ -65,7 +65,7 @@ module.exports = {
         };
       })
       .catch(err => {
-        return { success: false, message: "Login Failed", data: err };
+        return { success: false, message: "Gagal Login", data: err };
       });
   },
 
@@ -81,11 +81,11 @@ module.exports = {
       }).then(users => {
         //delete users.dataValues.password
         return !users
-          ? { success: false, message: "User Not Found", data: {} }
-          : { success: true, message: "User Found", data: users };
+          ? { success: false, message: "User Belum Ada!", data: {} }
+          : { success: true, message: "User Berhasil Ditemukan", data: users };
       })
       .catch(err => {
-        return { success: false, message: "User Not Found", data: err };
+        return { success: false, message: "User Belum Ada, Ada Kesalahan Server!", data: err };
       });
       ;
     } catch (error) {
@@ -100,11 +100,11 @@ module.exports = {
       .then(users => {
         //delete users.dataValues.password
         return !users
-          ? { success: false, message: "User Not Found", data: {} }
-          : { success: true, message: "User Found", data: users };
+          ? { success: false, message: "User Tidak Ditemukan", data: {} }
+          : { success: true, message: "User Ditemukan", data: users };
       })
       .catch(err => {
-        return { success: false, message: "User Not Found", data: err };
+        return { success: false, message: "User Tidak Ditemukan", data: err };
       });
   },
 
@@ -133,7 +133,7 @@ module.exports = {
         
       if(!users)
       {
-        return { success: false, message: "User Not Found", data: {} }
+        return { success: false, message: "User Tidak Ditemukan", data: {} }
       } 
       else 
       {
@@ -185,14 +185,14 @@ module.exports = {
               partner_packages: users.partner_package_headers
             }
             
-            return { success: true, message: "User Found", data: user };              
+            return { success: true, message: "User Ditemukan", data: user };              
           } else {                
-            return { success: true, message: "User Found", data: users };   
+            return { success: true, message: "User Ditemukan", data: users };   
           }           
         }
         else
         {
-          return { success: true, message: "User Found", data: users };
+          return { success: true, message: "User Ditemukan", data: users };
         }
       }
     } 
@@ -247,21 +247,21 @@ module.exports = {
         if (!insertUser[1]) {
           throw {
             success: false,
-            message: "That Phone Number already exists",
+            message: "Nomor Handphone Sudah Ada!",
             data: {}
           };
         } else {
           delete insertUser[0].dataValues.password;
           return {
             success: true,
-            message: "User Successfully Created",
+            message: "User Berhasil Dibuat",
             data: insertUser[0].dataValues
           };
         }
       } else {
         return {
           success: false,
-          message: "That Phone Number already exists",
+          message: "Nomor Handphone Sudah Ada!",
           data: {}
         };
       }
@@ -298,14 +298,14 @@ module.exports = {
       });
       console.log("returning : " + JSON.stringify(insertUser));
       if (!insertUser) {
-        throw { success: false, message: "Failed to register user", data: {} };
+        throw { success: false, message: "Gagal Daftar User", data: {} };
       } else {
         transaction.commit();
         delete insertUser.dataValues.password;
 
         return {
           success: true,
-          message: "User Successfully Created",
+          message: "User Berhasil Dibuat",
           data: insertUser.dataValues
         };
       }
@@ -341,14 +341,14 @@ module.exports = {
 
       console.log("returning : " + JSON.stringify(insertUser));
       if (!insertUser) {
-        throw { success: false, message: "Failed to register user", data: {} };
+        throw { success: false, message: "Gagal Daftar User", data: {} };
       } else {
         transaction.commit();
         delete insertUser.dataValues.password;
 
         return {
           success: true,
-          message: "User Successfully Created",
+          message: "User Berhasil Dibuat",
           data: insertUser.dataValues
         };
       }
@@ -379,7 +379,7 @@ module.exports = {
         else
           return {
             //success: false,
-            message: "User activation failed",
+            message: "Aktivasi User Gagal!",
             //data: updated
           };
       })
@@ -436,12 +436,12 @@ module.exports = {
         delete updated[1].dataValues.password;
         return {
           success: true,
-          message: "update Successful",
+          message: "Profil Berhasil Diubah",
           data: updated[1]
         };
       })
       .catch(err => {
-        return { success: false, message: "Update profile Failed", data: err };
+        return { success: false, message: "Profil Gagal Diubah", data: err };
       });
   },
 
@@ -467,12 +467,12 @@ module.exports = {
         delete updated[1].dataValues.password;
         return {
           success: true,
-          message: "update profile password Successful",
+          message: "Password Berhasil Diubah",
           data: updated[1]
         };
       })
       .catch(err => {
-        return { success: false, message: "Update profile password Failed", data: err };
+        return { success: false, message: "Password Gagal Diubah", data: err };
       });
   },
 
@@ -511,7 +511,7 @@ module.exports = {
 
       console.log("returning : " + JSON.stringify(insertUser));
       if (!insertUser) {
-        throw { success: false, message: "Failed to register user", data: {} };
+        throw { success: false, message: "Gagal Daftar User", data: {} };
       } else {
         transaction.commit();
         delete insertUser.dataValues.password;
@@ -538,7 +538,7 @@ module.exports = {
 
         return {
           success: true,
-          message: "User Successfully Created",
+          message: "User Berhasil Dibuat",
           data: insertUser.dataValues
         };
       }

@@ -22,11 +22,11 @@ module.exports =
         }
        })
         .then((Wallet) => {
-          return (!Wallet) ? { success: false, message: "Partner Wallet History Not Found", data: {} } : { success: true, message: "Partner Wallet History Found", data: Wallet }
+          return (!Wallet) ? { success: false, message: "Riwayat Wallet Partner Belum Ada!", data: {} } : { success: true, message: "Partner Wallet History Found", data: Wallet }
         })
         .catch((err) => { 
           console.log(err);
-          return { success: false, message: "Partner Wallet History Not Found", data: err } 
+          return { success: false, message: "Riwayat Wallet Partner Belum Ada, Ada Kesalahan Server!", data: err } 
         });
       },
 
@@ -37,11 +37,11 @@ module.exports =
               }
           })
           .then((data) => {
-            return (!data) ? { success: false, message: "Wallet History Not Found", data: {} } : { success: true, message: "Wallet History Found", data: data }
+            return (!data) ? { success: false, message: "Riwayat Wallet Partner Tidak Ditemukan!", data: {} } : { success: true, message: "Wallet History Found", data: data }
           })
           .catch((err) => { 
             console.log(err);
-            return { success: false, message: "Wallet History Not Found", data: err } 
+            return { success: false, message: "Riwayat Wallet Partner Tidak Ditemukan, Ada Kesalahan Server!", data: err } 
           });
     },
 
@@ -51,7 +51,7 @@ module.exports =
 
         if(!reservation_no){
           if(transaction_type == "C"){
-            throw ({ success: false, message: "Please input reservation no", data: {} });
+            throw ({ success: false, message: "Silahkan Masukan Nomor Reservasi", data: {} });
           }else{
             reservation_no = "";
           }
@@ -69,7 +69,7 @@ module.exports =
             if(isExists){
               return {
                 success: false,
-                message: "Already exists.",
+                message: "Riwayat Wallet Partner Sudah Ada",
                 data: {}
               };
             }
@@ -78,12 +78,12 @@ module.exports =
 
         if(total_amount == 0){
           console.log("error amount");
-          throw ({ success: false, message: "Please input total amount", data: {} });
+          throw ({ success: false, message: "Silahkan Masukan Jumlah Total", data: {} });
         }
 
         if (!transaction_type || !reservation_no || !partner_id || !status) {
           console.log("Please input all data");
-          throw ({ success: false, message: "Please input all data", data: {} })
+          throw ({ success: false, message: "Silahkan Masukan Semua Data", data: {} })
         }
 
         let transaction_date = moment().utcOffset(0);
@@ -162,7 +162,7 @@ module.exports =
           });
         }
         
-        return { success: true, message: "Partner Wallet History Successfully Created", data: Wallet[0].dataValues }
+        return { success: true, message: "Riwayat Wallet Partner Berhasil Dibuat", data: Wallet[0].dataValues }
       } catch (error) {
         
         console.log(error);
@@ -182,8 +182,8 @@ module.exports =
         .then(async (updated) => { 
             const result = await wallethistory.findOne({ where: { id: id } })
             
-            return { success: true, message: "Partner Wallet History Status Successfully Updated", data: result.dataValues[1] } })
-        .catch((err) => { return { success: false, message: "Update Partner Wallet History Status Failed", data: err } });
+            return { success: true, message: "Riwayat Status Wallet Partner Berhasil Diubah", data: result.dataValues[1] } })
+        .catch((err) => { return { success: false, message: "Riwayat Status Wallet Partner Gagal Diubah", data: err } });
       } catch (error) {
         console.log(error);
         throw (error)
@@ -197,14 +197,14 @@ module.exports =
        })
         .then((Wallet) => {
           return (!Wallet) ? { 
-            success: true, message: "Partner Wallet Balance Not Found", data: {current_balance:0} 
+            success: true, message: "Saldo Wallet Partner Wallet Belum Ada!", data: {current_balance:0} 
           } : { 
-            success: true, message: "Partner Wallet History Found", data: Wallet 
+            success: true, message: "Riwayat Saldo Wallet Partner Ditemukan", data: Wallet 
           }
         })
         .catch((err) => { 
           console.log(err);
-          return { success: false, message: "Partner Wallet Balance Not Found", data: err } 
+          return { success: false, message: "Saldo Wallet Partner Wallet Belum Ada, Ada Kesalahan Server!", data: err } 
         });
       },
       
@@ -221,7 +221,7 @@ module.exports =
         if(balance){
           if(balance.current_balance < totalAmount)
           {
-            return { success: true, message: "Balance is less than " + totalAmount, data: {} } 
+            return { success: true, message: "Saldo Kurang Dari " + totalAmount, data: {} } 
           }
           
           let transaction_date = moment().utcOffset(0);
@@ -323,12 +323,12 @@ module.exports =
           .then(async (updated) => { 
             console.log(updated);
             const newBalance = await walletbalance.findOne( { where: { id:balance.id }});
-              return { success: true, message: "Withdraw success", data: newBalance } }
+              return { success: true, message: "Penarikan Dana Sukses", data: newBalance } }
               )
-          .catch((err) => { return { success: false, message: "Withdraw Failed", data: err } });
+          .catch((err) => { return { success: false, message: "Penarikan Dana Gagal", data: err } });
         
         } else {     
-          return { success: false, message: "No saldo", data: {} }        
+          return { success: false, message: "Tidak Ada Saldo", data: {} }        
         }
       }catch (error) {
         

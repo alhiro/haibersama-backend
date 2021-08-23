@@ -187,7 +187,7 @@ module.exports =
             return { success: true, data: partner }
           
         } else {
-          return { success: false, message: "Partner Info Not Found", data: {} };
+          return { success: false, message: "Informasi Partner Tidak Ada", data: {} };
         }
         } catch (error) {
           console.log(error);

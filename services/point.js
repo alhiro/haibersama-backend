@@ -109,7 +109,7 @@ module.exports =
         }
 
         
-        return { success: true, message: "Partner Tiering Successfully Created", data: hist[0].dataValues }
+        return { success: true, message: "Peringkat Mitra Berhasil Dibuat", data: hist[0].dataValues }
       } catch (error) {
         
         console.log(error);

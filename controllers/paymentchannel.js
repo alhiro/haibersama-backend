@@ -4,7 +4,7 @@ const sequelizeTransaction = require('../config/sequelizeTransaction')
 exports.getAll = async function (req, res, next) {
   try {
         var channels = await cat.getAll();
-        return res.status(200).json({ status: 200, data: channels, message: "Succesfully Channels Retrieved" });
+        return res.status(200).json({ status: 200, data: channels, message: "Semua Channel Pembayaran Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)
@@ -15,7 +15,7 @@ exports.getAll = async function (req, res, next) {
 exports.getActiveList = async function (req, res, next) {
   try {
     var channels = await cat.getAllActive();
-    return res.status(200).json({ status: 200, data: channels, message: "Succesfully Payment Channel Retrieved" });
+    return res.status(200).json({ status: 200, data: channels, message: "Channel Pembayaran Aktif Berhasil Diambil " });
   } catch (err) {
   return res
     .status(500)
@@ -28,7 +28,7 @@ exports.getPaymentChannelDetail = async function (req, res, next) {
     let channelCode = req.query.channelCode;
 
     var channels = await cat.findPaymentChannelByCode(channelCode);
-    return res.status(200).json({ status: 200, data: channels.data, message: "Succesfully Payment Channel Retrieved" });
+    return res.status(200).json({ status: 200, data: channels.data, message: "Detail Channel Pembayaran Berhasil Diambil" });
   } catch (err) {
   return res
     .status(500)

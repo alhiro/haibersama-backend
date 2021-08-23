@@ -4,7 +4,7 @@ const sequelizeTransaction = require('../config/sequelizeTransaction')
 exports.getAllBanners = async function (req, res, next) {
   try {
         var banners = await cat.getAll();
-        return res.status(200).json({ status: 200, data: banners, message: "Succesfully Banners Retrieved" });
+        return res.status(200).json({ status: 200, data: banners, message: "Semua Banner Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)

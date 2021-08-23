@@ -8,7 +8,7 @@ exports.getAll = async function(req, res, next) {
     var account = await partnerbankaccount.getList(params);
     return res
       .status(200)
-      .json({ status: 200, data: account.data, message: "Succesfully Retrieved" });
+      .json({ status: 200, data: account.data, message: "Akun Bank Partner Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)
@@ -22,7 +22,7 @@ exports.getDetail = async function(req, res, next) {
     var account = await partnerbankaccount.getDetail(id);
     return res
       .status(200)
-      .json({ status: 200, data: account, message: "Succesfully Retrieved" });
+      .json({ status: 200, data: account, message: "Detail Akun Bank Partner Berhasil Diambil" });
   } catch (err) {
     console.log(err);
     return res

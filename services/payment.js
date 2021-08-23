@@ -70,13 +70,13 @@ module.exports =
           if (!insertPayment[1]) {
             throw {
               success: false,
-              message: "Failed to create payment",
+              message: "Transaksi Pembayaran Gagal Diproses",
               data: {}
             };
           } else {
             return {
               success: true,
-              message: "Payment Successfully Created",
+              message: "Transaksi Pembayaran Berhasil Diproses",
               data: insertPayment[0].dataValues
             };
           }
@@ -95,8 +95,8 @@ module.exports =
               const updatePayment = await Payment.findOne({ where: { reservation_no: reservationNo } });  
               const updateDetail = await PaymentDetail.create(detail);
   
-              return { success: true, message: "Payment Successfully Updated", data: updatePayment } })
-          .catch((err) => { return { success: false, message: "Update Payment Failed", data: err } });
+              return { success: true, message: "Transaksi Pembayaran Berhasil Diubah", data: updatePayment } })
+          .catch((err) => { return { success: false, message: "Transaksi Pembayaran Gagal Diubah", data: err } });
         }
       } catch (error) {
         console.log(error);
@@ -124,7 +124,7 @@ module.exports =
                   type: Sequelize.QueryTypes.SELECT
               }
           ).then(payment => {
-            return (!payment) ? { success: false, message: "Payment Info Not Found", data: {} } : { success: true, data: payment[0] }
+            return (!payment) ? { success: false, message: "Informasi Transaksi Pembayaran Tidak Ditemukan", data: {} } : { success: true, data: payment[0] }
           })
       } catch (error) {
       throw error
@@ -147,8 +147,8 @@ module.exports =
 
             const updateDetail = await PaymentDetail.create(detail);
 
-            return { success: true, message: "Payment Successfully Updated", data: updatePayment } })
-        .catch((err) => { return { success: false, message: "Update Payment Failed", data: err } });
+            return { success: true, message: "Status Transaksi Pembayaran Berhasil Diubah", data: updatePayment } })
+        .catch((err) => { return { success: false, message: "Status Transaksi Pembayaran Gagal Diubah", data: err } });
       } catch (error) {
         throw (error)
       }

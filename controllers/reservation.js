@@ -16,31 +16,31 @@ exports.createReservation = async function(req, res, next) {
       {
         if(req.reservationDate === null)
         {
-          return res.status(400).send({ code: 400, success: false, message: "Please input reservation date.", data: {} });
+          return res.status(400).send({ code: 400, success: false, message: "Silahkan Masukkan Tanggal Reservasi", data: {} });
         }
       }  
 
         if(!req.packageId || req.packageId == 0)
         {
-          return res.status(400).send({ code: 400, success: false, message: "Please select package.", data: {} });
+          return res.status(400).send({ code: 400, success: false, message: "Silahkan Pilih Paket Jasa/Produk", data: {} });
         }else if(!req.eventDate)
         {
-          return res.status(400).send({ code: 400, success: false, message: "Event date is null", data: {} });
+          return res.status(400).send({ code: 400, success: false, message: "Tanggal Acara Tidak Ada", data: {} });
         }else if(!req.eventTime)
         {
-          return res.status(400).send({ code: 400, success: false, message: "Event time is null", data: {} });
+          return res.status(400).send({ code: 400, success: false, message: "Waktu Acara Tidak Ada", data: {} });
         }else if(!req.eventAddress)
         {
-          return res.status(400).send({ code: 400, success: false, message: "Event address is null or empty", data: {} });
+          return res.status(400).send({ code: 400, success: false, message: "Alamat Lokasi Acara Tidak Ada / Kosong", data: {} });
         }else if(!req.name)
         {
-          return res.status(400).send({ code: 400, success: false, message: "Name is null or empty", data: {} });
+          return res.status(400).send({ code: 400, success: false, message: "Nama Tidak Ada / Kosong", data: {} });
         }else if(!req.phoneNo || !req.waNo)
         {
-          return res.status(400).send({ code: 400, success: false, message: "Phone No or WA No is null or empty", data: {} });
+          return res.status(400).send({ code: 400, success: false, message: "Nomor Telphon / Nomor Whatsapp Tidak Ada / Kosong", data: {} });
         }else if(!req.email)
         {
-          return res.status(400).send({ code: 400, success: false, message: "Email is null or empty", data: {} });
+          return res.status(400).send({ code: 400, success: false, message: "Email Tidak Ada / Kosong", data: {} });
         }
 
         let response = await resv.findOrCreateReservation(req);
@@ -534,14 +534,14 @@ exports.getSuccessReservationsEmail = async function(req, res, next) {
       return res.status(200).send({
         code: 200,
         success: true,
-        message: "Success to send email",
+        message: "Berhasil Mengirimkan Email",
         data: {}
       });
     } else {
       return res.status(401).send({
         code: 401,
         success: false,
-        message: "Failed to send email",
+        message: "Gagal Mengirimkan Email",
         data: {}
       });
     }
@@ -668,14 +668,14 @@ exports.getSuccessReservationEmail = async function(req, res, next) {
        return res.status(200).send({
          code: 200,
          success: true,
-         message: "Success to send email",
+         message: "Berhasil Mengirimkan Email",
          data: {}
        });
      } else {
        return res.status(401).send({
          code: 401,
          success: false,
-         message: "Failed to send email",
+         message: "Gagal Mengirimkan Email",
          data: {}
        });
      }
@@ -844,7 +844,7 @@ exports.sendEmailToCustomer = async function (req, res, next) {
           return res.status(401).send({
             code: 401,
             success: false,
-            message: "Failed to send email",
+            message: "Gagal Mengirimkan Email",
             data: {}
           });
         }

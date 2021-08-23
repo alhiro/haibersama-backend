@@ -16,11 +16,11 @@ module.exports =
         order: [["period_to", "DESC"]]
        })
         .then((experience) => {
-          return (!experience) ? { success: false, message: "Partner Experience Not Found", data: {} } : { success: true, message: "Partner Experience Found", data: experience }
+          return (!experience) ? { success: false, message: "Partner Experience Belum Ada!", data: {} } : { success: true, message: "Partner Experience Found", data: experience }
         })
         .catch((err) => { 
           console.log(err);
-          return { success: false, message: "Partner Experience Not Found", data: err } 
+          return { success: false, message: "Partner Experience Belum Ada, Ada Kesalahan Server!", data: err } 
         });
       },
 
@@ -40,11 +40,11 @@ module.exports =
             ], 
         })
         .then((data) => {
-          return (!data) ? { success: false, message: "Experience Not Found", data: {} } : { success: true, message: "Experience Found", data: data }
+          return (!data) ? { success: false, message: "Partner Experience Tidak Ditemukan!", data: {} } : { success: true, message: "Experience Found", data: data }
         })
         .catch((err) => { 
           console.log(err);
-          return { success: false, message: "Experience Not Found", data: err } 
+          return { success: false, message: "Partner Experience Tidak Ditemukan, Ada Kesalahan Server!", data: err } 
         });
     },
 
@@ -65,10 +65,10 @@ module.exports =
         const experience = await Experience.findOrCreate({ where: params, defaults: objData })
   
         if (!experience[1]) {
-          throw ({ success: false, message: "Partner experience already exists", data: {} })
+          throw ({ success: false, message: "Partner Experience Sudah Ada", data: {} })
         }
         
-        return { success: true, message: "Partner Experience Successfully Created", data: experience[0].dataValues }
+        return { success: true, message: "Partner Experience Berhasil Dibuat", data: experience[0].dataValues }
       } catch (error) {
         console.log(error)
         throw (error)
@@ -95,8 +95,8 @@ module.exports =
         .then(async (updated) => { 
             const result = await Experience.findOne({ where: { id: id } })
             
-            return { success: true, message: "Partner Experience Successfully Updated", data: result.dataValues } })
-        .catch((err) => { return { success: false, message: "Update Partner Experience Failed", data: err } });
+            return { success: true, message: "Partner Experience Berhasil Diubah", data: result.dataValues } })
+        .catch((err) => { return { success: false, message: "Partner Experience Gagal Diubah", data: err } });
       } catch (error) {
         console.log(error)
         throw (error)
@@ -114,11 +114,11 @@ module.exports =
           },
         })
           .then(async (deleted) => {
-            return { success: true, message: "Succesfully Deleted Experience", data: [] }
+            return { success: true, message: "Partner Experience Berhasil Dihapus", data: [] }
           })
           .catch((err) => {
             console.log(err);
-            return { success: false, message: "Deleted Experience Failed", data: err }
+            return { success: false, message: "Partner Experience Gagal Dihapus", data: err }
           });
       } catch (error) {
         console.log(error);

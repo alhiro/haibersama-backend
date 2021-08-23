@@ -8,7 +8,7 @@ exports.getAwards = async function(req, res, next) {
     var awards = await partnerawards.getList(params);
     return res
       .status(200)
-      .json({ status: 200, data: awards.data, message: "Succesfully Retrieved" });
+      .json({ status: 200, data: awards.data, message: "Partner Award Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)
@@ -23,7 +23,7 @@ exports.getAllAwards = async function(req, res, next) {
     var awards = await partnerawards.getList(params);
     return res
       .status(200)
-      .json({ status: 200, data: awards.data, message: "Succesfully Retrieved" });
+      .json({ status: 200, data: awards.data, message: "Semua Partner Award Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)
@@ -37,7 +37,7 @@ exports.getDetail = async function(req, res, next) {
     var awards = await partnerawards.getDetail(id);
     return res
       .status(200)
-      .json({ status: 200, data: awards, message: "Succesfully Retrieved" });
+      .json({ status: 200, data: awards, message: "Detail Partner Award Berhasil Diambil" });
   } catch (err) {
     console.log(err);
     return res

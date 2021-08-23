@@ -9,7 +9,7 @@ exports.getCertificate = async function(req, res, next) {
     var certificate = await partnercertificate.getList(params);
     return res
       .status(200)
-      .json({ status: 200, data: certificate.data, message: "Succesfully Retrieved" });
+      .json({ status: 200, data: certificate.data, message: "Sertifikat Partner Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)
@@ -24,7 +24,7 @@ exports.getAllCertificate = async function(req, res, next) {
     var certificate = await partnercertificate.getList(params);
     return res
       .status(200)
-      .json({ status: 200, data: certificate.data, message: "Succesfully Retrieved" });
+      .json({ status: 200, data: certificate.data, message: "Semua Sertifikat Partner Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)
@@ -38,7 +38,7 @@ exports.getDetail = async function(req, res, next) {
     var certificate = await partnercertificate.getDetail(id);
     return res
       .status(200)
-      .json({ status: 200, data: certificate, message: "Succesfully Retrieved" });
+      .json({ status: 200, data: certificate, message: "Detail Sertifikat Partner Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)
