@@ -7,6 +7,7 @@ const { VERIFY_URL, EMAIL_PASSWORD, EMAIL_USERNAME } = process.env;
 var nodemailer = require("nodemailer");
 var Hogan = require("hogan.js");
 var fs = require("fs");
+const path = require('path');
 
 exports.getAll =  async function(req, res, next) {
   try {
@@ -373,17 +374,12 @@ exports.verify = async function(req, res, next) {
 
       console.log(users["data"]["password"]);
       delete users["data"]["password"];
-      return res.status(401).send({
-        // code: 401,
-        // success: false,
-        message: "Akun sudah aktif ya. Silahkan login di aplikasi. Terima kasih dan selamat bergabung :)",
-        // data: users.data
-      });
+      return res.sendFile(path.join(__dirname, '../views', 'is_activation.html'));
     }
     //console.log(users);
-    var verifyUser = await auth.verifyUser(email, token);
+    var verifyUser = await auth.verifyUser(email, token, res);
 
-    return res.status(200).send(verifyUser);
+    return verifyUser;
   } catch (err) {
     return res
       .status(500)

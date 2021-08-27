@@ -12,6 +12,7 @@ const jwt = require("../lib/jwt");
 const utils = require("../lib/utils");
 const dbSeq = require("../config/sequelize");
 const moment = require("moment");
+const path = require('path');
 const {
   NODE_ENV,
   APP_ID,
@@ -358,12 +359,13 @@ module.exports = {
     }
   },
 
-  verifyUser: async (email, token, transaction, res) => {
+  verifyUser: async (email, token, res) => {
     let objUser = {
       active: 1
     };
     console.log("email :" + email);
     console.log("token 2 :" + token.replace(/['"]+/g, ""));
+    console.log("response :" + res);
 
     return await User.update(objUser, {
       where: { token: token.replace(/['"]+/g, ""), email: email }
@@ -371,17 +373,9 @@ module.exports = {
       .then(updated => {
         console.log("updated : " + updated);
         if (updated > 0)
-          return {
-            //success: true,
-            message: "Selamat akun sudah berhasil diaktifkan. Silahkan login di aplikasi ya :)",
-            //data: updated
-          };
+          return res.sendFile(path.join(__dirname, '../views', 'success_activation.html'));
         else
-          return {
-            //success: false,
-            message: "Aktivasi User Gagal!",
-            //data: updated
-          };
+          return res.sendFile(path.join(__dirname, '../views', 'failed_activation.html'));
       })
       .catch(err => {
         return { success: false, message: err.message, data: err };
