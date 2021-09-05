@@ -538,10 +538,117 @@ module.exports =
               const pointinput = await pointprocess.setPoint(objParamPoint);
             }
 
-            return { success: true, message: "Invoice Berhasil Dikirim Ke Email", data: upReserv } })
+            return { success: true, message: "Invoice " +reservationNo+ " Berhasil Dikirim Ke Email", data: upReserv } })
         .catch((err) => { return { success: false, message: "Invoice Gagal Dikirim Ke Email", data: err } });
       } catch (error) {
         throw (error)
+      }
+    },
+
+    updateReservation: async (data) => {
+      try {
+        const { id, reservationType, reservationNo, reservationDate, partnerId, userId, packageId, eventDate, eventTime, eventAddress, name, provinsi, city, address, phoneNo, waNo, email, socialMedia, otherDescription } = data;
+
+        // get services from package partner
+        var package = await PackageHeader.findOne({
+          where: { id: packageId }
+        });
+
+        if(package === null){
+          return {
+            success: false,
+            message: "Jasa/Produk Tidak Ditemukan"
+          };
+        }
+
+        if(reservationType == "MANUAL_ORDER"){
+          if(package.partner_id != partnerId){
+            return {
+              success: false,
+              message: "Partner Tidak Bisa Menggunakan Jasa/Produk Yang Dipilih.",
+              data: {}
+            };
+          }
+        }
+
+        console.log('package.partner_id');
+        console.log(package.partner_id);
+
+        console.log('partnerId');
+        console.log(partnerId);
+
+        var packageDetails = await PackageDetail.findAll({
+          where: { package_header_id: packageId }
+        });
+
+        if (packageDetails === null) {
+          return {
+            success: false,
+            message: "Detail Jasa/Produk Tidak Ditemukan"
+          };
+        }
+
+        var reservationData = {
+          reservation_no: reservationNo,
+          reservation_date: reservationDate,
+          reservation_type: reservationType,
+          user_id: userId,
+          partner_id: package.partner_id,
+          category_id: package.category_id,
+          package_id: packageId,
+          service_id: package.service_id,
+          name: name,
+          package_name: package.name,
+          description: package.description,
+          event_date: eventDate,
+          event_time: eventTime,
+          duration: package.duration,
+          event_address: eventAddress,
+          total_price: package.totalprice,
+          total_payment: package.totalprice,
+        };
+        console.log("resv data");
+        console.log(reservationData);
+
+        return Reservation.update(reservationData, {
+          where: {reservation_no: reservationNo},
+          defaults: reservationData,
+        } )
+        .then(async (updated) => { 
+            var resvContact = {
+              reservation_no: reservationNo,
+              name: name,
+              provinsi: provinsi,
+              city: city,
+              address: address,
+              phone_no: phoneNo,
+              wa_no: waNo,
+              email: email,
+              social_media: socialMedia,
+              other_description: otherDescription
+            }
+            
+            console.log("resv contact");
+            console.log(resvContact);
+
+            await ReservationContact.update(resvContact, { 
+              where: { reservation_id: id } });
+
+            const upReserv = await Reservation.findOne({ 
+              where: { reservation_no: reservationNo },
+              include: [
+                {
+                  model: ReservationContact,
+                  as: 'reservation_contact'
+                },
+              ],
+             })
+            console.log(JSON.stringify(upReserv), "upReserv")
+
+            return { success: true, message: "Data Reservasi " +reservationNo+ " Berhasil Diubah", data: upReserv } })
+      } catch (error) {
+        console.log(error);
+        throw error
       }
     },
 

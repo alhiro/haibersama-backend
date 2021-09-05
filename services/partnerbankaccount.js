@@ -36,7 +36,7 @@ module.exports =
         const { partner_id, bank_code, account_name, bank_name, account_no, is_active } = data;
 
         if (!account_name || !bank_code || !bank_name || !account_name || !account_no) {
-          throw ({ success: false, message: "Please input all data", data: {} })
+          throw ({ success: false, message: "Masukan Semua Informasi Bank", data: {} })
         }
 
         var objData = {
@@ -65,7 +65,11 @@ module.exports =
 
     updateAccount: async (data) => {
       try {
-        const { bank_code, bank_name, account_no, account_name, is_active, id } = data
+        const { bank_code, bank_name, account_no, account_name, is_active, id } = data;
+
+        if (!account_name || !bank_code || !bank_name || !account_name || !account_no) {
+          throw ({ success: false, message: "Masukan Semua Informasi Bank", data: {} })
+        }
 
         var objData = {
           bank_code: bank_code,

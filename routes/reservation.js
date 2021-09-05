@@ -21,7 +21,6 @@ reservationRouter.post("/getlist", headerAuth.isUserAuthenticated, (req, res, ne
   reservationController.getReservations(data, res);
 });
 
-
 reservationRouter.post("/create", headerAuth.isUserAuthenticated , (req, res, next) => {  
   const id = res.locals.auth.id;
 
@@ -100,12 +99,41 @@ reservationRouter.post("/updatestatusmanual", headerAuth.isPartnerAuthenticated 
     reservationType: "MANUAL_ORDER",
     statusCode: req.body.statusCode, 
     totalDp: req.body.totalDp, 
+    totalDiscount: req.body.totalDiscount, 
     userId: id, 
     type: type,
     email: email
   };
   
   reservationController.updateStatusManual(data, res);
+});
+
+reservationRouter.put("/update", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+  const id = res.locals.auth.id;
+
+  const data = { 
+    id: req.body.id,
+    userId: req.body.userId,
+    partnerId: id,
+    packageId: req.body.packageId, 
+    reservationNo: req.body.reservationNo, 
+    reservationDate: req.body.reservationDate, 
+    reservationType: "MANUAL_ORDER", 
+    eventDate: req.body.eventDate, 
+    eventTime: req.body.eventTime, 
+    eventAddress: req.body.eventAddress, 
+    name: req.body.name, 
+    provinsi: req.body.provinsi, 
+    city: req.body.city,
+    address: req.body.address, 
+    phoneNo: req.body.phoneNo, 
+    waNo: req.body.waNo, 
+    email: req.body.email, 
+    socialMedia: req.body.socialMedia, 
+    otherDescription: req.body.otherDescription
+  };
+
+  reservationController.getReservationDetail(data, res);
 });
 
 // reservationRouter.post("/agendaitems", headerAuth.isPartnerAuthenticated, (req, res, next) => {

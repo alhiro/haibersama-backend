@@ -174,8 +174,12 @@ exports.updateStatus = async function(req, res, next) {
 
 exports.updateStatusManual = async function(req, res, next) {
   try {            
+      const { reservationNo, statusCode, userId } = req;
+
+      var paramBank = { partner_id: userId };
+
       let data = await resv.updateStatusReservationManual(req);
-      let bankPartner = await bank.getList();
+      let bankPartner = await bank.getList(paramBank);
       
       if (data.success) {
         var reservation = data.data;
@@ -307,6 +311,21 @@ exports.updateStatusManual = async function(req, res, next) {
       } 
 
       return res.status(200).send(data);
+    } catch (err) {
+      console.log(err);
+      return res.status(500).send({ data: err });
+    }    
+};
+
+exports.getReservationDetail = async function(req, res, next) {
+  try {            
+      let data = await resv.updateReservation(req);
+      
+      if (data.success) {
+        return res.status(200).send(data);
+      } else {
+        return res.status(500).send(data);
+      }
     } catch (err) {
       console.log(err);
       return res.status(500).send({ data: err });
@@ -724,10 +743,12 @@ exports.sendEmailToCustomer = async function (req, res, next) {
  
      params.partner_id = userId;
      where += " AND rv.reservation_no = '" + reservationNo + "' "; 
+
+     var paramBank = { partner_id: userId };
           
      //  let reservation = await resv.findReservations(where);
      let data = await resv.updateStatusReservationManual(req);
-     let bankPartner = await bank.getList();     
+     let bankPartner = await bank.getList(paramBank);  
 
      if (data.success) {
        var reservation = data.data;
