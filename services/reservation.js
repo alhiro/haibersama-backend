@@ -389,21 +389,21 @@ module.exports =
             if(statusCode == "ORDER_COMPLETED")
             {
               console.log("ini ke wallet");
-              //hardcode 3 %
+              //fee order set 3 %
               const feeSetting = await appSetting.findOne({
                 where: { setting_name: "ORDER_FEE" }
               });
               
-              var walletAmount =  upReserv.total_price - (upReserv.total_price * (parseInt(feeSetting.setting_value) / 100));
-                console.log(walletAmount);
-                
-                var objBalance = {
-                  partner_id: upReserv.partner_id,
-                  reservation_no: upReserv.reservation_no,
-                  transaction_type: "C",
-                  total_amount: walletAmount,
-                  status: statusCode
-                }
+              var walletAmount = upReserv.total_price - (upReserv.total_price * (parseInt(feeSetting.setting_value) / 100));
+              console.log(walletAmount);
+
+              var objBalance = {
+                partner_id: upReserv.partner_id,
+                reservation_no: upReserv.reservation_no,
+                transaction_type: "C",
+                total_amount: walletAmount,
+                status: statusCode
+              }
 
               var objParam = {
                 reservation_no: upReserv.reservation_no
@@ -478,64 +478,35 @@ module.exports =
             const history = {status_code: statusCode, reservation_id: upReserv.id, updatedcreated_at: moment().utcOffset(0), created_by: userId };
             const upHistory = await ReservationStatusHistory.create(history);
           
+            console.log("ini ke wallet");
+
             if(statusCode == "ORDER_COMPLETED")
             {
-              console.log("ini ke wallet");
-              //hardcode 3 %
-              // const feeSetting = await appSetting.findOne({
-              //   where: { setting_name: "ORDER_FEE" }
-              // });
-
-              // setting manual condition not send order fee and no wallet history
-              // var walletAmount =  upReserv.total_price - (upReserv.total_price * (parseInt(feeSetting.setting_value) / 100));
-              //   console.log(walletAmount);
+              if (reservationType == "MANUAL_ORDER") {
+                console.log("tambahkan saldo ke wallet");
+                //fee order set 0 %
+                const feeSetting = await appSetting.findOne({
+                  where: { setting_name: "ORDER_FEE" }
+                });
                 
-              //   var objBalance = {
-              //     partner_id: upReserv.partner_id,
-              //     reservation_no: upReserv.reservation_no,
-              //     transaction_type: "C",
-              //     total_amount: walletAmount,
-              //     status: statusCode
-              //   }
-
-              // if (reservationType == "MANUAL_ORDER") {
-              //   console.log("ga kena order fee");
-
-              //   var objBalance = {
-              //     partner_id: upReserv.partner_id,
-              //     reservation_no: upReserv.reservation_no,
-              //     transaction_type: "C",
-              //     total_amount: upReserv.total_price,
-              //     status: statusCode
-              //   }
-              // } else {
-              //   console.log("ini kena order fee");
-
-              //   var walletAmount =  upReserv.total_price - (upReserv.total_price * (parseInt(feeSetting.setting_value) / 100));
-              //   console.log(walletAmount);
-                
-              //   var objBalance = {
-              //     partner_id: upReserv.partner_id,
-              //     reservation_no: upReserv.reservation_no,
-              //     transaction_type: "C",
-              //     total_amount: walletAmount,
-              //     status: statusCode
-              //   }
-              // }
-
-              // var objParam = {
-              //   reservation_no: upReserv.reservation_no
-              // }
-
-              // const insertWallet = await wallethistory.findOrCreateWallet(objParam, objBalance);
-
-              var objParamPoint = {
-                user_id: upReserv.partner_id, 
-                reservation_no: upReserv.reservation_no, 
-                reservation_date: upReserv.reservation_date, 
-                total_price: upReserv.total_price
-              };
-              const pointinput = await pointprocess.setPoint(objParamPoint);
+                var walletAmount = upReserv.total_price - (upReserv.total_price * (parseInt(0) / 100));
+                console.log(walletAmount);
+  
+                var objBalance = {
+                  partner_id: upReserv.partner_id,
+                  reservation_no: upReserv.reservation_no,
+                  transaction_type: "C",
+                  total_amount: walletAmount,
+                  status: statusCode
+                }
+  
+                var objParam = {
+                  reservation_no: upReserv.reservation_no
+                }
+  
+                const insertWallet = await wallethistory.findOrCreateWallet(objParam, objBalance);
+                console.log("insertWallet "  + JSON.stringify(insertWallet));
+              }             
             }
 
             return { success: true, message: "Invoice " +reservationNo+ " Berhasil Dikirim Ke Email", data: upReserv } })
@@ -766,7 +737,7 @@ module.exports =
                 WHERE date(r.event_date) = date(a.event_date)
                 and r.partner_id = a.partner_id
                 and r.transaction_status_code in ('ON_PROCESS')
-                order by r.event_time asc
+                order by r.event_time desc
               ) y
             ) d ON true
         LEFT   JOIN LATERAL (
@@ -947,56 +918,125 @@ module.exports =
     findReminder: async (where) => {
       var reservations = await sequelize.query(
         `SELECT 
-            rv.id, 
-            reservation_no, 
-            reservation_date, 
-            user_id, 
-            usr.name user_name,
-            partner_id, 
-            prt.name partner_name,
-            prt.picture partner_picture,
-            rv.category_id, 
-            cat.description category,
-            service_id, 
-            srv.description service,
-            rv.name,
-            rc.email,
-            rc.address,
-            rv.package_name,
-            rv.description,
-            event_date, 
-            event_time, 
-            event_address, 
-            total_price, 
-            total_discount, 
-            total_payment, 
-            total_down_payment,
-            status_code, 
-            ci.description status,
-            duration, 
-            reservation_type,
-            rt.description reservation_type_desc
-          FROM public.reservation rv
-          inner join hai_user prt on prt.id = rv.partner_id
-          left join hai_user usr on usr.id = rv.user_id
-          inner join category cat on cat.id = rv.category_id
-          inner join service srv on srv.id = rv.service_id
-          left join info_code ci on ci.code = rv.status_code
-          left join info_code rt on rt.code = rv.reservation_type
-          left join reservation_contact rc on rc.reservation_id = rv.id
-          `+where+`
-          order by event_time asc;`,
+              rv.id, 
+              reservation_no, 
+              reservation_date, 
+              user_id, 
+              usr.name user_name,
+              partner_id, 
+              prt.name partner_name,
+              prt.picture partner_picture,
+              rv.category_id, 
+              cat.description category,
+              service_id, 
+              srv.description service,
+              rv.name,
+              rc.email,
+              rc.address,
+              rv.package_name,
+              rv.description,
+              event_date, 
+              event_time, 
+              event_address, 
+              total_price, 
+              total_discount, 
+              total_payment, 
+              total_down_payment,
+              status_code, 
+              ci.description status,
+              duration, 
+              reservation_type,
+              rt.description reservation_type_desc
+            FROM public.reservation rv
+            inner join hai_user prt on prt.id = rv.partner_id
+            left join hai_user usr on usr.id = rv.user_id
+            inner join category cat on cat.id = rv.category_id
+            inner join service srv on srv.id = rv.service_id
+            left join info_code ci on ci.code = rv.status_code
+            left join info_code rt on rt.code = rv.reservation_type
+            left join reservation_contact rc on rc.reservation_id = rv.id
+            `+ where + `
+            order by event_time asc;`,
         {
-            raw: true,
-            type: sequelize.QueryTypes.SELECT
+          raw: true,
+          type: sequelize.QueryTypes.SELECT
         }
-    );
+      );
 
-    if(reservations.length > 0){
-      return (!reservations) ? { success: false, message: "Reminder Tidak Ditemukan!", data: {} } : { success: true, message: "Reminder Berhasil Ditemukan", data: reservations }
-    } else {      
-      return { success: false, message: "Reminder Tidak Ditemukan, Ada Kesalahan Server!", data: {} } 
-    }
+      if (reservations.length > 0) {
+        return (!reservations) ? { success: false, message: "Reminder Tidak Ditemukan!", data: {} } : { success: true, message: "Reminder Berhasil Ditemukan", data: reservations }
+      } else {
+        return { success: false, message: "Reminder Tidak Ditemukan!", data: {} }
+      }
+      // const {limit, offset} = paging;      
+      // return await Reservation.findAll({ 
+      //   where: params,
+      //   // limit: limit, 
+      //   // offset: offset,
+      //   order: [["reservation_no", "DESC"]]
+      //  })
+      //   .then((reservations) => {
+      //     return (!reservations) ? { success: false, message: "Reservation Not Found", data: {} } : { success: true, message: "Reservation Found", data: reservations }
+      //   })
+      //   .catch((err) => { 
+      //     console.log(err);
+      //     return { success: false, message: "Reservation Not Found", data: err } 
+      //   });
+    },
+
+    findReminderMore: async (where) => {
+      var reservations = await sequelize.query(
+        `SELECT 
+              rv.id, 
+              reservation_no, 
+              reservation_date, 
+              user_id, 
+              usr.name user_name,
+              partner_id, 
+              prt.name partner_name,
+              prt.picture partner_picture,
+              rv.category_id, 
+              cat.description category,
+              service_id, 
+              srv.description service,
+              rv.name,
+              rc.email,
+              rc.address,
+              rv.package_name,
+              rv.description,
+              event_date, 
+              event_time, 
+              event_address, 
+              total_price, 
+              total_discount, 
+              total_payment, 
+              total_down_payment,
+              status_code, 
+              ci.description status,
+              duration, 
+              reservation_type,
+              rt.description reservation_type_desc
+            FROM public.reservation rv
+            inner join hai_user prt on prt.id = rv.partner_id
+            left join hai_user usr on usr.id = rv.user_id
+            inner join category cat on cat.id = rv.category_id
+            inner join service srv on srv.id = rv.service_id
+            left join info_code ci on ci.code = rv.status_code
+            left join info_code rt on rt.code = rv.reservation_type
+            left join reservation_contact rc on rc.reservation_id = rv.id
+            `+ where + `
+            order by event_date asc, event_time asc;`,
+        {
+          raw: true,
+          type: sequelize.QueryTypes.SELECT
+        }
+      );
+
+      if (reservations.length > 0) {
+        return (!reservations) ? { success: false, message: "Reminder Tidak Ditemukan!", data: {} } : { success: true, message: "Reminder Berhasil Ditemukan", data: reservations }
+      } else {
+        return { success: false, message: "Reminder Tidak Ditemukan!", data: {} }
+      }
       // const {limit, offset} = paging;      
       // return await Reservation.findAll({ 
       //   where: params,

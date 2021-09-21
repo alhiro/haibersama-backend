@@ -143,8 +143,8 @@ module.exports = {
           var partnerResult = await PartnerService.getDetail(users.id);
           if(partnerResult.success){ 
             var partner = partnerResult.data;
-            console.log("Data Partner");
-            console.log(JSON.stringify(users));
+            // console.log("Data Partner");
+            // console.log(JSON.stringify(users));
             var user = {
               id: users.id,
               email: users.email,

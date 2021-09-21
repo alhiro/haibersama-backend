@@ -8,11 +8,11 @@ module.exports =
             where:{
                 active : true
             },
-            attributes: ['id',
-                        'title',
-                        'description',
-                        'image_url'
-            ],
+            // attributes: ['id',
+            //             'title',
+            //             'description',
+            //             'image_url'
+            // ],
             order:[
                 ["order_no", "ASC"]
             ]
@@ -25,7 +25,7 @@ module.exports =
     findBanner: async (params) => {
       return await Banner.findOne({ where: params })
         .then((banners) => {
-          return (!banners) ? { success: false, message: "Banner Belum Ada!", data: {} } : { success: true, message: "Banner Found", data: banners }
+          return (!banners) ? { success: false, message: "Banner Belum Ada!", data: {} } : { success: true, message: "Banner Ditemukan", data: banners }
         })
         .catch((err) => { return { success: false, message: "Banner Belum Ada, Ada Kesalahan Server!", data: err } });
     },

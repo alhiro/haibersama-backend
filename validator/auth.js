@@ -1,17 +1,31 @@
 const joi = require("joi");
 //.extend(require('@hapi/joi-date'));
-const pattern = /^\d{4}-\d{2}-\d{2}$/;
+const patternDob = /^\d{4}-\d{2}-\d{2}$/;
 const { validate } = require("../lib/validate");
 
 module.exports = {
   login: () => {
     const schema = {
       body: joi.object().keys({
-        email: joi.string().required(),
+        email: joi
+          .string()
+          .email({ minDomainAtoms: 2 })
+          .required()
+          .options({
+            language: {
+              string: { email: 'Format email salah.' },
+              any: { empty: 'Email tidak boleh kosong.' },
+            },
+          }),    
         password: joi
           .string()
           .required()
           .min(8)
+          .options({
+            language: {
+              string: { min: 'Kata sandi minimal harus 8 karakter' },
+            },
+          }),
       })
     };
 
@@ -21,21 +35,42 @@ module.exports = {
   register: () => {
     const schema = {
       body: joi.object().keys({
-        email: joi.string().required(),
-        name: joi.string().required(),
-        phone: joi
+        email: joi
           .string()
+          .email({ minDomainAtoms: 2 })
           .required()
-          .min(8),
-        address: joi
-          .string()
-          .min(8),        
+          .options({
+            language: {
+              string: { email: 'Format email salah.' },
+              any: { empty: 'Email tidak boleh kosong.' },
+            },
+          }),        
+        name: joi.string().required(),
         password: joi
           .string()
           .required()
-          .min(8),
-        dob: joi.string().regex(pattern),
-        nation: joi.string(),
+          .min(7)
+          .options({
+            language: {
+              string: { min: 'Kata sandi minimal harus 7 karakter' },
+            },
+          }),
+        phone: joi
+          .string(),
+        whatsapp: joi
+          .string()
+          .allow(""),
+        address: joi
+          .string()
+          .allow(""),   
+        province: joi
+          .string()
+          .allow(""),
+        city: joi
+          .string()
+          .allow(""),        
+        // dob: joi.string().regex(patternDob),
+        // nation: joi.string(),
       })
     };
 

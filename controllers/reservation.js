@@ -186,8 +186,8 @@ exports.updateStatusManual = async function(req, res, next) {
         var detailBank = bankPartner.data[0];
         var termPartner = await term.getPackage(reservation.package_id);
 
-        console.log('list banks');
-        console.log(detailBank);
+        // console.log('list banks');
+        // console.log(detailBank);
 
         if(reservation.status_code == "ORDER_NEW" || reservation.status_code == "ORDER_PARTNER_CONFIRM" || reservation.status_code == "ORDER_DP_COMPLETED" || reservation.status_code == "ORDER_PAYMENT_COMPLETED")
         {

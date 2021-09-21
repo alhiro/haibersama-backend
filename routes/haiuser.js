@@ -54,7 +54,7 @@ authRouter.post("/register", validator.register(), (req, res, next) => {
   authController.registerUser(req, res);
 });
 
-authRouter.post("/registerPartner", (req, res, next) => {
+authRouter.post("/registerPartner", validator.register(), (req, res, next) => {
   authController.registerPartner(req, res);
 });
 
