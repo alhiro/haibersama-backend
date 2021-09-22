@@ -479,6 +479,7 @@ module.exports =
             const upHistory = await ReservationStatusHistory.create(history);
           
             console.log("ini ke wallet");
+            console.log("ini reservation_type " + upReserv.reservation_type);
 
             if(statusCode == "ORDER_COMPLETED")
             {
@@ -495,6 +496,7 @@ module.exports =
                 var objBalance = {
                   partner_id: upReserv.partner_id,
                   reservation_no: upReserv.reservation_no,
+                  reservation_type: upReserv.reservation_type,
                   transaction_type: "C",
                   total_amount: walletAmount,
                   status: statusCode

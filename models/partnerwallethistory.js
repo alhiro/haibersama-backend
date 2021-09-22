@@ -29,6 +29,10 @@ const partnerWalletHistory = dbSeq.define('partner_wallet_history', {
     type: Sequelize.STRING(10),
     allowNull: false
   },
+  reservation_type:{
+    type: Sequelize.STRING(20),
+    allowNull: true
+  },
   reservation_no: {
     type: Sequelize.STRING(50),
     allowNull: true

@@ -47,7 +47,7 @@ module.exports =
 
     findOrCreateWallet: async (params, data) => {
       try {
-        const { partner_id, reservation_no, transaction_type, total_amount, status } = data;
+        const { partner_id, reservation_no, reservation_type, transaction_type, total_amount, status } = data;
 
         if(!reservation_no){
           if(transaction_type == "C"){
@@ -113,6 +113,7 @@ module.exports =
           transaction_no: transaction_no,
           transaction_date: transaction_date,
           transaction_type: transaction_type,
+          reservation_type: reservation_type,
           reservation_no: reservation_no,
           total_amount: total_amount,
           status: status
