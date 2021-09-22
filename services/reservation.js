@@ -511,6 +511,14 @@ module.exports =
               }             
             }
 
+            if (statusCode == "ORDER_CANCEL_BY_PARTNER" || statusCode == "ORDER_CANCEL_BY_USER") {
+              return { success: true, message: "Reservasi " +reservationNo+ " Dibatalkan", data: upReserv }
+            }
+
+            if (statusCode == "ORDER_COMPLETED") {
+              return { success: true, message: "Reservasi " +reservationNo+ " Sudah Selesai", data: upReserv }
+            }
+
             return { success: true, message: "Invoice " +reservationNo+ " Berhasil Dikirim Ke Email", data: upReserv } })
         .catch((err) => { return { success: false, message: "Invoice Gagal Dikirim Ke Email", data: err } });
       } catch (error) {
