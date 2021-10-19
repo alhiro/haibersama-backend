@@ -7,11 +7,11 @@ categoryRouter.get("/getall", (req, res, next) => {
   categoryController.getAllCategories(req, res);
 });
 
-categoryRouter.post("/add", headerAuth.isUserAuthenticated, (req, res, next) => {
+categoryRouter.post("/add", headerAuth.isAdminAuthenticated, (req, res, next) => {
   categoryController.addCategory(req, res);
 });
 
-categoryRouter.post("/update", headerAuth.isUserAuthenticated, (req, res, next) => {
+categoryRouter.post("/update", headerAuth.isAdminAuthenticated, (req, res, next) => {
   categoryController.updateCategory(req, res);
 });
 

@@ -21,6 +21,7 @@ const experienceRouter = require('./routes/partnerexperience');
 const paymentRouter = require('./routes/payment');
 const paymentMidtransRouter = require('./routes/paymentmidtrans');
 const bannerRouter = require('./routes/banner');
+const eventRouter = require('./routes/event');
 const partnerBankAccountRouter = require('./routes/partnerbankaccount');
 const partnerRatingRouter = require('./routes/partnerrating');
 const walletRouter = require('./routes/wallet');
@@ -68,6 +69,7 @@ app.use(process.env.APP_API_PREFIX + '/banner', bannerRouter);
 app.use(process.env.APP_API_PREFIX + '/partnerbankaccount', partnerBankAccountRouter);
 app.use(process.env.APP_API_PREFIX + '/rating', partnerRatingRouter);
 app.use(process.env.APP_API_PREFIX + '/wallet', walletRouter);
+app.use(process.env.APP_API_PREFIX + '/event', eventRouter);
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to Hai organizer application." });
@@ -82,7 +84,7 @@ app.use(function (req, res, next) {
 
 // Optional fallthrough error handler
 app.use(function onError(err, req, res, next) {
-  if (err.name === 'UnauthorizedError') {
+  if (err.name === 'Unauthorized Error') {
     res.json({
       error: err
     }).status(401)

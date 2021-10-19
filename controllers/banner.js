@@ -1,9 +1,9 @@
-const cat = require("../services/banner");
+const bannerService = require("../services/banner");
 const sequelizeTransaction = require('../config/sequelizeTransaction')
 
 exports.getAllBanners = async function (req, res, next) {
   try {
-        var banners = await cat.getAll();
+        var banners = await bannerService.getAll();
         return res.status(200).json({ status: 200, data: banners, message: "Semua Banner Berhasil Diambil" });
   } catch (err) {
     return res
@@ -16,8 +16,8 @@ exports.getAllBanners = async function (req, res, next) {
 exports.getBanner = async function (req, res, next) {
   try {
         const params = { id: req.query.id };
-        var banner = await cat.findBanner(params);
-        return res.status(200).json({ status: 200, data: banner.data, message: banner.message });
+        var findBanner = await bannerService.findBanner(params);
+        return res.status(200).json({ status: 200, data: findBanner.data, message: findBanner.message });
   } catch (err) {
     return res
       .status(500)
@@ -30,7 +30,7 @@ exports.addBanner = async function(req, res, next) {
     console.log("controller addBanner")
     const params = { title: req.title };
 
-    let insertBanner = await cat.findOrCreateBanner(params, req);
+    let insertBanner = await bannerService.findOrCreateBanner(params, req);
     return res.status(200).send(insertBanner);
   } catch (err) {
     console.log(err)
@@ -44,10 +44,10 @@ exports.updateBanner = async function(req, res, next) {
     const params = { id: req.id };
     console.log(req);
 
-    const findBanner = await cat.findBanner(params);
+    const findBanner = await bannerService.findBanner(params);
     console.log("findBanner :", findBanner)
     if (findBanner.success=== true){
-      let updateBanner = await cat.updateBanner(params, req);
+      let updateBanner = await bannerService.updateBanner(params, req);
       return res.status(200).send(updateBanner);
     }else
     return res.status(400).send(findBanner);

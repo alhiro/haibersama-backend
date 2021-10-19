@@ -1,6 +1,6 @@
 var express = require("express");
-var bannerRouter = express.Router();
-var bannerController = require("../controllers/banner");
+var eventRouter = express.Router();
+var controller = require("../controllers/event");
 var headerAuth  =  require('../authMiddleware');
 const path = require('path');
 const multer = require('multer');
@@ -38,23 +38,23 @@ const upload = multer({
   }
 });
 
-bannerRouter.get("/getall", headerAuth.isUserAuthenticated, (req, res, next) => {
-  bannerController.getAllBanners(req, res);
+eventRouter.get("/getall", headerAuth.isUserAuthenticated, (req, res, next) => {
+  controller.getAllEvent(req, res);
 });
 
 
-bannerRouter.get("/get", headerAuth.isUserAuthenticated, (req, res, next) => {
-  bannerController.getBanner(req, res);
+eventRouter.get("/get", headerAuth.isUserAuthenticated, (req, res, next) => {
+  controller.getEvent(req, res);
 });
 
-bannerRouter.post("/add", headerAuth.isAdminAuthenticated, upload.single('bannerImage'), (req, res, next) => {
+eventRouter.post("/add", headerAuth.isAdminAuthenticated, upload.single('eventImage'), (req, res, next) => {
   const admin_email = res.locals.auth.email;
 
-  const bannerImage = req.file;
-  console.log(bannerImage);
+  const eventImage = req.file;
+  console.log(eventImage);
   console.log('storage location is ', req.hostname +'/' + req.file.path);
   // make sure file is available
-  if (!bannerImage) {
+  if (!eventImage) {
       res.status(400).send({
           status: false,
           data: 'No file is selected.'
@@ -64,49 +64,55 @@ bannerRouter.post("/add", headerAuth.isAdminAuthenticated, upload.single('banner
       const data = { 
         title: req.body.title, 
         description: req.body.description, 
-        image_url: ENV.API_URL + '/ftp/'+ FILE_PATH + '/' + bannerImage.filename, 
-        link_url: req.body.bannerLink,
+        image_url: ENV.API_URL + '/ftp/'+ FILE_PATH + '/' + eventImage.filename, 
+        link_url: req.body.eventLink, 
         order_no: parseInt(req.body.orderNo), 
         active: req.body.active,
+        ticket: req.body.ticket, 
+        approval: req.body.approval,
         created_by: admin_email
       };
       
-      bannerController.addBanner(data, res);
+      controller.addEvent(data, res);
   }    
 });
 
-bannerRouter.post("/update", headerAuth.isAdminAuthenticated, upload.single('bannerImage'), (req, res, next) => {
+eventRouter.post("/update", headerAuth.isAdminAuthenticated, upload.single('eventImage'), (req, res, next) => {
   const admin_email = res.locals.auth.email;
 
-  const bannerImage = req.file;
+  const eventImage = req.file;  
   // make sure file is available
-  if (!bannerImage) {
+  if (!eventImage) {
     const data = { 
       id: parseInt(req.body.id), 
       title: req.body.title, 
-      description: req.body.description, 
-      image_url: req.body.bannerImage, 
-      link_url: req.body.bannerLink,
-      order_no: parseInt(req.body.orderNo), 
-      active: req.body.active,
-      updated_by: admin_email
+        description: req.body.description, 
+        image_url: req.body.imageUrl, 
+        link_url: req.body.eventLink, 
+        order_no: parseInt(req.body.orderNo), 
+        active: req.body.active,
+        ticket: req.body.ticket, 
+        approval: req.body.approval,
+        updated_by: admin_email
     };
     
-    bannerController.updateBanner(data, res);
+    controller.updateEvent(data, res);
   } else {
       const data = { 
         id: parseInt(req.body.id), 
         title: req.body.title, 
         description: req.body.description, 
-        image_url: ENV.API_URL + '/ftp/'+ FILE_PATH + '/' + bannerImage.filename, 
-        link_url: req.body.bannerLink,
+        image_url: ENV.API_URL + '/ftp/'+ FILE_PATH + '/' + eventImage.filename, 
+        link_url: req.body.eventLink, 
         order_no: parseInt(req.body.orderNo), 
         active: req.body.active,
+        ticket: req.body.ticket, 
+        approval: req.body.approval,
         updated_by: admin_email
       };
       
-      bannerController.updateBanner(data, res);
+      controller.updateEvent(data, res);
   }   
 });
 
-module.exports = bannerRouter;
+module.exports = eventRouter;

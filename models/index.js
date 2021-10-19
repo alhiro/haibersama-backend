@@ -1,4 +1,10 @@
 // // Seed and update model into table
+// const Event = require('./event');
+// Event.sequelize.sync({ alter: true })
+//     .then(() => {
+//         console.log(`Table Event updated!`)
+//     })
+
 // const Banner = require('./banner');
 // Banner.sequelize.sync({ alter: true })
 //     .then(() => {

@@ -32,13 +32,15 @@ module.exports =
 
     findOrCreateBanner: async (params, req) => {
       try {
-        const { title, description, image_url, order_no, active } = req
+        const { title, description, image_url, link_url, order_no, active, created_by } = req
         var objBanner = {
           title: title,
           description: description,
           image_url: image_url,
+          link_url: link_url,
           order_no: order_no,
-          active: active == 1 ? true : false
+          active: active == 1 ? true : false,
+          created_by: created_by
         }
         const insertBanner = await Banner.findOrCreate({ where: params, defaults: objBanner })
   
@@ -56,14 +58,16 @@ module.exports =
 
     updateBanner: async (params, req) => {
         try {
-          const { title, description, id, image_url, active, order_no } = req
+          const { title, description, id, image_url, link_url, active, order_no, updated_by } = req
 
           var objBanner = {
             title: title,
             description: description, 
             image_url: image_url,
+            link_url: link_url,
             order_no: order_no,
-            active: active == 1 ? true : false
+            active: active == 1 ? true : false,
+            updated_by: updated_by
           }
           console.log(JSON.stringify(objBanner), "objBanner")
 

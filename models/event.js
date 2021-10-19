@@ -1,7 +1,7 @@
 var dbSeq = require('../config/sequelize')
 var Sequelize = require('sequelize')
 
-const Banner = dbSeq.define('banner', {
+const Event = dbSeq.define('event', {
   id: {
     type: Sequelize.INTEGER,
     allowNull: false,
@@ -23,6 +23,14 @@ const Banner = dbSeq.define('banner', {
   link_url: {
     type: Sequelize.STRING(500),
     allowNull: true
+  },
+  ticket: {
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
+  approval: {
+    type: Sequelize.BOOLEAN,
+    allowNull: false
   },
   order_no: {
     type: Sequelize.INTEGER,
@@ -50,12 +58,12 @@ const Banner = dbSeq.define('banner', {
   },
 }, 
 {
-  tableName: 'banner',
+  tableName: 'event',
   freezeTableName: true,
   timestamps: true,
   paranoid: false,
   underscored: true
 });
 
-module.exports = Banner
+module.exports = Event
 
