@@ -38,16 +38,16 @@ const upload = multer({
   }
 });
 
-eventRouter.get("/getall", headerAuth.isUserAuthenticated, (req, res, next) => {
+eventRouter.get("/getall", (req, res, next) => {
   controller.getAllEvent(req, res);
 });
 
 
-eventRouter.get("/get", headerAuth.isUserAuthenticated, (req, res, next) => {
+eventRouter.get("/get", (req, res, next) => {
   controller.getEvent(req, res);
 });
 
-eventRouter.post("/add", headerAuth.isAdminAuthenticated, upload.single('eventImage'), (req, res, next) => {
+eventRouter.post("/add", headerAuth.isPartnerAuthenticated, upload.single('eventImage'), (req, res, next) => {
   const admin_email = res.locals.auth.email;
 
   const eventImage = req.file;
@@ -77,7 +77,7 @@ eventRouter.post("/add", headerAuth.isAdminAuthenticated, upload.single('eventIm
   }    
 });
 
-eventRouter.post("/update", headerAuth.isAdminAuthenticated, upload.single('eventImage'), (req, res, next) => {
+eventRouter.post("/update", headerAuth.isPartnerAuthenticated, upload.single('eventImage'), (req, res, next) => {
   const admin_email = res.locals.auth.email;
 
   const eventImage = req.file;  

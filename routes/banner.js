@@ -38,12 +38,12 @@ const upload = multer({
   }
 });
 
-bannerRouter.get("/getall", headerAuth.isUserAuthenticated, (req, res, next) => {
+bannerRouter.get("/getall", (req, res, next) => {
   bannerController.getAllBanners(req, res);
 });
 
 
-bannerRouter.get("/get", headerAuth.isUserAuthenticated, (req, res, next) => {
+bannerRouter.get("/get", (req, res, next) => {
   bannerController.getBanner(req, res);
 });
 
