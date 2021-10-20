@@ -28,6 +28,10 @@ const Event = dbSeq.define('event', {
     type: Sequelize.STRING(50),
     allowNull: true
   },
+  event_date: {
+    type: Sequelize.DATE,
+    allowNull: true
+  },
   approval: {
     type: Sequelize.BOOLEAN,
     allowNull: false

@@ -32,12 +32,13 @@ module.exports =
 
     findOrCreate: async (params, req) => {
       try {
-        const { title, description, image_url, link_url, order_no, active, ticket, approval, created_by} = req
+        const { title, description, image_url, link_url, event_date, order_no, active, ticket, approval, created_by} = req
         var object = {
           title: title,
           description: description,
           image_url: image_url,
           link_url: link_url,
+          event_date: event_date, 
           ticket: ticket,
           approval: approval == 1 ? true : false,
           order_no: order_no,
@@ -60,13 +61,14 @@ module.exports =
 
     update: async (params, req) => {
         try {
-          const { id, title, description, image_url, link_url, order_no, active, ticket, approval, updated_by } = req
+          const { id, title, description, image_url, link_url, event_date, order_no, active, ticket, approval, updated_by } = req
 
           var object = {
             title: title,
             description: description, 
             image_url: image_url,
             link_url: link_url,
+            event_date: event_date, 
             ticket: ticket,
             approval: approval == 1 ? true : false,
             order_no: order_no,
