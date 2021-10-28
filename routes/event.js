@@ -42,80 +42,92 @@ eventRouter.get("/getall", (req, res, next) => {
   controller.getAllEvent(req, res);
 });
 
-
 eventRouter.get("/get", (req, res, next) => {
   controller.getEvent(req, res);
 });
 
+eventRouter.get("/partner", (req, res, next) => {
+  controller.getEventPartner(req, res);
+});
+
+eventRouter.post("/search", (req, res, next) => {
+  controller.searchEvent(req, res);
+});
+
 eventRouter.post("/add", headerAuth.isPartnerAuthenticated, upload.single('eventImage'), (req, res, next) => {
-  const admin_email = res.locals.auth.email;
+  const partner_id = res.locals.auth.id;
+  const partner_email = res.locals.auth.email;
 
   const eventImage = req.file;
   console.log(eventImage);
-  console.log('storage location is ', req.hostname +'/' + req.file.path);
+  console.log('storage location is ', req.hostname + '/' + req.file.path);
   // make sure file is available
   if (!eventImage) {
-      res.status(400).send({
-          status: false,
-          data: 'No file is selected.'
-      });
+    res.status(400).send({
+      status: false,
+      data: 'No file is selected.'
+    });
   } else {
     console.log(req.body);
-      const data = { 
-        title: req.body.title, 
-        description: req.body.description, 
-        image_url: ENV.API_URL + '/ftp/'+ FILE_PATH + '/' + eventImage.filename, 
-        link_url: req.body.eventLink, 
-        event_date: req.body.eventDate, 
-        order_no: parseInt(req.body.orderNo), 
-        active: req.body.active,
-        ticket: req.body.ticket, 
-        approval: req.body.approval,
-        created_by: admin_email
-      };
-      
-      controller.addEvent(data, res);
-  }    
+    const data = {
+      partner_id: partner_id,
+      title: req.body.title,
+      description: req.body.description,
+      image_url: ENV.API_URL + '/ftp/' + FILE_PATH + '/' + eventImage.filename,
+      link_url: req.body.eventLink,
+      event_date: req.body.eventDate,
+      order_no: parseInt(req.body.orderNo),
+      active: req.body.active,
+      ticket: req.body.ticket,
+      approval: req.body.approval,
+      created_by: partner_email
+    };
+
+    controller.addEvent(data, res);
+  }
 });
 
 eventRouter.post("/update", headerAuth.isPartnerAuthenticated, upload.single('eventImage'), (req, res, next) => {
-  const admin_email = res.locals.auth.email;
+  const partner_id = res.locals.auth.id;
+  const partner_email = res.locals.auth.email;
 
-  const eventImage = req.file;  
+  const eventImage = req.file;
   // make sure file is available
   if (!eventImage) {
-    const data = { 
-      id: parseInt(req.body.id), 
-      title: req.body.title, 
-        description: req.body.description, 
-        image_url: req.body.imageUrl, 
-        link_url: req.body.eventLink, 
-        event_date: req.body.eventDate, 
-        order_no: parseInt(req.body.orderNo), 
-        active: req.body.active,
-        ticket: req.body.ticket, 
-        approval: req.body.approval,
-        updated_by: admin_email
+    const data = {
+      partner_id: partner_id,
+      id: parseInt(req.body.id),
+      title: req.body.title,
+      description: req.body.description,
+      image_url: req.body.imageUrl,
+      link_url: req.body.eventLink,
+      event_date: req.body.eventDate,
+      order_no: parseInt(req.body.orderNo),
+      active: req.body.active,
+      ticket: req.body.ticket,
+      approval: req.body.approval,
+      updated_by: partner_email
     };
-    
+
     controller.updateEvent(data, res);
   } else {
-      const data = { 
-        id: parseInt(req.body.id), 
-        title: req.body.title, 
-        description: req.body.description, 
-        image_url: ENV.API_URL + '/ftp/'+ FILE_PATH + '/' + eventImage.filename, 
-        link_url: req.body.eventLink, 
-        event_date: req.body.eventDate, 
-        order_no: parseInt(req.body.orderNo), 
-        active: req.body.active,
-        ticket: req.body.ticket, 
-        approval: req.body.approval,
-        updated_by: admin_email
-      };
-      
-      controller.updateEvent(data, res);
-  }   
+    const data = {
+      partner_id: partner_id,
+      id: parseInt(req.body.id),
+      title: req.body.title,
+      description: req.body.description,
+      image_url: ENV.API_URL + '/ftp/' + FILE_PATH + '/' + eventImage.filename,
+      link_url: req.body.eventLink,
+      event_date: req.body.eventDate,
+      order_no: parseInt(req.body.orderNo),
+      active: req.body.active,
+      ticket: req.body.ticket,
+      approval: req.body.approval,
+      updated_by: partner_email
+    };
+
+    controller.updateEvent(data, res);
+  }
 });
 
 module.exports = eventRouter;

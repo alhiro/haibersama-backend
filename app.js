@@ -27,6 +27,7 @@ const partnerRatingRouter = require('./routes/partnerrating');
 const walletRouter = require('./routes/wallet');
 const serveIndex = require('serve-index');
 const initDB = require('./models/index');
+const path = require('path');
 
 // Seed model into table
 // const haiuser = require("./models/reservation");
@@ -49,6 +50,9 @@ app.use(morgan('dev'));
 
 app.use(passport.initialize()); // Used to initialize passport
 app.use(passport.session()); // Used to persist login sessions
+
+// set static file
+app.use(express.static(path.join(__dirname, 'views')));
 
 // set the endpoint paths
 app.use(process.env.APP_API_PREFIX + '/auth', authRouter);
@@ -77,9 +81,14 @@ app.get("/", (req, res) => {
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
+  // res.status(404).render('404.jade');
+
+  res.status(404);
+  res.send('404: File Not Found');
+
+  // var err = new Error('Not Found');
+  // err.status = 404;
+  // next(err);
 });
 
 // Optional fallthrough error handler
@@ -102,4 +111,8 @@ var server = app.listen(app.get('port'), function() {
   initDB;
   console.log('Express server listening on port ' + server.address().port);
 });
+// set html view with ejs render file
+app.engine('html', require('ejs').renderFile);
+app.set('view engine', 'html');
+
 module.exports = app;

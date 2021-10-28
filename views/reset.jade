@@ -1,0 +1,22 @@
+extends layout
+
+block content
+    .login-container
+        .login-box
+            .col-md-3.mx-auto.box-login
+                .image-block.text-center
+                    img.logo(src="/assets/logo.png" alt="Logo HaiO")
+                .mt-3
+                    form(method='POST')
+                        legend.text-center.mb-5 Reset Password
+                        .mb-3
+                            label.form-label(for='password') Password Baru
+                            input.form-control(type='password', name='password', value='', placeholder='masukan password baru', autofocus=tru, required)
+                        if errors
+                            each error, i in errors.errors
+                                div.alert.alert-danger #{error.msg}
+                        //- .mb-3
+                        //-     label.form-label(for='confirm') Konfirmasi Password Baru
+                        //-     input.form-control(type='password', name='confirm', value='', placeholder='konfirmasi password baru')
+                        .mb-3.mt-4.text-center
+                            button.btn.btn-primary(type='submit') Update Password

@@ -1,4 +1,6 @@
 const Event = require('../models/event');
+const sequelize = require("../config/sequelize");
+const Sequelize = require('sequelize')
 
 module.exports =
   {        
@@ -6,7 +8,7 @@ module.exports =
       try {
         return await Event.findAll({
             where:{
-                active : true
+                approval : true
             },
             // attributes: ['id',
             //             'title',
@@ -14,7 +16,7 @@ module.exports =
             //             'image_url'
             // ],
             order:[
-                ["order_no", "ASC"]
+                ["created_at", "ASC"]
             ]
         });
       } catch (error) {
@@ -30,15 +32,44 @@ module.exports =
         .catch((err) => { return { success: false, message: "Event Belum Ada, Ada Kesalahan Server!", data: err } });
     },
 
+    findAll: async (params) => {
+      try {
+        return await Event.findAll({
+          where: {
+            partner_id : JSON.stringify(params) 
+          },
+          order: [["created_at", "ASC"]],
+        });
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    search: async (params) => {
+      try {
+        // search any word in table event column title with %foo%
+        return await Event.findAll({
+          where: {
+            title :  { [Sequelize.Op.like]: `%${params.title}%` },
+          },
+          order: [["created_at", "ASC"]],
+        });
+      } catch (error) {
+        console.log(error);
+        throw error
+      }
+    },
+
     findOrCreate: async (params, req) => {
       try {
-        const { title, description, image_url, link_url, event_date, order_no, active, ticket, approval, created_by} = req
+        const { partner_id, title, description, image_url, link_url, event_date, order_no, active, ticket, approval, created_by} = req
         var object = {
+          partner_id: partner_id,
           title: title,
           description: description,
           image_url: image_url,
           link_url: link_url,
-          event_date: event_date, 
+          event_date: event_date == null || event_date == "" ? "0" : event_date, 
           ticket: ticket,
           approval: approval == 1 ? true : false,
           order_no: order_no,
@@ -61,14 +92,15 @@ module.exports =
 
     update: async (params, req) => {
         try {
-          const { id, title, description, image_url, link_url, event_date, order_no, active, ticket, approval, updated_by } = req
+          const { id, partner_id, title, description, image_url, link_url, event_date, order_no, active, ticket, approval, updated_by } = req
 
           var object = {
+            partner_id: partner_id,
             title: title,
             description: description, 
             image_url: image_url,
             link_url: link_url,
-            event_date: event_date, 
+            event_date: event_date == null || event_date == "" ? "0" : event_date, 
             ticket: ticket,
             approval: approval == 1 ? true : false,
             order_no: order_no,

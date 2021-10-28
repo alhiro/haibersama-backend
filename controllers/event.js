@@ -24,6 +24,31 @@ exports.getEvent = async function (req, res, next) {
   }
 };
 
+exports.getEventPartner = async function (req, res, next) {
+  const partner_id = parseInt(req.query.partnerid);
+  console.log("controller search event partner_id " + partner_id);
+  try {
+    var findEvent = await eventService.findAll(partner_id);
+    return res.status(200).json({ status: 200, data: findEvent, message: "Event Partner Berhasil Diambil" });
+  } catch (err) {
+    return res
+      .status(500)
+      .send({ code: 500, success: false, message: err.message, data: { err } });
+  }
+};
+
+exports.searchEvent = async function (req, res, next) {
+  console.log("controller search event " + JSON.stringify(req.query));
+  try {
+        var events = await eventService.search(req.query);
+        return res.status(200).json({ status: 200, data: events, message: "Pencarian Event Berhasil Diambil" });
+  } catch (err) {
+    return res
+      .status(500)
+      .send({ code: 500, success: false, message: err.message, data: { err } });
+  }
+};
+
 exports.addEvent = async function (req, res, next) {
   try {
     console.log("controller add event")

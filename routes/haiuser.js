@@ -12,6 +12,7 @@ const multer = require('multer');
 const FILE_PATH = 'imagehai';
 const ENV = process.env;
 const now = Date.now();
+const {check, validationResult} = require('express-validator');
 // configure multer
 
 var storage = multer.diskStorage({
@@ -62,8 +63,30 @@ authRouter.post("/registerGoogle", (req, res, next) => {
   authController.registerGoogle(req, res);
 });
 
-authRouter.get("/verify" ,(req, res, next) => {
+authRouter.get("/verify", (req, res, next) => {
   authController.verify(req, res);
+});
+
+authRouter.post("/forgetPassword", (req, res, next) => {
+  authController.forgetPassword(req, res);
+});
+
+authRouter.get("/resetPassword", (req, res, next) => {
+  authController.resetPassword(req, res);
+});
+
+authRouter.post("/resetPassword", [
+  check('password', 'password minimal 8 karakter!').isLength({ min: 8 }),
+], (req, res, next) => {
+  const tokenExpired = req.query.token_expired;
+
+  const data = {
+    reset_token: tokenExpired,
+    password: req.body.password,
+    validate: req
+  }
+
+  authController.resetNewPassword(data, res);
 });
 
 authRouter.post("/updatePassword", headerAuth.isUserAuthenticated, (req, res, next) => {

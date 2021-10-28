@@ -8,6 +8,10 @@ var nodemailer = require("nodemailer");
 var Hogan = require("hogan.js");
 var fs = require("fs");
 const path = require('path');
+var crypto = require('crypto');
+const User = require("../models/haiuser");
+const transformers = require("../lib/transformers");
+const resetSecret = process.env.TOKEN_JWT_SECRET;
 
 exports.getAll =  async function(req, res, next) {
   try {
@@ -380,6 +384,152 @@ exports.verify = async function(req, res, next) {
     var verifyUser = await auth.verifyUser(email, token, res);
 
     return verifyUser;
+  } catch (err) {
+    return res
+      .status(500)
+      .send({ code: 500, success: false, message: err.message, data: { err } });
+  }
+};
+
+exports.forgetPassword = async function(req, res, next) {
+  console.log("controller forget password");
+  try {
+    var email = req.query.email;
+    var users = await auth.findUser({ email });
+
+    if (!users.success) {
+      users.responseCode = 404;
+      return res.status(users.responseCode).send(users);
+    } else {
+      var resetPassword = await auth.resetPassword(users.data, req);
+      console.log("forget password response " + JSON.stringify(resetPassword.data));
+      
+      var smtpTransport = nodemailer.createTransport({
+        host: "missandei.id.rapidplex.com",
+        port: 465,
+        secure: true,
+        auth: {
+          user: EMAIL_USERNAME,
+          pass: EMAIL_PASSWORD
+        }
+      }); 
+      
+      var templateInvoice = fs.readFileSync('./views/reset_password.html', 'utf-8');
+      var compileInvoice = Hogan.compile(templateInvoice);
+
+      let mailoptions = {
+        from: '"HaiO Reset Password" notify@haiorganizer.com',
+        to: email,
+        subject: 'Permintaan Reset Password HaiO',
+        html: compileInvoice.render({
+          email: resetPassword.data.email,
+          resetToken: resetPassword.data.reset_token,
+          verifyUrl: VERIFY_URL,
+        }),
+      };
+      smtpTransport.sendMail(mailoptions, function (error, res) {
+        if (error) {
+          console.log(error);
+        } else {
+          console.log("Message sent: " + res.response);
+        }
+        //smtpTransport.close();
+      });
+
+      return res.status(200).send(resetPassword);
+    }    
+  } catch (err) {
+    return res
+      .status(500)
+      .send({ code: 500, success: false, message: err.message, data: {} });
+  }
+};
+
+exports.resetPassword = async function(req, res, next) {
+  console.log("controller reset password");
+
+  try {
+    let reset_token = req.query.token_expired;   
+    console.log("tokenReset : " + reset_token);
+    var users = await auth.findUser({ reset_token });
+
+    if (!users.success) {
+      users.responseCode = 404;
+      return res.status(users.responseCode).send(users);
+    }
+
+    const dateNow = new Date();
+    const dateExpired = users.data.dataValues.expired_reset_token;
+    console.log('dateNow ' + dateNow);
+    console.log('dateExpired ' + dateExpired);
+    if (dateNow > dateExpired) {
+      console.log('token reset password is expired');
+      return res.sendFile(path.join(__dirname, '../views', 'expired_reset_password.html'));
+    }
+
+    return res.render(path.join(__dirname, '../views', 'reset.jade'), {
+      user: users.data.dataValues
+    });
+    
+    // console.log('delete user token');
+    // console.log(users.data.dataValues.reset_token);
+    // delete users.data.dataValues.reset_token;
+
+    // set value null token reset
+    // var object = {
+    //   reset_token: null,
+    // };
+    // await User.update(object, {
+    //   where: { email: users.data.dataValues.email }
+    // })   
+    // return res.sendFile(path.join(__dirname, '../views', 'success_reset_password.html'));
+
+    // return res.status(200).send({
+    //   success: true,
+    //   message: "Reset Password Berhasil",
+    // });
+    
+  } catch (err) {
+    return res
+      .status(500)
+      .send({ code: 500, success: false, message: err.message, data: { err } });
+  }
+};
+
+exports.resetNewPassword = async function(req, res, next) {
+  console.log("controller reset new password ");
+
+  try {
+    let reset_token = req.reset_token;   
+    console.log("tokenReset new : " + reset_token);
+    var users = await auth.findUser({ reset_token });
+
+    if (!users.success) {
+      users.responseCode = 404;
+      return res.status(users.responseCode).send(users);
+    }
+
+    const dateNow = new Date();
+    const dateExpired = users.data.dataValues.expired_reset_token;
+    console.log('dateNow reset new ' + dateNow);
+    console.log('dateExpired reset new ' + dateExpired);
+    if (dateNow > dateExpired) {
+      console.log('token reset password is expired');
+      return res.sendFile(path.join(__dirname, '../views', 'expired_reset_password.html'));
+    }
+
+    var response = await auth.updateNewPassword(req, res);
+
+    response.code = response.success ? 200 : 500;
+    console.log('response.code reset new ' + response.code);
+
+    if (response.code == 200) {
+      return res.status(200).sendFile(path.join(__dirname, '../views', 'success_reset_password.html'));
+    } else if (response.code == 500) {
+      return res.status(500).sendFile(path.join(__dirname, '../views', 'failed_reset_password.html'));
+    }
+    return res.status(200).send(response);
+
   } catch (err) {
     return res
       .status(500)

@@ -1,5 +1,6 @@
 var dbSeq = require('../config/sequelize')
 var Sequelize = require('sequelize')
+var HaiUser = require('./haiuser')
 
 const Event = dbSeq.define('event', {
   id: {
@@ -7,6 +8,11 @@ const Event = dbSeq.define('event', {
     allowNull: false,
     primaryKey: true,
     autoIncrement: true
+  },
+  partner_id: {
+    type: Sequelize.INTEGER,
+    allowNull: false,
+    primaryKey: true,
   },
   title: {
     type: Sequelize.STRING(100),
@@ -68,6 +74,9 @@ const Event = dbSeq.define('event', {
   paranoid: false,
   underscored: true
 });
+
+Event.belongsTo(HaiUser, { foreignKey: "partner_id" });
+HaiUser.hasMany(Event, { foreignKey: "partner_id" });
 
 module.exports = Event
 

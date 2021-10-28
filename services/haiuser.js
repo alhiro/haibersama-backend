@@ -6,6 +6,8 @@ const PartnerCertificate = require('../models/partnercertificate');
 const PartnerExperience = require('../models/partnerexperience');
 const PartnerPortfolio = require('../models/partnerportfolio');
 const PartnerPackage = require('../models/partnerPackageHeader');
+const { VERIFY_URL, EMAIL_PASSWORD, EMAIL_USERNAME } = process.env;
+const nodemailer = require("nodemailer");
 //const Otp = require('../models/otp');
 const transformers = require("../lib/transformers");
 const jwt = require("../lib/jwt");
@@ -28,6 +30,10 @@ const now = moment()
   .format("YYYY-MM-DD HH:mm:ss");
 const StoreHelper = require("../helpers/store");
 const crypto = require("crypto-random-string");
+var async = require('async');
+var cryptos = require('crypto');
+const resetSecret = process.env.TOKEN_JWT_SECRET;
+const {check, validationResult} = require('express-validator');
 
 module.exports = {
   login: async (users, revoke) => {
@@ -96,7 +102,7 @@ module.exports = {
 
   findUser: async params => {
     console.log("servive findUser")
-    console.log("params : "+ params)
+    console.log("params : "+ JSON.stringify(params))
     return await User.findOne({ where: params })
       .then(users => {
         //delete users.dataValues.password
@@ -380,6 +386,127 @@ module.exports = {
       .catch(err => {
         return { success: false, message: err.message, data: err };
       });
+  },
+
+  // resetPassword: async (email, token, res) => {
+  //   return await User.findOne({ where: { email: email } })
+  //     .then(users => {
+  //       //delete users.dataValues.password
+
+  //       if(!users) {
+  //         console.log('user forget password tidak ada');
+  //       }
+
+  //       console.log('user forget password adaaaa');
+
+  //       crypto.randomBytes(20, function (err, buf) {
+  //         var token = buf.toString('hex');
+  //         done(err, token);
+  //       });
+
+  //       user.token = token;
+  //       // user.tokenExpires = Date.now() + 3600000; // 1 hour
+
+  //       user.save(function (err) {
+  //         done(err, token, user);
+  //       });
+  //     })
+  //     .catch(err => {
+  //       return { success: false, message: "User Tidak Ditemukan", data: err };
+  //     });      
+  // },
+
+
+  resetPassword: async (users, req) => {
+    console.log("req.query.email: " + req.query.email);
+
+    try {     
+      // generate new token expired
+      const tokenX = cryptos.randomBytes(20).toString("hex");
+      console.log("generateToken: " + tokenX);         
+      
+       // set response token expired
+      user = await transformers.resetToken(users);
+      const tokenExpired = await jwt.reset(user, resetSecret, { expiresIn: "1m" });
+      const decoded = await jwt.verify(tokenExpired);
+      console.log("token decoded ", decoded);
+      console.log("token decoded expired : " + JSON.stringify(new Date(decoded.exp * 1000).toLocaleString()));
+
+      var object = {
+        reset_token: tokenX,
+        expired_reset_token: new Date(decoded.exp * 1000)
+      };
+      const update = await User.update(object, {
+        where: { email: req.query.email }
+      })      
+
+      if (!update) {
+        throw { success: false, message: "Gagal Update Token Reset Password User", data: {} };
+      } else {
+        return {
+          success: true,
+          message: "Token Reset Password User Berhasil Dibuat",
+          data:  {
+            email: req.query.email,
+            reset_token: tokenX,
+          }
+        };
+      }
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateNewPassword: async (req, res) => {
+    console.log("Update reset new password service");    
+
+    const { reset_token, password, validate } = req;
+    console.log("req new reset :", req);
+
+    //Check for errors
+    var errors = validationResult(validate);
+    console.log("validationResult new reset :", errors.errors);
+
+    if (!errors.isEmpty()) {
+      res.render(path.join(__dirname, '../views', 'reset.jade'), {
+        errors: errors,
+      });
+    } else {
+      console.log("gooooooooooooooo:");
+
+      const generateHashPassword = await jwt.hash(password, 10);
+      var data = {
+        password: generateHashPassword
+      };
+
+      return User.update(data, {
+        where: { reset_token: reset_token },
+        returning: true,
+        plain: true
+      })
+        .then(async updated => {
+          console.log(updated[1].dataValues);
+          delete updated[1].dataValues.password;
+          delete updated[1].dataValues.reset_token;
+  
+          // set value null token reset after change new password via reset
+          var object = {
+            reset_token: null,
+          };
+          await User.update(object, {
+            where: { email: updated[1].dataValues.email }
+          })
+  
+          return {
+            success: true,
+            message: "Password Berhasil Diubah",
+            data: updated[1]
+          };
+        })
+        .catch(err => {
+          return { success: false, message: "Password Gagal Diubah", data: err };
+        });
+    }
   },
 
   updateProfile: async params => {

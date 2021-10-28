@@ -6,9 +6,15 @@ const emailcounter = require("../services/emailcounter");
 const sequelizeTransaction = require("../config/sequelizeTransaction");
 const { VERIFY_URL, EMAIL_PASSWORD, EMAIL_USERNAME } = process.env;
 const moment = require("moment");
-var nodemailer = require("nodemailer");
-var Hogan = require("hogan.js");
-var fs = require("fs");
+const nodemailer = require("nodemailer");
+const Hogan = require("hogan.js");
+const fs = require("fs");
+
+const path = require('path')
+const utils = require('util')
+const puppeteer = require('puppeteer')
+const hb = require('handlebars')
+const readFile = utils.promisify(fs.readFile)
 
 exports.createReservation = async function(req, res, next) {
     try {  
@@ -269,16 +275,26 @@ exports.updateStatusManual = async function(req, res, next) {
           //   }
           // );
 
-          let mailoptions = {
-            from: '"Haio Invoice" notify@haiorganizer.com',
-            to: getData.data.reservation_contact.email,
-            subject: `Invoice #${reservation.reservation_no} dari partner ${dataUser.data.partnername}`,
-            html: compileInvoice.render({
+          // get template invoice html
+          async function getTemplateHtml() {
+            console.log("Loading template file in memory")
+            try {
+              const invoicePath = path.resolve("./views/invoice_manual_pdf.html");
+              return await readFile(invoicePath, 'utf8');
+            } catch (err) {
+              return Promise.reject("Could not load html template");
+            }
+          }
+
+          // generate template invoice html into pdf
+          async function generatePdf() {
+            let data = {
               partnerName: dataUser.data.partnername,
               partnerAddress: dataUser.data.address,
               packageName: reservation.package_name,
               eventDate: moment(reservation.event_date).utcOffset(0).format("DD-MM-YYYY"),
               eventTime: reservation.event_time,
+              eventAddress: reservation.event_address,
               codeInvoice: reservation.reservation_no,
               invoiceDate: moment(reservation.reservation_date).utcOffset(0).format("DD-MM-YYYY"),
               customerName: detailUser.name,
@@ -294,18 +310,99 @@ exports.updateStatusManual = async function(req, res, next) {
               accountBank: detailBank.account_name,
               rekBank: detailBank.account_no,
               terms: termPartner.data.terms
-              // services: services
-            })
-          };
-          // console.log("mailoptions :" + JSON.stringify(mailoptions));
-
-          smtpTransport.sendMail(mailoptions, function(error, res) {
-            if (error) {
-              console.log(error);
-            } else {
-              console.log("Message sent: " + res.response);
             }
-            //smtpTransport.close();
+            
+            getTemplateHtml().then(async (res) => {
+              // Now we have the html code of our template in res object
+              // you can check by logging it on console
+              // console.log(res)
+              console.log("Compiling the template with handlebars")
+              const template = hb.compile(res, { strict: true });
+              // we have compile our code with handlebars
+              const result = template(data);
+              // We can use this to add dyamic data to our handlebas template at run time from database or API as per need. you can read the official doc to learn more https://handlebarsjs.com/
+              const html = result;
+              // we are using headless mode
+              const browser = await puppeteer.launch();
+              const page = await browser.newPage()
+              // We set the page content as the generated html by handlebars
+              await page.setContent(html)
+              // We use pdf function to generate the pdf in the same folder as this file.
+              await page.pdf({ 
+                path: './views/invoice_manual.pdf', 
+                format: 'A4',
+                printBackground: true,
+                displayHeaderFooter: true,
+                footerTemplate: `<div style="font-size: 9px; padding-top: 8px; text-align: center; width: 100%;color: #444444">
+                <span>HaiO Invoice</span> - <span class="pageNumber"></span>/<span class="totalPages"></span>
+                </div>
+                `,
+                margin: {top: '50px', right: '10px', bottom: '50px', left: '10px', }
+              })
+              await browser.close();
+              console.log("PDF Generated")
+
+              setTimeout(() => {
+                let mailoptions = {
+                  from: '"Haio Invoice" notify@haiorganizer.com',
+                  to: getData.data.reservation_contact.email,
+                  subject: `Invoice #${reservation.reservation_no} dari partner ${dataUser.data.partnername}`,
+                  html: compileInvoice.render({
+                    partnerName: dataUser.data.partnername,
+                    partnerAddress: dataUser.data.address,
+                    packageName: reservation.package_name,
+                    eventDate: moment(reservation.event_date).utcOffset(0).format("DD-MM-YYYY"),
+                    eventTime: reservation.event_time,
+                    eventAddress: reservation.event_address,
+                    codeInvoice: reservation.reservation_no,
+                    invoiceDate: moment(reservation.reservation_date).utcOffset(0).format("DD-MM-YYYY"),
+                    customerName: detailUser.name,
+                    customerAddress: detailUser.address,
+                    completePayment: statusPayment,
+                    totalPrice: totalPrice,
+                    totalDiscount: totalDiscount,
+                    totalPayment: totalPayment,
+                    totalDownPayment: totalDownPayment,
+                    remainingPayment: remainingPayment.toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+                    description: reservation.description,
+                    bankName: detailBank.bank_name,
+                    accountBank: detailBank.account_name,
+                    rekBank: detailBank.account_no,
+                    terms: termPartner.data.terms
+                    // services: services
+                  }),
+                  attachments: {
+                    filename: `${reservation.package_name}` + '_' + `${detailUser.name}` + '_' + `${moment(reservation.event_date).utcOffset(0).format("DD-MM-YYYY")}` + '.pdf',
+                    contentType: 'application/pdf',
+                    path: './views/invoice_manual.pdf'
+                  }
+                };
+                console.log("mailoptions :" + JSON.stringify(mailoptions));
+  
+                smtpTransport.sendMail(mailoptions, function (error, res) {
+                  if (error) {
+                    console.log(error);
+                  } else {
+                    console.log("Message sent: " + res.response);
+                  }
+                  //smtpTransport.close();
+                });
+              }, 500)
+              
+            }).catch(err => {
+              console.error(err)
+            });
+          }
+
+          // result generate pdf
+          generatePdf();
+         
+        } else {
+          return res.status(401).send({
+            code: 401,
+            success: false,
+            message: "Gagal Mengirimkan Email",
+            data: {}
           });
         }
       } 
@@ -823,16 +920,26 @@ exports.sendEmailToCustomer = async function (req, res, next) {
             totalDownPayment = parseFloat(totalDownPayment).toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
           }
           
-          let mailoptions = {
-            from: '"Haio Invoice" notify@haiorganizer.com',
-            to: getData.data.reservation_contact.email,
-            subject: `Invoice #${reservation.reservation_no} dari partner ${dataUser.data.partnername}`,
-            html: compileInvoice.render({
+          // get template invoice html
+          async function getTemplateHtml() {
+            console.log("Loading template file in memory")
+            try {
+              const invoicePath = path.resolve("./views/invoice_manual_pdf.html");
+              return await readFile(invoicePath, 'utf8');
+            } catch (err) {
+              return Promise.reject("Could not load html template");
+            }
+          }
+
+          // generate template invoice html into pdf
+          async function generatePdf() {
+            let data = {
               partnerName: dataUser.data.partnername,
               partnerAddress: dataUser.data.address,
               packageName: reservation.package_name,
               eventDate: moment(reservation.event_date).utcOffset(0).format("DD-MM-YYYY"),
               eventTime: reservation.event_time,
+              eventAddress: reservation.event_address,
               codeInvoice: reservation.reservation_no,
               invoiceDate: moment(reservation.reservation_date).utcOffset(0).format("DD-MM-YYYY"),
               customerName: detailUser.name,
@@ -848,19 +955,93 @@ exports.sendEmailToCustomer = async function (req, res, next) {
               accountBank: detailBank.account_name,
               rekBank: detailBank.account_no,
               terms: termPartner.data.terms
-              // services: services
-            })
-          };
-          console.log("mailoptions :" + JSON.stringify(mailoptions));
-    
-          smtpTransport.sendMail(mailoptions, function(error, res) {
-            if (error) {
-              console.log(error);
-            } else {
-              console.log("Message sent: " + res.response);
             }
-            //smtpTransport.close();
-          });
+            
+            getTemplateHtml().then(async (res) => {
+              // Now we have the html code of our template in res object
+              // you can check by logging it on console
+              // console.log(res)
+              console.log("Compiling the template with handlebars")
+              const template = hb.compile(res, { strict: true });
+              // we have compile our code with handlebars
+              const result = template(data);
+              // We can use this to add dyamic data to our handlebas template at run time from database or API as per need. you can read the official doc to learn more https://handlebarsjs.com/
+              const html = result;
+              // we are using headless mode
+              const browser = await puppeteer.launch();
+              const page = await browser.newPage()
+              // We set the page content as the generated html by handlebars
+              await page.setContent(html)
+              // We use pdf function to generate the pdf in the same folder as this file.
+              await page.pdf({ 
+                path: './views/invoice_manual.pdf', 
+                format: 'A4',
+                printBackground: true,
+                displayHeaderFooter: true,
+                footerTemplate: `<div style="font-size: 9px; padding-top: 8px; text-align: center; width: 100%;color: #444444">
+                <span>HaiO Invoice</span> - <span class="pageNumber"></span>/<span class="totalPages"></span>
+                </div>
+                `,
+                margin: {top: '50px', right: '10px', bottom: '50px', left: '10px', }
+              })
+              await browser.close();
+              console.log("PDF Generated")
+
+              setTimeout(() => {
+                let mailoptions = {
+                  from: '"Haio Invoice" notify@haiorganizer.com',
+                  to: getData.data.reservation_contact.email,
+                  subject: `Invoice #${reservation.reservation_no} dari partner ${dataUser.data.partnername}`,
+                  html: compileInvoice.render({
+                    partnerName: dataUser.data.partnername,
+                    partnerAddress: dataUser.data.address,
+                    packageName: reservation.package_name,
+                    eventDate: moment(reservation.event_date).utcOffset(0).format("DD-MM-YYYY"),
+                    eventTime: reservation.event_time,
+                    eventAddress: reservation.event_address,
+                    codeInvoice: reservation.reservation_no,
+                    invoiceDate: moment(reservation.reservation_date).utcOffset(0).format("DD-MM-YYYY"),
+                    customerName: detailUser.name,
+                    customerAddress: detailUser.address,
+                    completePayment: statusPayment,
+                    totalPrice: totalPrice,
+                    totalDiscount: totalDiscount,
+                    totalPayment: totalPayment,
+                    totalDownPayment: totalDownPayment,
+                    remainingPayment: remainingPayment.toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+                    description: reservation.description,
+                    bankName: detailBank.bank_name,
+                    accountBank: detailBank.account_name,
+                    rekBank: detailBank.account_no,
+                    terms: termPartner.data.terms
+                    // services: services
+                  }),
+                  attachments: {
+                    filename: `${reservation.package_name}` + '_' + `${detailUser.name}` + '_' + `${moment(reservation.event_date).utcOffset(0).format("DD-MM-YYYY")}` + '.pdf',
+                    contentType: 'application/pdf',
+                    path: './views/invoice_manual.pdf'
+                  }
+                };
+                console.log("mailoptions :" + JSON.stringify(mailoptions));
+  
+                smtpTransport.sendMail(mailoptions, function (error, res) {
+                  if (error) {
+                    console.log(error);
+                  } else {
+                    console.log("Message sent: " + res.response);
+                  }
+                  //smtpTransport.close();
+                });
+              }, 500)
+              
+            }).catch(err => {
+              console.error(err)
+            });
+          }
+
+          // result generate pdf
+          generatePdf();    
+         
         } else {
           return res.status(401).send({
             code: 401,

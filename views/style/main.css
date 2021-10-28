@@ -1,0 +1,34 @@
+input:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.login-container {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.login-box {
+    background: #eee;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    min-height: 100%;
+}
+
+.logo {
+    width: 215px;
+    height: auto;
+}
+
+.box-login {
+    box-shadow: 0 5px 21px 5px #dedede;
+    padding: 25px;
+    background: #fff;
+    border-radius: 7px;
+}

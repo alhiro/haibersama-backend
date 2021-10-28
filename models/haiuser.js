@@ -102,6 +102,14 @@ const HaiUser = dbSeq.define('hai_user', {
     type: Sequelize.STRING,
     allowNull: true
   },
+  reset_token: {
+    type: Sequelize.STRING,
+    allowNull: true
+  },
+  expired_reset_token: {
+    type: Sequelize.DATE,
+    allowNull: true
+  },
   verified_document: {
     type: Sequelize.STRING(255),
     allowNull: true
