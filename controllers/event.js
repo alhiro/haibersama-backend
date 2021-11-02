@@ -25,10 +25,11 @@ exports.getEvent = async function (req, res, next) {
 };
 
 exports.getEventPartner = async function (req, res, next) {
-  const partner_id = parseInt(req.query.partnerid);
+  const partner_id = req;
   console.log("controller search event partner_id " + partner_id);
   try {
-    var findEvent = await eventService.findAll(partner_id);
+    var params = { partner_id: partner_id };
+    var findEvent = await eventService.findAll(params);
     return res.status(200).json({ status: 200, data: findEvent, message: "Event Partner Berhasil Diambil" });
   } catch (err) {
     return res

@@ -46,8 +46,9 @@ eventRouter.get("/get", (req, res, next) => {
   controller.getEvent(req, res);
 });
 
-eventRouter.get("/partner", (req, res, next) => {
-  controller.getEventPartner(req, res);
+eventRouter.get("/partner", headerAuth.isUserAuthenticated, (req, res, next) => {
+  const partner_id = res.locals.auth.id;
+  controller.getEventPartner(partner_id, res);
 });
 
 eventRouter.post("/search", (req, res, next) => {

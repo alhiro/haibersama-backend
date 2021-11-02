@@ -35,9 +35,7 @@ module.exports =
     findAll: async (params) => {
       try {
         return await Event.findAll({
-          where: {
-            partner_id : JSON.stringify(params) 
-          },
+          where: params,
           order: [["created_at", "ASC"]],
         });
       } catch (error) {
