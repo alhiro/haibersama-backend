@@ -55,7 +55,7 @@ eventRouter.post("/search", (req, res, next) => {
   controller.searchEvent(req, res);
 });
 
-eventRouter.post("/add", headerAuth.isPartnerAuthenticated, upload.single('eventImage'), (req, res, next) => {
+eventRouter.post("/add", headerAuth.isPartnerAuthenticated, upload.single('events'), (req, res, next) => {
   const partner_id = res.locals.auth.id;
   const partner_email = res.locals.auth.email;
 
@@ -75,9 +75,9 @@ eventRouter.post("/add", headerAuth.isPartnerAuthenticated, upload.single('event
       title: req.body.title,
       description: req.body.description,
       image_url: ENV.API_URL + '/ftp/' + FILE_PATH + '/' + eventImage.filename,
-      link_url: req.body.eventLink,
-      event_date: req.body.eventDate,
-      order_no: parseInt(req.body.orderNo),
+      link_url: req.body.link_url,
+      event_date: req.body.event_date,
+      order_no: parseInt(req.body.order_no),
       active: req.body.active,
       ticket: req.body.ticket,
       approval: req.body.approval,
@@ -88,7 +88,7 @@ eventRouter.post("/add", headerAuth.isPartnerAuthenticated, upload.single('event
   }
 });
 
-eventRouter.post("/update", headerAuth.isPartnerAuthenticated, upload.single('eventImage'), (req, res, next) => {
+eventRouter.post("/update", headerAuth.isPartnerAuthenticated, upload.single('events'), (req, res, next) => {
   const partner_id = res.locals.auth.id;
   const partner_email = res.locals.auth.email;
 
@@ -100,10 +100,10 @@ eventRouter.post("/update", headerAuth.isPartnerAuthenticated, upload.single('ev
       id: parseInt(req.body.id),
       title: req.body.title,
       description: req.body.description,
-      image_url: req.body.imageUrl,
-      link_url: req.body.eventLink,
-      event_date: req.body.eventDate,
-      order_no: parseInt(req.body.orderNo),
+      image_url: req.body.events,
+      link_url: req.body.link_url,
+      event_date: req.body.event_date,
+      order_no: parseInt(req.body.order_no),
       active: req.body.active,
       ticket: req.body.ticket,
       approval: req.body.approval,
@@ -118,9 +118,9 @@ eventRouter.post("/update", headerAuth.isPartnerAuthenticated, upload.single('ev
       title: req.body.title,
       description: req.body.description,
       image_url: ENV.API_URL + '/ftp/' + FILE_PATH + '/' + eventImage.filename,
-      link_url: req.body.eventLink,
-      event_date: req.body.eventDate,
-      order_no: parseInt(req.body.orderNo),
+      link_url: req.body.link_url,
+      event_date: req.body.event_date,
+      order_no: parseInt(req.body.order_no),
       active: req.body.active,
       ticket: req.body.ticket,
       approval: req.body.approval,

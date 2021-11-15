@@ -20,7 +20,7 @@ const Event = dbSeq.define('event', {
   },
   description: {
     type: Sequelize.STRING(500),
-    allowNull: false
+    allowNull: true
   },
   image_url: {
     type: Sequelize.STRING(500),
