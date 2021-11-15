@@ -397,13 +397,6 @@ exports.updateStatusManual = async function(req, res, next) {
           // result generate pdf
           generatePdf();
          
-        } else {
-          return res.status(401).send({
-            code: 401,
-            success: false,
-            message: "Gagal Mengirimkan Email",
-            data: {}
-          });
         }
       } 
 
@@ -816,7 +809,7 @@ exports.sendEmailToCustomer = async function (req, res, next) {
     var counter = await emailcounter.findCounter(counterParams);
     if (counter.success) {
       var dataCounter = counter.data;
-      if (dataCounter.counter >= 3) {
+      if (dataCounter.counter >= 5) {
         return res.status(500).send({ code: 500, success: false, message: "Reach limit send email for reservation number " + reservationNo, data: {} });
       } else {
         dataCounter.counter = dataCounter.counter + 1;
@@ -1042,13 +1035,6 @@ exports.sendEmailToCustomer = async function (req, res, next) {
           // result generate pdf
           generatePdf();    
          
-        } else {
-          return res.status(401).send({
-            code: 401,
-            success: false,
-            message: "Gagal Mengirimkan Email",
-            data: {}
-          });
         }
      }
 
