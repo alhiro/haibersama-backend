@@ -1,6 +1,7 @@
 const Event = require('../models/event');
 const sequelize = require("../config/sequelize");
-const Sequelize = require('sequelize')
+const Sequelize = require('sequelize');
+const auth = require("../services/haiuser");
 
 module.exports =
   {        
@@ -61,6 +62,16 @@ module.exports =
     findOrCreate: async (params, req) => {
       try {
         const { partner_id, title, description, image_url, link_url, event_date, order_no, active, ticket, approval, created_by} = req
+
+        var idUser = partner_id;
+        var usersDetail = await auth.findUser({ id: idUser });
+        const getname = usersDetail.data.name;
+        console.log(JSON.stringify("data user own event"), usersDetail.data.name);
+
+        if (!getname) {
+          return { success: false, message: "User tidak bisa membuat event. Silahkan ulangi kembali", data: {} };
+        }
+
         var object = {
           partner_id: partner_id,
           title: title,
@@ -72,7 +83,7 @@ module.exports =
           approval: approval == 1 ? true : false,
           order_no: order_no,
           active: active == 1 ? true : false,
-          created_by: created_by
+          created_by: getname
         }
         const insertEvent = await Event.findOrCreate({ where: params, defaults: object })
   
@@ -92,6 +103,15 @@ module.exports =
         try {
           const { id, partner_id, title, description, image_url, link_url, event_date, order_no, active, ticket, approval, updated_by } = req
 
+          var idUser = partner_id;
+          var usersDetail = await auth.findUser({ id: idUser });
+          const getname = usersDetail.data.name;
+          console.log(JSON.stringify("data user own event"), usersDetail.data.name);
+  
+          if (!getname) {
+            return { success: false, message: "User tidak bisa update event. Silahkan ulangi kembali", data: {} };
+          }
+
           var object = {
             partner_id: partner_id,
             title: title,
@@ -103,7 +123,7 @@ module.exports =
             approval: approval == 1 ? true : false,
             order_no: order_no,
             active: active == 1 ? true : false,
-            updated_by: updated_by
+            updated_by: getname
           }
           console.log(JSON.stringify(object), "object event")
 
