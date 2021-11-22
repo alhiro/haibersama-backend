@@ -499,7 +499,7 @@ exports.getReservationsGroupByCategory = async function(req, res, next) {
       //const paging = { limit: pageSize, offset: (page - 1) *  pageSize};
 
       const params = { };
-      var where = " "
+      var where = " ";
 
       if(type == 2){
           params.partner_id = userId;
@@ -519,7 +519,7 @@ exports.getReservationsGroupByCategory = async function(req, res, next) {
         where += " AND rv.category_id = " + categoryId + " ";
       }
           
-      console.log(where);
+      console.log('where ' + where);
       let data = await resv.findReservationsGroupByCategory(where);
       data.code = data.success ? 200 : 500;
       return res.status(200).send(data);
@@ -533,7 +533,7 @@ exports.getReservationsGroupByCategory = async function(req, res, next) {
 
 exports.getSuccessReservations = async function(req, res, next) {
   try {
-      const { eventFrom, eventTo,  userId,  } = req;
+      const { eventFrom, eventTo, limitItem, page, userId,  } = req;
       
       //const paging = { limit: pageSize, offset: (page - 1) *  pageSize};
 
@@ -553,7 +553,7 @@ exports.getSuccessReservations = async function(req, res, next) {
         where += " AND date(rv.event_date) <= date('" + eventTo + "') ";
       }
           
-      let data = await resv.findReservations(where);
+      let data = await resv.findSuccessReservations(where, limitItem, page);
       data.code = data.success ? 200 : 500;
       return res.status(200).send(data);
   

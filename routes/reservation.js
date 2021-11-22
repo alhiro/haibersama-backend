@@ -185,6 +185,8 @@ reservationRouter.post("/getinvoicelist", headerAuth.isUserAuthenticated, (req, 
   const data = { 
     eventFrom: req.body.eventFrom, 
     eventTo: req.body.eventTo,
+    page: req.body.page,
+    limitItem: req.body.limitItem,
     email: email,
     userId: id
   };

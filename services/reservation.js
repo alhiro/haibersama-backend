@@ -317,13 +317,13 @@ module.exports =
             raw: true,
             type: sequelize.QueryTypes.SELECT
         }
-    );
+      );
 
-    if(reservations.length > 0){
-      return (!reservations) ? { success: false, message: "Reservasi Tidak Ditemukan", data: {} } : { success: true, message: "Reservasi Ditemukan", data: reservations }
-    } else {      
-      return { success: false, message: "Reservasi Tidak Ditemukan", data: {} } 
-    }
+      if(reservations.length > 0){
+        return (!reservations) ? { success: false, message: "Reservasi Tidak Ditemukan", data: {} } : { success: true, message: "Reservasi Ditemukan", data: reservations }
+      } else {
+        return { success: false, message: "Reservasi Tidak Ditemukan", data: {} } 
+      }
       // const {limit, offset} = paging;      
       // return await Reservation.findAll({ 
       //   where: params,
@@ -338,6 +338,78 @@ module.exports =
       //     console.log(err);
       //     return { success: false, message: "Reservation Not Found", data: err } 
       //   });
+    },
+
+    findSuccessReservations: async (where, limitItem, page) => {
+      var reservations = await sequelize.query(
+        `SELECT 
+            rv.id, 
+            reservation_no, 
+            reservation_date, 
+            user_id, 
+            usr.name user_name,
+            partner_id, 
+            prt.name partner_name,
+            prt.picture partner_picture,
+            rv.category_id, 
+            cat.description category,
+            service_id, 
+            srv.description service,
+            rv.name,
+            rc.email,
+            rc.address,
+            rv.package_name,
+            rv.description,
+            event_date, 
+            event_time, 
+            event_address, 
+            total_price, 
+            total_discount, 
+            total_payment, 
+            total_down_payment,
+            status_code, 
+            ci.description status,
+            duration, 
+            reservation_type,
+            rt.description reservation_type_desc
+          FROM public.reservation rv
+          inner join hai_user prt on prt.id = rv.partner_id
+          left join hai_user usr on usr.id = rv.user_id
+          inner join category cat on cat.id = rv.category_id
+          inner join service srv on srv.id = rv.service_id
+          left join info_code ci on ci.code = rv.status_code
+          left join info_code rt on rt.code = rv.reservation_type
+          left join reservation_contact rc on rc.reservation_id = rv.id
+          `+where+`
+          order by event_date desc;`,
+        {
+            raw: true,
+            type: sequelize.QueryTypes.SELECT
+        }
+      );
+
+      const pageCount = Math.ceil(reservations.length / limitItem);
+      let pages = parseInt(page);
+      if (!pages) { pages }
+      if (pages > pageCount) {
+        pages = pageCount
+      }
+
+      if(reservations.length > 0){
+        return (!reservations) ? { 
+          success: false, 
+          message: "Reservasi Tidak Ditemukan", 
+          data: {},  
+          page: pages,
+          pageCount: pageCount } : { 
+            success: true, 
+            message: "Reservasi Ditemukan", 
+            data: reservations.slice(pages * limitItem - limitItem, pages * limitItem), 
+            page: pages,
+            pageCount: pageCount }
+      } else {      
+        return { success: false, message: "Reservasi Tidak Ada", data: {}, page: pages, pageCount: pageCount } 
+      }
     },
     
     updateStatusReservation: async (req) => {
@@ -797,7 +869,7 @@ module.exports =
       }
     },
     
-    findReservationsGroupByCategory: async (where) => {
+    findReservationsGroupByCategory: async (where) => {   
       var reservations = await sequelize.query(
         `		select 
         json_agg(
