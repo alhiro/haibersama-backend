@@ -185,6 +185,20 @@ reservationRouter.post("/getinvoicelist", headerAuth.isUserAuthenticated, (req, 
   const data = { 
     eventFrom: req.body.eventFrom, 
     eventTo: req.body.eventTo,
+    email: email,
+    userId: id
+  };
+  
+  reservationController.getSuccessReservationAll(data, res);
+});
+
+reservationRouter.post("/getinvoicelists", headerAuth.isUserAuthenticated, (req, res, next) => {
+  const id = res.locals.auth.id;
+  const email = res.locals.auth.email;
+
+  const data = { 
+    eventFrom: req.body.eventFrom, 
+    eventTo: req.body.eventTo,
     page: req.body.page,
     limitItem: req.body.limitItem,
     email: email,

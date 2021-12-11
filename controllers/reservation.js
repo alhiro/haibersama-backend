@@ -530,6 +530,39 @@ exports.getReservationsGroupByCategory = async function(req, res, next) {
     }    
 };
 
+exports.getSuccessReservationAll = async function(req, res, next) {
+  try {
+      const { eventFrom, eventTo,  userId,  } = req;
+      
+      //const paging = { limit: pageSize, offset: (page - 1) *  pageSize};
+
+      const params = { };
+      var where = " WHERE 1=1 "
+
+      params.partner_id = userId;
+      where += " AND rv.partner_id = " + userId; 
+
+      // where += " AND rv.transaction_status_code = 'SUCCESS' ";
+      
+      if(eventFrom != null){
+        where += " AND date(rv.event_date) >= date('" + eventFrom + "') ";
+      }
+      
+      if(eventTo != null){
+        where += " AND date(rv.event_date) <= date('" + eventTo + "') ";
+      }
+          
+      let data = await resv.findReservations(where);
+      data.code = data.success ? 200 : 500;
+      return res.status(200).send(data);
+  
+    } catch (err) {
+      console.log(err);
+      return res.status(500).send({ data: err });
+    }    
+};
+
+
 
 exports.getSuccessReservations = async function(req, res, next) {
   try {
