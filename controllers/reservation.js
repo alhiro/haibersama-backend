@@ -395,7 +395,7 @@ exports.updateStatusManual = async function(req, res, next) {
           }
 
           // result generate pdf
-          generatePdf();
+          return generatePdf();
          
         }
       } 
@@ -1066,7 +1066,7 @@ exports.sendEmailToCustomer = async function (req, res, next) {
           }
 
           // result generate pdf
-          generatePdf();    
+          return generatePdf();    
          
         }
      }
