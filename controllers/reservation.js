@@ -287,6 +287,7 @@ exports.updateStatusManual = async function(req, res, next) {
           }
 
           // generate template invoice html into pdf
+          async function generatePdf() {
             let data = {
               partnerName: dataUser.data.partnername,
               partnerAddress: dataUser.data.address,
@@ -391,7 +392,11 @@ exports.updateStatusManual = async function(req, res, next) {
             }).catch(err => {
               console.error(err)
             });
+          }
 
+          // result generate pdf
+          generatePdf();
+         
         }
       } 
 
@@ -953,6 +958,7 @@ exports.sendEmailToCustomer = async function (req, res, next) {
           }
 
           // generate template invoice html into pdf
+          async function generatePdf() {
             let data = {
               partnerName: dataUser.data.partnername,
               partnerAddress: dataUser.data.address,
@@ -1057,7 +1063,11 @@ exports.sendEmailToCustomer = async function (req, res, next) {
             }).catch(err => {
               console.error(err)
             });
+          }
 
+          // result generate pdf
+          generatePdf();    
+         
         }
      }
 
