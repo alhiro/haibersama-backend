@@ -316,14 +316,14 @@ exports.updateStatusManual = async function(req, res, next) {
               // Now we have the html code of our template in res object
               // you can check by logging it on console
               // console.log(res)
-              console.log("Compiling the template with handlebars")
+              console.log("Compiling the template with handlebars");
               const template = hb.compile(res, { strict: true });
               // we have compile our code with handlebars
               const result = template(data);
               // We can use this to add dyamic data to our handlebas template at run time from database or API as per need. you can read the official doc to learn more https://handlebarsjs.com/
               const html = result;
               // we are using headless mode
-              const browser = await puppeteer.launch();
+              const browser = await puppeteer.launch({ headless: true });
               const page = await browser.newPage()
               // We set the page content as the generated html by handlebars
               await page.setContent(html)
@@ -340,7 +340,7 @@ exports.updateStatusManual = async function(req, res, next) {
                 margin: {top: '50px', right: '10px', bottom: '50px', left: '10px', }
               })
               await browser.close();
-              console.log("PDF Generated")
+              console.log("PDF Generated");
 
               setTimeout(() => {
                 let mailoptions = {
@@ -387,10 +387,10 @@ exports.updateStatusManual = async function(req, res, next) {
                   }
                   //smtpTransport.close();
                 });
-              }, 500)
+              }, 500);
               
             }).catch(err => {
-              console.error(err)
+              console.error(err);
             });
           }
 
@@ -994,7 +994,7 @@ exports.sendEmailToCustomer = async function (req, res, next) {
               // We can use this to add dyamic data to our handlebas template at run time from database or API as per need. you can read the official doc to learn more https://handlebarsjs.com/
               const html = result;
               // we are using headless mode
-              const browser = await puppeteer.launch();
+              const browser = await puppeteer.launch({ headless: true });
               const page = await browser.newPage()
               // We set the page content as the generated html by handlebars
               await page.setContent(html)
@@ -1011,7 +1011,7 @@ exports.sendEmailToCustomer = async function (req, res, next) {
                 margin: {top: '50px', right: '10px', bottom: '50px', left: '10px', }
               })
               await browser.close();
-              console.log("PDF Generated")
+              console.log("PDF Generated");
 
               setTimeout(() => {
                 let mailoptions = {
@@ -1058,10 +1058,10 @@ exports.sendEmailToCustomer = async function (req, res, next) {
                   }
                   //smtpTransport.close();
                 });
-              }, 500)
+              }, 500);
               
             }).catch(err => {
-              console.error(err)
+              console.error(err);
             });
           }
 
