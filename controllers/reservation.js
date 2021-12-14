@@ -15,7 +15,6 @@ const utils = require('util');
 const puppeteer = require('puppeteer');
 const hb = require('handlebars');
 const readFile = utils.promisify(fs.readFile);
-var pdf = require('html-pdf');
 
 exports.createReservation = async function(req, res, next) {
     try {  
