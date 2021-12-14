@@ -1091,7 +1091,7 @@ exports.sendEmailToCustomer = async function (req, res, next) {
                 if (error) {
                   console.log(error);
                 } else {
-                  console.log("Message sent: " + res.response);
+                  console.log("Message sent invoice: " + res.response);
                 }
                 //smtpTransport.close();
               });
