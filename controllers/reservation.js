@@ -307,16 +307,15 @@ exports.updateStatusManual = async function(req, res, next) {
               totalDownPayment: totalDownPayment,
               remainingPayment: remainingPayment.toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
               description: reservation.description,
-              bankName: detailBank.bank_name,
-              accountBank: detailBank.account_name,
-              rekBank: detailBank.account_no,
+              bankName: detailBank?.bank_name,
+              accountBank: detailBank?.account_name,
+              rekBank: detailBank?.account_no,
               terms: termPartner.data.terms
             }
             
             getTemplateHtml().then(async (res) => {
               // Now we have the html code of our template in res object
               // you can check by logging it on console
-              // console.log('res generate template pdf')
               // console.log(res)
               console.log("Compiling the template with handlebars")
               const template = hb.compile(res, { strict: true });
@@ -324,7 +323,25 @@ exports.updateStatusManual = async function(req, res, next) {
               const result = template(data);
               // We can use this to add dyamic data to our handlebas template at run time from database or API as per need. you can read the official doc to learn more https://handlebarsjs.com/
               const html = result;
-              console.log('generate file html data set value with handlebars');
+              // we are using headless mode
+              const browser = await puppeteer.launch();
+              const page = await browser.newPage()
+              // We set the page content as the generated html by handlebars
+              await page.setContent(html)
+              // We use pdf function to generate the pdf in the same folder as this file.
+              await page.pdf({ 
+                path: './views/invoice_manual.pdf', 
+                format: 'A4',
+                printBackground: true,
+                displayHeaderFooter: true,
+                footerTemplate: `<div style="font-size: 9px; padding-top: 8px; text-align: center; width: 100%;color: #444444">
+                <span>HaiO Invoice</span> - <span class="pageNumber"></span>/<span class="totalPages"></span>
+                </div>
+                `,
+                margin: {top: '50px', right: '10px', bottom: '50px', left: '10px', }
+              })
+              await browser.close();
+              console.log("PDF Generated");
 
               // render file html
               // fs.writeFile("./views/test.html", result, function(err) {
@@ -333,30 +350,30 @@ exports.updateStatusManual = async function(req, res, next) {
               //   }
               // });
 
-              var datenow = moment(new Date).format("DD MMM YYYY H:mm:ss");
+              // var datenow = moment(new Date).format("DD MMM YYYY H:mm:ss");
 
-              var options = { 
-                format: 'A4',
-                header: {
-                  height: "20mm",
-                  contents: {
-                    first: `<div style="font-size: 11px; padding-top: 8px; text-align: center; width: 100%;color: #444">
-                      <span style="color: #444;">${datenow}</span>
-                    </div>`
-                  }
-                },
-                footer: {
-                  contents: {
-                    default: `<div style="font-size: 11px; padding-top: 8px; text-align: center; width: 100%;color: #444">
-                    <span>HaiO Invoice</span> - <span style="color: #444;">{{page}}</span>/<span>{{pages}}</span>
-                    </div>`, // fallback value
-                  }
-                },
-              };
+              // var options = { 
+              //   format: 'A4',
+              //   header: {
+              //     height: "20mm",
+              //     contents: {
+              //       first: `<div style="font-size: 11px; padding-top: 8px; text-align: center; width: 100%;color: #444">
+              //         <span style="color: #444;">${datenow}</span>
+              //       </div>`
+              //     }
+              //   },
+              //   footer: {
+              //     contents: {
+              //       default: `<div style="font-size: 11px; padding-top: 8px; text-align: center; width: 100%;color: #444">
+              //       <span>HaiO Invoice</span> - <span style="color: #444;">{{page}}</span>/<span>{{pages}}</span>
+              //       </div>`, // fallback value
+              //     }
+              //   },
+              // };
 
-              pdf.create(html, options).toStream(function(err, stream) {
-                stream.pipe(fs.createWriteStream('./views/invoice_manual.pdf'));
-              });              
+              // pdf.create(html, options).toStream(function(err, stream) {
+              //   stream.pipe(fs.createWriteStream('./views/invoice_manual.pdf'));
+              // });              
 
             }).catch(err => {
               console.error(err);
@@ -388,9 +405,9 @@ exports.updateStatusManual = async function(req, res, next) {
                   totalDownPayment: totalDownPayment,
                   remainingPayment: remainingPayment.toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
                   description: reservation.description,
-                  bankName: detailBank.bank_name,
-                  accountBank: detailBank.account_name,
-                  rekBank: detailBank.account_no,
+                  bankName: detailBank?.bank_name,
+                  accountBank: detailBank?.account_name,
+                  rekBank: detailBank?.account_no,
                   terms: termPartner.data.terms
                   // services: services
                 }),
@@ -993,16 +1010,15 @@ exports.sendEmailToCustomer = async function (req, res, next) {
               totalDownPayment: totalDownPayment,
               remainingPayment: remainingPayment.toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
               description: reservation.description,
-              bankName: detailBank.bank_name,
-              accountBank: detailBank.account_name,
-              rekBank: detailBank.account_no,
+              bankName: detailBank?.bank_name,
+              accountBank: detailBank?.account_name,
+              rekBank: detailBank?.account_no,
               terms: termPartner.data.terms
             }
 
             getTemplateHtml().then(async (res) => {
               // Now we have the html code of our template in res object
               // you can check by logging it on console
-              // console.log('res generate template pdf')
               // console.log(res)
               console.log("Compiling the template with handlebars")
               const template = hb.compile(res, { strict: true });
@@ -1010,7 +1026,25 @@ exports.sendEmailToCustomer = async function (req, res, next) {
               const result = template(data);
               // We can use this to add dyamic data to our handlebas template at run time from database or API as per need. you can read the official doc to learn more https://handlebarsjs.com/
               const html = result;
-              console.log('generate file html data set value with handlebars');
+              // we are using headless mode
+              const browser = await puppeteer.launch();
+              const page = await browser.newPage()
+              // We set the page content as the generated html by handlebars
+              await page.setContent(html)
+              // We use pdf function to generate the pdf in the same folder as this file.
+              await page.pdf({ 
+                path: './views/invoice_manual.pdf', 
+                format: 'A4',
+                printBackground: true,
+                displayHeaderFooter: true,
+                footerTemplate: `<div style="font-size: 9px; padding-top: 8px; text-align: center; width: 100%;color: #444444">
+                <span>HaiO Invoice</span> - <span class="pageNumber"></span>/<span class="totalPages"></span>
+                </div>
+                `,
+                margin: {top: '50px', right: '10px', bottom: '50px', left: '10px', }
+              })
+              await browser.close();
+              console.log("PDF Generated");
 
               // render file html
               // fs.writeFile("./views/test.html", result, function(err) {
@@ -1019,30 +1053,30 @@ exports.sendEmailToCustomer = async function (req, res, next) {
               //   }
               // });
 
-              var datenow = moment(new Date).format("DD MMM YYYY H:mm:ss");
+              // var datenow = moment(new Date).format("DD MMM YYYY H:mm:ss");
 
-              var options = { 
-                format: 'A4',
-                header: {
-                  height: "20mm",
-                  contents: {
-                    first: `<div style="font-size: 11px; padding-top: 8px; text-align: center; width: 100%;color: #444">
-                      <span style="color: #444;">${datenow}</span>
-                    </div>`
-                  }
-                },
-                footer: {
-                  contents: {
-                    default: `<div style="font-size: 11px; padding-top: 8px; text-align: center; width: 100%;color: #444">
-                    <span>HaiO Invoice</span> - <span style="color: #444;">{{page}}</span>/<span>{{pages}}</span>
-                    </div>`, // fallback value
-                  }
-                },
-              };
+              // var options = { 
+              //   format: 'A4',
+              //   header: {
+              //     height: "20mm",
+              //     contents: {
+              //       first: `<div style="font-size: 11px; padding-top: 8px; text-align: center; width: 100%;color: #444">
+              //         <span style="color: #444;">${datenow}</span>
+              //       </div>`
+              //     }
+              //   },
+              //   footer: {
+              //     contents: {
+              //       default: `<div style="font-size: 11px; padding-top: 8px; text-align: center; width: 100%;color: #444">
+              //       <span>HaiO Invoice</span> - <span style="color: #444;">{{page}}</span>/<span>{{pages}}</span>
+              //       </div>`, // fallback value
+              //     }
+              //   },
+              // };
 
-              pdf.create(html, options).toStream(function(err, stream) {
-                stream.pipe(fs.createWriteStream('./views/invoice_manual.pdf'));
-              });              
+              // pdf.create(html, options).toStream(function(err, stream) {
+              //   stream.pipe(fs.createWriteStream('./views/invoice_manual.pdf'));
+              // });              
 
             }).catch(err => {
               console.error(err);
@@ -1073,9 +1107,9 @@ exports.sendEmailToCustomer = async function (req, res, next) {
                   totalDownPayment: totalDownPayment,
                   remainingPayment: remainingPayment.toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
                   description: reservation.description,
-                  bankName: detailBank.bank_name,
-                  accountBank: detailBank.account_name,
-                  rekBank: detailBank.account_no,
+                  bankName: detailBank?.bank_name,
+                  accountBank: detailBank?.account_name,
+                  rekBank: detailBank?.account_no,
                   terms: termPartner.data.terms
                   // services: services
                 }),
