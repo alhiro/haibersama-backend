@@ -306,9 +306,9 @@ exports.updateStatusManual = async function(req, res, next) {
               totalDownPayment: totalDownPayment,
               remainingPayment: remainingPayment.toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
               description: reservation.description,
-              bankName: detailBank?.bank_name,
-              accountBank: detailBank?.account_name,
-              rekBank: detailBank?.account_no,
+              bankName: detailBank == undefined ? "-" : detailBank.bank_name,
+              accountBank: detailBank == undefined ? "-" : detailBank.account_name,
+              rekBank: detailBank == undefined ? "-" : detailBank.account_no,
               terms: termPartner.data.terms
             }
             
@@ -404,9 +404,9 @@ exports.updateStatusManual = async function(req, res, next) {
                   totalDownPayment: totalDownPayment,
                   remainingPayment: remainingPayment.toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
                   description: reservation.description,
-                  bankName: detailBank?.bank_name,
-                  accountBank: detailBank?.account_name,
-                  rekBank: detailBank?.account_no,
+                  bankName: detailBank == undefined ? "-" : detailBank.bank_name,
+                  accountBank: detailBank == undefined ? "-" : detailBank.account_name,
+                  rekBank: detailBank == undefined ? "-" : detailBank.account_no,
                   terms: termPartner.data.terms
                   // services: services
                 }),
@@ -1009,9 +1009,9 @@ exports.sendEmailToCustomer = async function (req, res, next) {
               totalDownPayment: totalDownPayment,
               remainingPayment: remainingPayment.toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
               description: reservation.description,
-              bankName: detailBank?.bank_name,
-              accountBank: detailBank?.account_name,
-              rekBank: detailBank?.account_no,
+              bankName: detailBank == undefined ? "-" : detailBank.bank_name,
+              accountBank: detailBank == undefined ? "-" : detailBank.account_name,
+              rekBank: detailBank == undefined ? "-" : detailBank.account_no,
               terms: termPartner.data.terms
             }
 
@@ -1106,9 +1106,9 @@ exports.sendEmailToCustomer = async function (req, res, next) {
                   totalDownPayment: totalDownPayment,
                   remainingPayment: remainingPayment.toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
                   description: reservation.description,
-                  bankName: detailBank?.bank_name,
-                  accountBank: detailBank?.account_name,
-                  rekBank: detailBank?.account_no,
+                  bankName: detailBank == undefined ? "-" : detailBank.bank_name,
+                  accountBank: detailBank == undefined ? "-" : detailBank.account_name,
+                  rekBank: detailBank == undefined ? "-" : detailBank.account_no,
                   terms: termPartner.data.terms
                   // services: services
                 }),
