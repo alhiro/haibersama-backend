@@ -15,6 +15,7 @@ const utils = require('util');
 const puppeteer = require('puppeteer');
 const hb = require('handlebars');
 const readFile = utils.promisify(fs.readFile);
+var pdf = require('html-pdf');
 
 exports.createReservation = async function(req, res, next) {
     try {  
@@ -322,28 +323,27 @@ exports.updateStatusManual = async function(req, res, next) {
               const result = template(data);
               // We can use this to add dyamic data to our handlebas template at run time from database or API as per need. you can read the official doc to learn more https://handlebarsjs.com/
               const html = result;
+
+              // puppeteer only support vps cloud
               // we are using headless mode
-              const browser = await puppeteer.launch({
-                headless: true,
-                args: ['--use-gl=egl'],
-              });
-              const page = await browser.newPage()
-              // We set the page content as the generated html by handlebars
-              await page.setContent(html)
-              // We use pdf function to generate the pdf in the same folder as this file.
-              await page.pdf({ 
-                path: './views/invoice_manual.pdf', 
-                format: 'A4',
-                printBackground: true,
-                displayHeaderFooter: true,
-                footerTemplate: `<div style="font-size: 9px; padding-top: 8px; text-align: center; width: 100%;color: #444444">
-                <span>HaiO Invoice</span> - <span class="pageNumber"></span>/<span class="totalPages"></span>
-                </div>
-                `,
-                margin: {top: '50px', right: '10px', bottom: '50px', left: '10px', }
-              })
-              await browser.close();
-              console.log("PDF Generated");
+              // const browser = await puppeteer.launch({headless: true});
+              // const page = await browser.newPage()
+              // // We set the page content as the generated html by handlebars
+              // await page.setContent(html)
+              // // We use pdf function to generate the pdf in the same folder as this file.
+              // await page.pdf({ 
+              //   path: './views/invoice_manual.pdf', 
+              //   format: 'A4',
+              //   printBackground: true,
+              //   displayHeaderFooter: true,
+              //   footerTemplate: `<div style="font-size: 9px; padding-top: 8px; text-align: center; width: 100%;color: #444444">
+              //   <span>HaiO Invoice</span> - <span class="pageNumber"></span>/<span class="totalPages"></span>
+              //   </div>
+              //   `,
+              //   margin: {top: '50px', right: '10px', bottom: '50px', left: '10px', }
+              // })
+              // await browser.close();
+              // console.log("PDF Generated");
 
               // render file html
               // fs.writeFile("./views/test.html", result, function(err) {
@@ -352,30 +352,32 @@ exports.updateStatusManual = async function(req, res, next) {
               //   }
               // });
 
-              // var datenow = moment(new Date).format("DD MMM YYYY H:mm:ss");
+              var datenow = moment(new Date).format("DD MMM YYYY H:mm:ss");
 
-              // var options = { 
-              //   format: 'A4',
-              //   header: {
-              //     height: "20mm",
-              //     contents: {
-              //       first: `<div style="font-size: 11px; padding-top: 8px; text-align: center; width: 100%;color: #444">
-              //         <span style="color: #444;">${datenow}</span>
-              //       </div>`
-              //     }
-              //   },
-              //   footer: {
-              //     contents: {
-              //       default: `<div style="font-size: 11px; padding-top: 8px; text-align: center; width: 100%;color: #444">
-              //       <span>HaiO Invoice</span> - <span style="color: #444;">{{page}}</span>/<span>{{pages}}</span>
-              //       </div>`, // fallback value
-              //     }
-              //   },
-              // };
+              var options = { 
+                format: 'A4',
+                orientation: "portrait",
+                header: {
+                  height: "20mm",
+                  contents: {
+                    first: `<div style="font-size: 11px; padding-top: 8px; text-align: center; width: 100%;color: #444">
+                      <span style="color: #444;">${datenow}</span>
+                    </div>`
+                  }
+                },
+                footer: {
+                  height: "30mm",
+                  contents: {
+                    default: `<div style="font-size: 11px; padding-top: 8px; text-align: center; width: 100%;color: #444">
+                    <span>HaiO Invoice</span> - <span style="color: #444;">{{page}}</span>/<span>{{pages}}</span>
+                    </div>`, // fallback value
+                  }
+                },
+              };
 
-              // pdf.create(html, options).toStream(function(err, stream) {
-              //   stream.pipe(fs.createWriteStream('./views/invoice_manual.pdf'));
-              // });              
+              pdf.create(html, options).toStream(function(err, stream) {
+                stream.pipe(fs.createWriteStream('./views/invoice_manual.pdf'));
+              });             
 
             }).catch(err => {
               console.error(err);
@@ -1028,28 +1030,27 @@ exports.sendEmailToCustomer = async function (req, res, next) {
               const result = template(data);
               // We can use this to add dyamic data to our handlebas template at run time from database or API as per need. you can read the official doc to learn more https://handlebarsjs.com/
               const html = result;
+
+              // puppeteer only support vps cloud
               // we are using headless mode
-              const browser = await puppeteer.launch({
-                headless: true,
-                args: ['--use-gl=egl'],
-              });
-              const page = await browser.newPage()
-              // We set the page content as the generated html by handlebars
-              await page.setContent(html)
-              // We use pdf function to generate the pdf in the same folder as this file.
-              await page.pdf({ 
-                path: './views/invoice_manual.pdf', 
-                format: 'A4',
-                printBackground: true,
-                displayHeaderFooter: true,
-                footerTemplate: `<div style="font-size: 9px; padding-top: 8px; text-align: center; width: 100%;color: #444444">
-                <span>HaiO Invoice</span> - <span class="pageNumber"></span>/<span class="totalPages"></span>
-                </div>
-                `,
-                margin: {top: '50px', right: '10px', bottom: '50px', left: '10px', }
-              })
-              await browser.close();
-              console.log("PDF Generated");
+              // const browser = await puppeteer.launch({headless: true});
+              // const page = await browser.newPage()
+              // // We set the page content as the generated html by handlebars
+              // await page.setContent(html)
+              // // We use pdf function to generate the pdf in the same folder as this file.
+              // await page.pdf({ 
+              //   path: './views/invoice_manual.pdf', 
+              //   format: 'A4',
+              //   printBackground: true,
+              //   displayHeaderFooter: true,
+              //   footerTemplate: `<div style="font-size: 9px; padding-top: 8px; text-align: center; width: 100%;color: #444444">
+              //   <span>HaiO Invoice</span> - <span class="pageNumber"></span>/<span class="totalPages"></span>
+              //   </div>
+              //   `,
+              //   margin: {top: '50px', right: '10px', bottom: '50px', left: '10px', }
+              // })
+              // await browser.close();
+              // console.log("PDF Generated");
 
               // render file html
               // fs.writeFile("./views/test.html", result, function(err) {
@@ -1058,30 +1059,32 @@ exports.sendEmailToCustomer = async function (req, res, next) {
               //   }
               // });
 
-              // var datenow = moment(new Date).format("DD MMM YYYY H:mm:ss");
+              var datenow = moment(new Date).format("DD MMM YYYY H:mm:ss");
 
-              // var options = { 
-              //   format: 'A4',
-              //   header: {
-              //     height: "20mm",
-              //     contents: {
-              //       first: `<div style="font-size: 11px; padding-top: 8px; text-align: center; width: 100%;color: #444">
-              //         <span style="color: #444;">${datenow}</span>
-              //       </div>`
-              //     }
-              //   },
-              //   footer: {
-              //     contents: {
-              //       default: `<div style="font-size: 11px; padding-top: 8px; text-align: center; width: 100%;color: #444">
-              //       <span>HaiO Invoice</span> - <span style="color: #444;">{{page}}</span>/<span>{{pages}}</span>
-              //       </div>`, // fallback value
-              //     }
-              //   },
-              // };
+              var options = { 
+                format: 'A4',
+                orientation: "portrait",
+                header: {
+                  height: "20mm",
+                  contents: {
+                    first: `<div style="font-size: 11px; padding-top: 8px; text-align: center; width: 100%;color: #444">
+                      <span style="color: #444;">${datenow}</span>
+                    </div>`
+                  }
+                },
+                footer: {
+                  height: "30mm",
+                  contents: {
+                    default: `<div style="font-size: 11px; padding-top: 8px; text-align: center; width: 100%;color: #444">
+                    <span>HaiO Invoice</span> - <span style="color: #444;">{{page}}</span>/<span>{{pages}}</span>
+                    </div>`, // fallback value
+                  }
+                },
+              };
 
-              // pdf.create(html, options).toStream(function(err, stream) {
-              //   stream.pipe(fs.createWriteStream('./views/invoice_manual.pdf'));
-              // });              
+              pdf.create(html, options).toStream(function(err, stream) {
+                stream.pipe(fs.createWriteStream('./views/invoice_manual.pdf'));
+              });              
 
             }).catch(err => {
               console.error(err);
