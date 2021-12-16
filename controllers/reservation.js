@@ -355,7 +355,6 @@ exports.updateStatusManual = async function(req, res, next) {
               var datenow = moment(new Date).format("DD MMM YYYY H:mm:ss");
 
               var options = { 
-                zoomFactor: "0.75",
                 format: 'A4',
                 orientation: "portrait",
                 header: {
@@ -376,8 +375,8 @@ exports.updateStatusManual = async function(req, res, next) {
                 },
               };
 
-              pdf.create(html, options).toStream(function(err, stream) {
-                stream.pipe(fs.createWriteStream('./views/invoice_manual.pdf'));
+              pdf.create(html, options).toFile('./views/invoice_manual.pdf', function(err, res) {
+                console.log('This is a toFile:', res);
               });             
 
             }).catch(err => {
@@ -1063,7 +1062,6 @@ exports.sendEmailToCustomer = async function (req, res, next) {
               var datenow = moment(new Date).format("DD MMM YYYY H:mm:ss");
 
               var options = { 
-                zoomFactor: "0.75",
                 format: 'A4',
                 orientation: "portrait",
                 header: {
@@ -1084,8 +1082,8 @@ exports.sendEmailToCustomer = async function (req, res, next) {
                 },
               };
 
-              pdf.create(html, options).toStream(function(err, stream) {
-                stream.pipe(fs.createWriteStream('./views/invoice_manual.pdf'));
+              pdf.create(html, options).toFile('./views/invoice_manual.pdf', function(err, res) {
+                console.log('This is a toFile:', res);
               });              
 
             }).catch(err => {
