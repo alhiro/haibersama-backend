@@ -355,6 +355,8 @@ exports.updateStatusManual = async function(req, res, next) {
               var datenow = moment(new Date).format("DD MMM YYYY H:mm:ss");
 
               var options = { 
+                height: "11.69in",        // allowed units: mm, cm, in, px
+                width: "8.27in",            // allowed units: mm, cm, in, px
                 format: 'A4',
                 orientation: "portrait",
                 header: {
@@ -1062,6 +1064,8 @@ exports.sendEmailToCustomer = async function (req, res, next) {
               var datenow = moment(new Date).format("DD MMM YYYY H:mm:ss");
 
               var options = { 
+                height: "11.69in",        // allowed units: mm, cm, in, px
+                width: "8.27in",            // allowed units: mm, cm, in, px
                 format: 'A4',
                 orientation: "portrait",
                 header: {
