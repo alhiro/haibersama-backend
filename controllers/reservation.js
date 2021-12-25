@@ -567,6 +567,44 @@ exports.getReservationsGroupByCategory = async function(req, res, next) {
     }    
 };
 
+exports.getReservationsGroupByCategories = async function(req, res, next) {
+  try {
+      const { statusCode, categoryId, limitItem, page, userId, type } = req;
+      
+      //const paging = { limit: pageSize, offset: (page - 1) *  pageSize};
+
+      const params = { };
+      var where = " ";
+
+      if(type == 2){
+          params.partner_id = userId;
+          where += " AND rv.partner_id = " + userId;
+      }else{
+          params.user_id = userId;
+          where += " AND rv.user_id = " + userId;
+      }        
+
+      if(statusCode != ""){
+        params.status_code = statusCode;
+        where += " AND (rv.status_code = '" + statusCode + "' OR rv.transaction_status_code = '" + statusCode + "') ";
+      }
+      
+      if(categoryId > 0){
+        params.category_id = categoryId;
+        where += " AND rv.category_id = " + categoryId + " ";
+      }
+          
+      console.log('where ' + where);
+      let data = await resv.findReservationsGroupByCategories(where, limitItem, page);
+      data.code = data.success ? 200 : 500;
+      return res.status(200).send(data);
+  
+    } catch (err) {
+      console.log(err);
+      return res.status(500).send({ data: err });
+    }    
+};
+
 exports.getSuccessReservationAll = async function(req, res, next) {
   try {
       const { eventFrom, eventTo,  userId,  } = req;

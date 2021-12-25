@@ -178,6 +178,22 @@ reservationRouter.post("/getlistgroupbycategory", headerAuth.isUserAuthenticated
   reservationController.getReservationsGroupByCategory(data, res);
 });
 
+reservationRouter.post("/getlistgroupbycategories", headerAuth.isUserAuthenticated, (req, res, next) => {
+  const id = res.locals.auth.id;
+  const type = res.locals.auth.type;
+
+  const data = { 
+    statusCode: req.body.statusCode, 
+    categoryId: req.body.categoryId,
+    page: req.body.page,
+    limitItem: req.body.limitItem,
+    userId: id, 
+    type: type
+  };
+  
+  reservationController.getReservationsGroupByCategories(data, res);
+});
+
 reservationRouter.post("/getinvoicelist", headerAuth.isUserAuthenticated, (req, res, next) => {
   const id = res.locals.auth.id;
   const email = res.locals.auth.email;

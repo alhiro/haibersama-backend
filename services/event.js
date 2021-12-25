@@ -45,11 +45,16 @@ module.exports =
     },
 
     search: async (params) => {
+      const Op = Sequelize.Op;
+
       try {
-        // search any word in table event column title with %foo%
+        // search multi word in table event column title with %foo%
         return await Event.findAll({
           where: {
-            title :  { [Sequelize.Op.like]: `%${params.title}%` },
+            [Op.or]: [
+              {title :  { [Sequelize.Op.iLike]: `%${params.title}%` }}, 
+              {description :  { [Sequelize.Op.iLike]: `%${params.description}%` }}, 
+            ]
           },
           order: [["created_at", "ASC"]],
         });
