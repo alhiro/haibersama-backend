@@ -253,7 +253,7 @@ module.exports =
             transaction_date: transaction_date,
             transaction_type: "D",
             reservation_no: "",
-            total_amount: totalAmount,
+            total_amount: -Math.abs(totalAmount),
             status: "WITHDRAW",
             created_at: moment().utcOffset(0),
             created_by: userId
@@ -300,7 +300,7 @@ module.exports =
             transaction_date: transaction_date,
             transaction_type: "D",
             reservation_no: "",
-            total_amount: adminFee,
+            total_amount: -Math.abs(adminFee),
             status: "ADMIN_FEE",
             created_at: moment().utcOffset(0),
             created_by: userId
@@ -337,6 +337,7 @@ module.exports =
         throw (error)
       }
     },
+    
     getHistoriesGroupByDate: async (req) => {
       try {
       
@@ -376,6 +377,50 @@ module.exports =
                 return histories;
               }
               else{
+                console.log('get list history by group date');
+                console.log(JSON.stringify(results[0].d));
+
+                // var total = 0;
+                // results[0].d.map(val => {
+                //   // console.log('map results');
+                //   // console.log(val);
+                  
+                //   for (var i = 0; i < val[Object.keys(val)].length; i++) {
+                //     let filter = val[Object.keys(val)][i];
+
+                //     console.log('filter object by total_amount');
+                //     console.log(filter.total_amount);
+
+                //     total += filter.total_amount;
+                //   }
+                // });
+
+                // console.log('total_amount');
+                // console.log(total);
+
+                // var obj = results[0].d;
+                
+                // var total_amount = {
+                //   "total_history_amount": total
+                // };
+                
+                // newObj = obj.concat(total_amount);
+
+                // let newArray = [];
+                // results[0].d.map(d => {
+                //   for (var i = 0; i < Object.keys(d).length; i++) {
+
+                //     let revItem = d[Object.keys(d)[i]];
+                //     let mergeWithTotal = revItem.concat({total});
+                //     let combine = {
+                //         [Object.keys(d)[i]] : mergeWithTotal
+                //     }
+                //     console.log('reviiii');
+                //     console.log(combine);
+                //     newArray.push(combine);
+                //   }
+                // });
+
                 return results[0].d;
               }
           });

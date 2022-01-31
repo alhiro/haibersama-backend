@@ -919,21 +919,114 @@ module.exports =
         left join info_code ci on ci.code = rv.status_code
         left join info_code rt on rt.code = rv.reservation_type
         WHERE cat.description = a.category 
-        `+where+`
+        `+ where + `
           order by event_date desc
           ) x
         ) c ON true;`,
         {
-            raw: true,
-            type: sequelize.QueryTypes.SELECT
+          raw: true,
+          type: sequelize.QueryTypes.SELECT
         }
-    );
+      );
 
-    if(reservations.length > 0){
-      return (!reservations) ? { success: false, message: "Reservasi Tidak Ditemukan!", data: {} } : { success: true, message: "Reservasi Berhasil Ditemukan", data: reservations[0].d }
-    } else {      
-      return { success: false, message: "Reservasi Tidak Ditemukan, Ada Kesalahan Server!", data: err } 
-    }
+      if (reservations.length > 0) {
+        return (!reservations) ? { success: false, message: "Reservasi Tidak Ditemukan!", data: {} } : { success: true, message: "Reservasi Berhasil Ditemukan", data: reservations[0].d }
+      } else {
+        return { success: false, message: "Reservasi Tidak Ditemukan, Ada Kesalahan Server!", data: err }
+      }
+    },
+
+    findReservationsGroupByCategories: async (where, limitItem, page) => {   
+      var reservations = await sequelize.query(
+        `		select 
+        json_agg(
+          json_build_object(
+            category, items
+          )
+        ) d
+      FROM (select 
+             id category_id,
+       rr.description category
+            from category rr
+        )  a
+      LEFT JOIN LATERAL (
+        SELECT json_agg(x) AS items
+        FROM  (select 
+        rv.id, 
+        reservation_no, 
+        reservation_date, 
+        user_id, 
+        usr.name user_name,
+        partner_id, 
+        prt.name partner_name,
+        prt.picture partner_picture,
+        rv.category_id, 
+        cat.description category,
+        service_id, 
+        srv.description service,
+        rv.name,
+        rv.package_name,
+        event_date, 
+        event_time, 
+        event_address, 
+        total_price, 
+        total_discount, 
+        total_payment, 
+        total_down_payment, 
+        status_code, 
+        ci.description status,
+        duration, 
+        reservation_type,
+        rt.description reservation_type_desc
+        FROM public.reservation rv
+        inner join hai_user prt on prt.id = rv.partner_id
+        left join hai_user usr on usr.id = rv.user_id
+        inner join category cat on cat.id = rv.category_id
+        inner join service srv on srv.id = rv.service_id
+        left join info_code ci on ci.code = rv.status_code
+        left join info_code rt on rt.code = rv.reservation_type
+        WHERE cat.description = a.category 
+        `+ where + `
+          order by event_date desc
+          ) x
+        ) c ON true;`,
+        {
+          raw: true,
+          type: sequelize.QueryTypes.SELECT
+        }
+      );
+
+      const pageCount = Math.ceil(reservations.length / limitItem);
+      let pages = parseInt(page);
+      if (!pages) { pages }
+      if (pages > pageCount) {
+        pages = pageCount
+      }
+
+      if (reservations.length > 0) {
+        // let data = [{ "data 1": [{ id: 1, name: "John" }, { id: 2, name: "James" }, { id: 3, name: "James" }] }, { "data 2": [{ id: 1, name: "May" }, { id: 2, name: "Joe" }, { id: 3, name: "Din" }] },]
+        let limitList = reservations[0].d.map(v => {
+          let obj = {}
+          for (let [k, arr] of Object.entries(v))
+            obj[k] = arr != null ? arr.slice(pages * limitItem - limitItem, pages * limitItem) : null;
+
+          return obj
+        });
+
+        return (!reservations) ? { 
+          success: false, 
+          message: "Reservasi Tidak Ditemukan!", 
+          data: {},
+          page: pages,
+          pageCount: pageCount } : { 
+            success: true, 
+            message: "Reservasi Berhasil Ditemukan", 
+            data: limitList,
+            page: pages,
+            pageCount: pageCount }
+      } else {
+        return { success: false, message: "Reservasi Tidak Ditemukan, Ada Kesalahan Server!", data: err }
+      }
     },
     
     findReservationSummary: async (partnerId) => {
