@@ -142,4 +142,27 @@ module.exports =
           throw (error)
         }
       },
+
+      delete: async (data) => {
+        try {
+          const { partner_id, id } = data;
+  
+          return Event.destroy({
+            where: {
+              id: id,
+              partner_id: partner_id
+            },
+          })
+            .then(async (deleted) => {
+              return { success: true, message: "Event Berhasil Dihapus", data: [] }
+            })
+            .catch((err) => {
+              console.log(err);
+              return { success: false, message: "Event Gagal Dihapus", data: err }
+            });
+        } catch (error) {
+          console.log(error);
+          throw (error)
+        }
+      },
   }

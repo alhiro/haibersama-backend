@@ -780,7 +780,7 @@ module.exports =
           where rr.partner_id = ` + partnerId + `
           and extract(MONTH from rr.event_date) = ` + month + `
           and extract(YEAR from rr.event_date) = ` + year + `
-          and rr.transaction_status_code in ('ON_PROCESS')
+          and rr.transaction_status_code in ('CANCEL', 'NEW', 'ON_PROCESS', 'SUCCESS')
          )  a
          LEFT   JOIN LATERAL (
             SELECT json_agg(y) AS items
@@ -819,7 +819,7 @@ module.exports =
                  ) r_details on true
                 WHERE date(r.event_date) = date(a.event_date)
                 and r.partner_id = a.partner_id
-                and r.transaction_status_code in ('ON_PROCESS')
+                and r.transaction_status_code in ('CANCEL', 'NEW', 'ON_PROCESS', 'SUCCESS')
                 order by r.event_time desc
               ) y
             ) d ON true
@@ -851,7 +851,7 @@ module.exports =
           on r.category_id = ph.id
             WHERE date(r.event_date) = date(a.event_date)
             and r.partner_id = a.partner_id
-            and r.transaction_status_code in ('ON_PROCESS')
+            and r.transaction_status_code in ('CANCEL', 'NEW', 'ON_PROCESS', 'SUCCESS')
            ) x
          ) c ON true`;
           return sequelize.query(query,{ type : sequelize.QueryTypes.SELECT}).then(results => {

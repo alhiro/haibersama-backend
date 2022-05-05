@@ -81,3 +81,13 @@ exports.updateEvent = async function (req, res, next) {
     return res.status(500).send({ data: err });
   }
 };
+
+exports.deleteEvent = async function(req, res, next) {
+  try {
+    var result = await eventService.delete(req);
+    return res.status(200).send(result);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send({ data: err });
+  }
+};

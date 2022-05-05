@@ -131,4 +131,13 @@ eventRouter.post("/update", headerAuth.isPartnerAuthenticated, upload.single('ev
   }
 });
 
+eventRouter.delete("/delete", headerAuth.isPartnerAuthenticated, upload.single('events'), (req, res, next) => {
+  const partner_id = res.locals.auth.id;
+  const data = { 
+    partner_id: partner_id,
+    id: req.body.id
+  };
+  controller.deleteEvent(data, res);
+});
+
 module.exports = eventRouter;
