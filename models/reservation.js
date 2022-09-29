@@ -4,6 +4,7 @@ var Sequelize = require('sequelize')
 var ReservationContact = require('./reservationcontact')
 var ReservationService = require('./reservationservice')
 var ReservationStatusHistory = require('./reservationstatushistory')
+var partnerWalletHistory = require('./partnerwallethistory')
 
 const Reservation = dbSeq.define('reservation', {
   id: {
@@ -140,6 +141,7 @@ Reservation.hasMany(ReservationStatusHistory, {foreignKey: 'reservation_id', as:
 ReservationContact.belongsTo(Reservation);
 ReservationService.belongsTo(Reservation);
 ReservationStatusHistory.belongsTo(Reservation);
+partnerWalletHistory.belongsTo(Reservation);
 
 module.exports = Reservation
 

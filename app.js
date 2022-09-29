@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
-const app = express()
+const app = express();
 const config = require('./config/config');
 const authRouter = require('./routes/haiuser');
 const categoryRouter = require('./routes/category');
@@ -50,7 +50,6 @@ app.use(morgan('dev'));
 
 app.use(passport.initialize()); // Used to initialize passport
 app.use(passport.session()); // Used to persist login sessions
-
 // set static file
 app.use(express.static(path.join(__dirname, 'views')));
 

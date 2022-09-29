@@ -50,18 +50,19 @@ module.exports =
         const params = {
           user_id: userId,
           partner_id: package.partner_id,
-          event_date: eventDate,
-          event_time: eventTime,
-          event_address: eventAddress,
+          event_date: new Date(eventDate).toLocaleString(),
+          event_time: eventTime,   
+          // event_address: eventAddress,
           reservation_type: reservationType
         };
-
+        console.log('params')
+        console.log(params)
         const isDuplicate = await Reservation.findOne({ where: params });
         
         if(isDuplicate != null){
           return {
             success: false,
-            message: "Sudah Ada Order Dengan User, Partner, Tanggal Event, Jam Event Dan Alamat Event Yang Sama",
+            message: "Sudah Ada Reservasi Dengan Tanggal Acara Dan Jam Acara Yang Sama",
             data: {}
           };
         }
@@ -69,7 +70,7 @@ module.exports =
         //check available partner with event date, event time, partner id 
         const params2 = {
           partner_id: package.partner_id,
-          event_date: eventDate,
+          event_date: new Date(eventDate).toLocaleString(),
           event_time: eventTime,
           transaction_status_code: ["ON_PROCESS"]
         };
@@ -467,7 +468,9 @@ module.exports =
                 where: { setting_name: "ORDER_FEE" }
               });
               
-              var walletAmount = upReserv.total_price - (upReserv.total_price * (parseInt(feeSetting.setting_value) / 100));
+              var countTotal = upReserv.total_price - upReserv.total_discount;
+
+              var walletAmount = countTotal - (countTotal * (parseInt(feeSetting.setting_value) / 100));
               console.log(walletAmount);
 
               var objBalance = {
@@ -562,12 +565,15 @@ module.exports =
                 const feeSetting = await appSetting.findOne({
                   where: { setting_name: "ORDER_FEE" }
                 });
+
+                var countTotal = upReserv.total_price - upReserv.total_discount;
                 
-                var walletAmount = upReserv.total_price - (upReserv.total_price * (parseInt(0) / 100));
+                var walletAmount = countTotal - (countTotal * (parseInt(0) / 100));
                 console.log(walletAmount);
   
                 var objBalance = {
                   partner_id: upReserv.partner_id,
+                  event_date: upReserv.event_date,
                   reservation_no: upReserv.reservation_no,
                   reservation_type: upReserv.reservation_type,
                   transaction_type: "C",
@@ -706,6 +712,35 @@ module.exports =
       }
     },
 
+    delete: async (data) => {
+      try {
+        const { partner_id, id } = data;
+
+        return Reservation.destroy({
+          where: {
+            id: id,
+            partner_id: partner_id
+          },
+        })
+          .then(async (deleted) => {
+            console.log('deleted')
+            console.log(deleted)
+            if (deleted == 0) {
+              return { success: true, message: "Reservasi Ini Tidak Ditemukan", data: [] }
+            } else {
+              return { success: true, message: "Reservasi Berhasil Dihapus", data: [] }
+            }
+          })
+          .catch((err) => {
+            console.log(err);
+            return { success: false, message: "Reservasi Gagal Dihapus", data: err }
+          });
+      } catch (error) {
+        console.log(error);
+        throw (error)
+      }
+    },
+
     // getPartnerAgendaItems: async (param) => {
     //   try {
     //       const { partnerId, month, year } = param;
@@ -790,6 +825,7 @@ module.exports =
                ph.name package_name,
                r.name,
                r.reservation_no,
+               r.event_date,
                r.event_address,
                r.duration,   
                r.description,    
@@ -797,6 +833,7 @@ module.exports =
                r.total_payment,
                r.total_discount,
                r.total_down_payment,
+               r.status_code,
                r.transaction_status_code,
                50 height,
                r_details.det details

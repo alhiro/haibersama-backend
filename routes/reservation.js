@@ -137,6 +137,17 @@ reservationRouter.put("/update", headerAuth.isPartnerAuthenticated, (req, res, n
   reservationController.getReservationDetail(data, res);
 });
 
+reservationRouter.delete("/delete", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+  const partner_id = res.locals.auth.id;
+  const data = { 
+    partner_id: partner_id,
+    id: req.body.id
+  };
+  console.log('deleteee')
+  console.log(data)
+  reservationController.deleteReservation(data, res);
+});
+
 // reservationRouter.post("/agendaitems", headerAuth.isPartnerAuthenticated, (req, res, next) => {
 //   const id = res.locals.auth.id;
 //   const type = res.locals.auth.type;
@@ -197,28 +208,34 @@ reservationRouter.post("/getlistgroupbycategories", headerAuth.isUserAuthenticat
 reservationRouter.post("/getinvoicelist", headerAuth.isUserAuthenticated, (req, res, next) => {
   const id = res.locals.auth.id;
   const email = res.locals.auth.email;
+  const type = res.locals.auth.type;
 
   const data = { 
     eventFrom: req.body.eventFrom, 
     eventTo: req.body.eventTo,
     email: email,
-    userId: id
+    userId: id,
+    type: type
   };
   
-  reservationController.getSuccessReservationAll(data, res);
+  reservationController.getSuccessReservationDate(data, res);
 });
 
 reservationRouter.post("/getinvoicelists", headerAuth.isUserAuthenticated, (req, res, next) => {
   const id = res.locals.auth.id;
   const email = res.locals.auth.email;
+  const type = res.locals.auth.type;
 
   const data = { 
+    statusCode: req.body.statusCode, 
+    categoryId: req.body.categoryId,
     eventFrom: req.body.eventFrom, 
     eventTo: req.body.eventTo,
     page: req.body.page,
     limitItem: req.body.limitItem,
     email: email,
-    userId: id
+    userId: id,
+    type: type
   };
   
   reservationController.getSuccessReservations(data, res);

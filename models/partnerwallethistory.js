@@ -17,6 +17,10 @@ const partnerWalletHistory = dbSeq.define('partner_wallet_history', {
       key: 'id'
     }
   },
+  event_date: {
+    type: Sequelize.DATE,
+    allowNull: false
+  },
   transaction_no: {
     type: Sequelize.STRING(30),
     allowNull: false

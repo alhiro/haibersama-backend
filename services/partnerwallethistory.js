@@ -47,7 +47,7 @@ module.exports =
 
     findOrCreateWallet: async (params, data) => {
       try {
-        const { partner_id, reservation_no, reservation_type, transaction_type, total_amount, status } = data;
+        const { partner_id, event_date, reservation_no, reservation_type, transaction_type, total_amount, status } = data;
 
         if(!reservation_no){
           if(transaction_type == "C"){
@@ -110,6 +110,7 @@ module.exports =
 
         var objData = {
           partner_id: partner_id,
+          event_date: event_date,
           transaction_no: transaction_no,
           transaction_date: transaction_date,
           transaction_type: transaction_type,
@@ -370,6 +371,108 @@ module.exports =
               total_amount
               from partner_wallet_history r
               where date(r.transaction_date) = a.transaction_date
+            ) x 
+          ) c ON true`;
+          return sequelize.query(query,{ type : sequelize.QueryTypes.SELECT}).then(results => {
+              if(results === null){
+                return histories;
+              }
+              else{
+                console.log('get list history by group date');
+                console.log(JSON.stringify(results[0].d));
+
+                // var total = 0;
+                // results[0].d.map(val => {
+                //   // console.log('map results');
+                //   // console.log(val);
+                  
+                //   for (var i = 0; i < val[Object.keys(val)].length; i++) {
+                //     let filter = val[Object.keys(val)][i];
+
+                //     console.log('filter object by total_amount');
+                //     console.log(filter.total_amount);
+
+                //     total += filter.total_amount;
+                //   }
+                // });
+
+                // console.log('total_amount');
+                // console.log(total);
+
+                // var obj = results[0].d;
+                
+                // var total_amount = {
+                //   "total_history_amount": total
+                // };
+                
+                // newObj = obj.concat(total_amount);
+
+                // let newArray = [];
+                // results[0].d.map(d => {
+                //   for (var i = 0; i < Object.keys(d).length; i++) {
+
+                //     let revItem = d[Object.keys(d)[i]];
+                //     let mergeWithTotal = revItem.concat({total});
+                //     let combine = {
+                //         [Object.keys(d)[i]] : mergeWithTotal
+                //     }
+                //     console.log('reviiii');
+                //     console.log(combine);
+                //     newArray.push(combine);
+                //   }
+                // });
+
+                return results[0].d;
+              }
+          });
+
+      } catch (error) {
+        console.log(error);
+        throw error
+      }
+    },
+
+    getHistoriesGroupByEventDate: async (req) => {
+      try {
+      
+        const { userId, date_from, date_to } = req;
+        var histories = {};
+
+        var query = `
+        select 
+          json_agg(
+            json_build_object(
+              to_char(a.event_date, 'YYYY-MM-DD'), items
+            )
+          ) d
+        FROM (select 
+                distinct date(event_date) event_date, 
+                partner_id	  
+              from partner_wallet_history rr
+              where rr.partner_id = ` + userId + `
+              and date(rr.event_date) >= '` + date_from + `'
+              and date(rr.event_date) <= '` + date_to + `'
+          )  a
+        LEFT JOIN LATERAL (
+          SELECT json_agg(x) AS items
+          FROM  (select 
+              event_date,
+              transaction_date,
+              transaction_type,
+              reservation_no,
+              transaction_no,
+              status,
+              total_amount,
+              event_date_reservation,
+              client_name
+              from partner_wallet_history r
+              left join lateral (
+                SELECT event_date event_date_reservation,
+                name client_name
+                from reservation oyc
+                where oyc.reservation_no = r.reservation_no
+              ) sum4 on true
+              where date(r.event_date) = a.event_date
             ) x 
           ) c ON true`;
           return sequelize.query(query,{ type : sequelize.QueryTypes.SELECT}).then(results => {

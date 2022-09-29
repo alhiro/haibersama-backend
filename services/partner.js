@@ -113,6 +113,8 @@ module.exports =
                 part.title,
                 part.dob,
                 part.province,
+                part.phone_number,
+                part.whatsapp_number,
                 coalesce(rating, 0) rating,
                 coalesce(reviewcount, 0) reviewcount,
                 coalesce(follower, 0) follower,

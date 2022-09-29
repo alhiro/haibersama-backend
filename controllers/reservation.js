@@ -459,6 +459,16 @@ exports.getReservationDetail = async function(req, res, next) {
     }    
 };
 
+exports.deleteReservation = async function(req, res, next) {
+  try {
+    var result = await resv.delete(req);
+    return res.status(200).send(result);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send({ data: err });
+  }
+};
+
 exports.getReservation = async function(req, res, next) {
     try {
         const { body } = req;
@@ -605,17 +615,25 @@ exports.getReservationsGroupByCategories = async function(req, res, next) {
     }    
 };
 
-exports.getSuccessReservationAll = async function(req, res, next) {
+exports.getSuccessReservationDate = async function(req, res, next) {
   try {
-      const { eventFrom, eventTo,  userId,  } = req;
+      const { eventFrom, eventTo,  userId, type } = req;
       
       //const paging = { limit: pageSize, offset: (page - 1) *  pageSize};
 
       const params = { };
       var where = " WHERE 1=1 "
 
-      params.partner_id = userId;
-      where += " AND rv.partner_id = " + userId; 
+      // params.partner_id = userId;
+      // where += " AND rv.partner_id = " + userId; 
+
+      if (type == 2) {
+        params.partner_id = userId;
+        where += " AND rv.partner_id = " + userId;
+      } else {
+        params.user_id = userId;
+        where += " AND rv.user_id = " + userId;
+      }   
 
       // where += " AND rv.transaction_status_code = 'SUCCESS' ";
       
@@ -637,19 +655,25 @@ exports.getSuccessReservationAll = async function(req, res, next) {
     }    
 };
 
-
-
 exports.getSuccessReservations = async function(req, res, next) {
   try {
-      const { eventFrom, eventTo, limitItem, page, userId,  } = req;
+      const { statusCode, categoryId, eventFrom, eventTo, limitItem, page, userId, type } = req;
       
       //const paging = { limit: pageSize, offset: (page - 1) *  pageSize};
 
       const params = { };
       var where = " WHERE 1=1 "
 
-      params.partner_id = userId;
-      where += " AND rv.partner_id = " + userId; 
+      // params.partner_id = userId;
+      // where += " AND rv.partner_id = " + userId; 
+
+      if (type == 2) {
+        params.partner_id = userId;
+        where += " AND rv.partner_id = " + userId;
+      } else {
+        params.user_id = userId;
+        where += " AND rv.user_id = " + userId;
+      }    
 
       // where += " AND rv.transaction_status_code = 'SUCCESS' ";
       
@@ -659,6 +683,16 @@ exports.getSuccessReservations = async function(req, res, next) {
       
       if(eventTo != null){
         where += " AND date(rv.event_date) <= date('" + eventTo + "') ";
+      }
+
+      if(statusCode != ""){
+        params.status_code = statusCode;
+        where += " AND (rv.status_code = '" + statusCode + "' OR rv.transaction_status_code = '" + statusCode + "') ";
+      }
+      
+      if(categoryId > 0){
+        params.category_id = categoryId;
+        where += " AND rv.category_id = " + categoryId + " ";
       }
           
       let data = await resv.findSuccessReservations(where, limitItem, page);
