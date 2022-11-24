@@ -472,7 +472,7 @@ module.exports =
                 from reservation oyc
                 where oyc.reservation_no = r.reservation_no
               ) sum4 on true
-              where date(r.event_date) = a.event_date
+              where date(r.event_date) = a.event_date and r.partner_id = ` + userId + `
             ) x 
           ) c ON true`;
           return sequelize.query(query,{ type : sequelize.QueryTypes.SELECT}).then(results => {
