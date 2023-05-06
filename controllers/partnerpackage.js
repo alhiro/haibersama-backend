@@ -44,7 +44,7 @@ exports.addPackage = async function(req, res, next) {
     try {
       console.log("controller add package detail")
 
-      let update = await package.updatePackageDetail(req);
+      let update = await package.createPackageDetail(req);
       return res.status(200).send(update);
     } catch (err) {
       return res.status(500).send({ data: err });

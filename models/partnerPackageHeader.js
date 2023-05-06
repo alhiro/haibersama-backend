@@ -91,5 +91,8 @@ HaiUser.hasMany(PartnerPackageHeader, { foreignKey: "partner_id" });
 PartnerPackageHeader.belongsTo(Category, {foreignKey: 'category_id'})
 PartnerPackageHeader.belongsTo(Service, {foreignKey: 'service_id'});
 
+PartnerPackageHeader.hasMany(PartnerPackageDetail, {foreignKey: 'package_header_id'})
+PartnerPackageDetail.belongsTo(PartnerPackageHeader, {foreignKey: 'package_header_id'});
+
 module.exports = PartnerPackageHeader
 

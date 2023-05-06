@@ -686,3 +686,13 @@ exports.getProfile =  async function(req, res, next) {
       .send({ code: 500, success: false, message: "Error", data: { err } });
   }
 }
+
+exports.deleteUser = async function(req, res, next) {
+  try {
+    var result = await auth.delete(req);
+    return res.status(200).send(result);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send({ data: err });
+  }
+};

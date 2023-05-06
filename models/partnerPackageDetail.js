@@ -18,6 +18,15 @@ const PartnerPackageDetail = dbSeq.define('partner_package_detail', {
       key: 'id'
     }
   },
+  reservation_no: {
+    type: Sequelize.STRING(20),
+    allowNull: true,
+    unique: false,
+    references: {
+      model: 'reservation',
+      key: 'reservation_no'
+    }
+  },
   // di remark sementara karna d table gad fieldnya
   // category_id: {
   //   type: Sequelize.INTEGER,

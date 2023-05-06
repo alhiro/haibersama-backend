@@ -109,6 +109,24 @@ reservationRouter.post("/updatestatusmanual", headerAuth.isPartnerAuthenticated 
   reservationController.updateStatusManual(data, res);
 });
 
+reservationRouter.post("/updatestatusbookingmanual", headerAuth.isPartnerAuthenticated ,(req, res, next) => {
+  const id = res.locals.auth.id;
+  const type = res.locals.auth.type;
+  const email = res.locals.auth.email;
+
+  const data = { 
+    reservationNo: req.body.reservationNo, 
+    reservationType: "MANUAL_ORDER",
+    statusCode: req.body.statusCode, 
+    totalDp: req.body.totalDp, 
+    userId: id, 
+    type: type,
+    email: email
+  };
+  
+  reservationController.updateStatusBookingManual(data, res);
+});
+
 reservationRouter.put("/update", headerAuth.isPartnerAuthenticated, (req, res, next) => {
   const id = res.locals.auth.id;
 
@@ -280,11 +298,48 @@ reservationRouter.post("/sendemailtocustomer", headerAuth.isPartnerAuthenticated
     statusCode: req.body.statusCode,
     counter: 1,
     totalDiscount: req.body.totalDiscount,
+    totalPpn: req.body.totalPpn,
     email: email,
     userId: id
   };
   
   reservationController.sendEmailToCustomer(data, res);
+});
+
+reservationRouter.post("/sendemailtocustomermanual", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+  const id = res.locals.auth.id;
+  const email = res.locals.auth.email;
+  const type = res.locals.auth.type;
+
+  const data = { 
+    reservationNo: req.body.reservationNo,
+    statusCode: req.body.statusCode,
+    counter: 1,
+    totalDiscount: req.body.totalDiscount,
+    totalPpn: req.body.totalPpn,
+    email: email,
+    userId: id
+  };
+  
+  reservationController.sendEmailToCustomerManual(data, res);
+});
+
+reservationRouter.put("/updateTotalInvoice", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+  const id = res.locals.auth.id;
+  const email = res.locals.auth.email;
+  const type = res.locals.auth.type;
+
+  const data = { 
+    reservationNo: req.body.reservationNo,
+    reservationType: "MANUAL_ORDER",
+    totalDiscount: req.body.totalDiscount,
+    totalPpn: req.body.totalPpn,
+    totalDp: req.body.totalDp, 
+    email: email,
+    userId: id
+  };
+  
+  reservationController.updateTotalInvoice(data, res);
 });
 
 module.exports = reservationRouter;

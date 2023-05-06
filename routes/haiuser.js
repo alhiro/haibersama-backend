@@ -216,4 +216,15 @@ authRouter.get("/me", headerAuth.isUserAuthenticated , (req, res, next) => {
   authController.getProfile(email, res);
 });
 
+authRouter.delete("/delete", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+  const partner_id = res.locals.auth.id;
+  const data = { 
+    partner_id: partner_id,
+    id: req.body.id
+  };
+  console.log('delete user ')
+  console.log(data)
+  authController.deleteUser(data, res);
+});
+
 module.exports = authRouter;

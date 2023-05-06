@@ -667,7 +667,35 @@ module.exports = {
       transaction.rollback();
       throw error;
     }
-  }
+  },
+
+  delete: async (data) => {
+    try {
+      const { partner_id, id } = data;
+
+      return User.destroy({
+        where: {
+          id: partner_id,
+        },
+      })
+        .then(async (deleted) => {
+          console.log('deleted')
+          console.log(deleted)
+          if (deleted == 0) {
+            return { success: true, message: "Akun Ini Tidak Ditemukan", data: [] }
+          } else {
+            return { success: true, message: "Akun Berhasil Dihapus", data: [] }
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+          return { success: false, message: "Akun Gagal Dihapus", data: err }
+        });
+    } catch (error) {
+      console.log(error);
+      throw (error)
+    }
+  },
   /*
 
   insertProfile: async params => {

@@ -5,6 +5,7 @@ var ReservationContact = require('./reservationcontact')
 var ReservationService = require('./reservationservice')
 var ReservationStatusHistory = require('./reservationstatushistory')
 var partnerWalletHistory = require('./partnerwallethistory')
+var PartnerPackageDetail = require('./partnerPackageDetail')
 
 const Reservation = dbSeq.define('reservation', {
   id: {
@@ -90,6 +91,10 @@ const Reservation = dbSeq.define('reservation', {
     type: Sequelize.DECIMAL(18, 2),
     allowNull: true
   },
+  total_ppn: {
+    type: Sequelize.DECIMAL(18, 2),
+    allowNull: true
+  },
   status_code: {
     type: Sequelize.STRING(50),
     allowNull: true
@@ -142,6 +147,9 @@ ReservationContact.belongsTo(Reservation);
 ReservationService.belongsTo(Reservation);
 ReservationStatusHistory.belongsTo(Reservation);
 partnerWalletHistory.belongsTo(Reservation);
+
+Reservation.hasMany(PartnerPackageDetail, {foreignKey: 'reservation_no'})
+PartnerPackageDetail.belongsTo(Reservation, {foreignKey: 'reservation_no'});
 
 module.exports = Reservation
 

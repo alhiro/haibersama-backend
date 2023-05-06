@@ -444,6 +444,19 @@ exports.updateStatusManual = async function(req, res, next) {
     }    
 };
 
+exports.updateStatusBookingManual = async function(req, res, next) {
+  try {            
+      let data = await resv.updateStatusReservationManual(req);
+      
+      if (data.success) {
+        return res.status(200).send(data);
+      } 
+    } catch (err) {
+      console.log(err);
+      return res.status(500).send({ data: err });
+    }    
+};
+
 exports.getReservationDetail = async function(req, res, next) {
   try {            
       let data = await resv.updateReservation(req);
@@ -951,8 +964,8 @@ exports.sendEmailToCustomer = async function (req, res, next) {
     var counter = await emailcounter.findCounter(counterParams);
     if (counter.success) {
       var dataCounter = counter.data;
-      if (dataCounter.counter >= 5) {
-        return res.status(500).send({ code: 500, success: false, message: "Reach limit send email for reservation number " + reservationNo, data: {} });
+      if (dataCounter.counter >= 11) {
+        return res.status(500).send({ code: 500, success: false, message: "Kirim email untuk invoice " + reservationNo + " sudah dibatasi. Silahkan hubungi admin untuk bantuan.", data: {} });
       } else {
         dataCounter.counter = dataCounter.counter + 1;
 
@@ -1025,6 +1038,7 @@ exports.sendEmailToCustomer = async function (req, res, next) {
           var totalDiscount = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
           var totalPayment = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
           var totalDownPayment = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          var totalPpn = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
           var remainingPayment = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
 
           if(reservation.total_price){
@@ -1043,6 +1057,10 @@ exports.sendEmailToCustomer = async function (req, res, next) {
             totalPayment = reservation.total_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
           }
 
+          if(reservation.total_ppn){
+            totalPpn = reservation.total_ppn.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          }
+
           var detailUser = getData.data.reservation_contact;
 
           remainingPayment = parseInt(totalPayment.replace(/[$,]/g, '')) - (parseInt(totalDiscount.replace(/[$,]/g, '')) + parseInt(totalDownPayment.replace(/[$,]/g, '')));
@@ -1053,6 +1071,10 @@ exports.sendEmailToCustomer = async function (req, res, next) {
 
           if (totalDownPayment == 0 || totalDownPayment == null) {
             totalDownPayment = parseFloat(totalDownPayment).toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          }
+
+          if (totalPpn == 0 || totalPpn == null) {
+            totalPpn = parseFloat(totalPpn).toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
           }
           
           // get template invoice html
@@ -1084,6 +1106,7 @@ exports.sendEmailToCustomer = async function (req, res, next) {
               totalDiscount: totalDiscount,
               totalPayment: totalPayment,
               totalDownPayment: totalDownPayment,
+              totalPpn: totalPpn,
               remainingPayment: remainingPayment.toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
               description: reservation.description,
               bankName: detailBank == undefined ? "-" : detailBank.bank_name,
@@ -1185,6 +1208,7 @@ exports.sendEmailToCustomer = async function (req, res, next) {
                   totalDiscount: totalDiscount,
                   totalPayment: totalPayment,
                   totalDownPayment: totalDownPayment,
+                  totalPpn: totalPpn,
                   remainingPayment: remainingPayment.toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
                   description: reservation.description,
                   bankName: detailBank == undefined ? "-" : detailBank.bank_name,
@@ -1216,6 +1240,325 @@ exports.sendEmailToCustomer = async function (req, res, next) {
      }
 
     return res.status(200).send(data);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send({ data: err });
+  }
+};
+
+exports.sendEmailToCustomerManual = async function (req, res, next) {
+  try {
+    const { reservationNo, statusCode, userId } = req;
+
+    var counterParams = {
+      reservation_no: reservationNo,
+      status_code: statusCode
+    };
+    console.log(counterParams);
+
+    var counter = await emailcounter.findCounter(counterParams);
+    if (counter.success) {
+      var dataCounter = counter.data;
+      if (dataCounter.counter >= 11) {
+        return res.status(500).send({ code: 500, success: false, message: "Kirim email untuk invoice " + reservationNo + " sudah dibatasi. Silahkan hubungi admin untuk bantuan.", data: {} });
+      } else {
+        dataCounter.counter = dataCounter.counter + 1;
+
+        var updateCounter = await emailcounter.updateCounter(dataCounter);
+      }
+    } else {
+      var dataCounter = counter.data;
+
+      const params = {
+        reservation_no: req.reservationNo,
+        status_code: req.statusCode,
+        counter: req.counter
+      };
+
+      var createCounter = await emailcounter.findOrCreateCounter(params, dataCounter);
+    }
+
+    const params = { };
+     var where = " WHERE 1=1 "
+ 
+     params.partner_id = userId;
+     where += " AND rv.reservation_no = '" + reservationNo + "' "; 
+
+     var paramBank = { partner_id: userId };
+          
+     //  let reservation = await resv.findReservations(where);
+     let data = await resv.sendEmailReservationManual(req);
+     let bankPartner = await bank.getList(paramBank);  
+
+     if (data.success) {
+       var reservation = data.data;
+       var detailBank = bankPartner.data[0];
+       var termPartner = await term.getPackage(reservation.package_id);
+      
+        if (reservation.status_code == "ORDER_NEW" || reservation.status_code == "ORDER_PARTNER_CONFIRM" || reservation.status_code == "ORDER_DP_COMPLETED" || reservation.status_code == "ORDER_PAYMENT_COMPLETED")
+        {
+          let getData = await resv.findReservation(reservationNo);   
+          let dataUser = await partnerResv.getDetail(userId); 
+          
+          console.log(reservation);
+          //create user by email n password
+          //hash email
+    
+          var smtpTransport = nodemailer.createTransport({
+            host: "missandei.id.rapidplex.com",
+            port: 465,
+            secure: true,
+            auth: {
+              user: EMAIL_USERNAME,
+              pass: EMAIL_PASSWORD
+            }
+          });
+
+          //console.log('reservation[0] ' + JSON.stringify(getData.data.reservation_no));
+    
+          var statusPayment = "";
+          if (reservation.status_code == "ORDER_NEW" || reservation.status_code == "ORDER_PARTNER_CONFIRM") {
+            statusPayment = "Belum Dibayar";
+          } else if (reservation.status_code == "ORDER_DP_COMPLETED") {
+            statusPayment = "Sudah DP";
+          } else if (reservation.status_code == "ORDER_PAYMENT_COMPLETED") {
+            statusPayment = "Sudah Lunas";
+          }
+
+          var templateInvoice = fs.readFileSync('./views/invoice_manual.html', 'utf-8');
+          var compileInvoice = Hogan.compile(templateInvoice);
+
+          var zero = 0;
+          var totalPrice = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          var totalDiscount = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          var totalPayment = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          var totalDownPayment = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          var totalPpn = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          var remainingPayment = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+
+          if(reservation.total_price){
+            totalPrice = reservation.total_price.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          }
+
+          if(reservation.total_discount){
+            totalDiscount = reservation.total_discount.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          }          
+
+          if(reservation.total_down_payment){
+            totalDownPayment = reservation.total_down_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          }
+
+          if(reservation.total_payment){
+            totalPayment = reservation.total_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          }
+
+          if(reservation.total_ppn){
+            totalPpn = reservation.total_ppn.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          }
+
+          var detailUser = getData.data.reservation_contact;
+
+          remainingPayment = parseInt(totalPayment.replace(/[$,]/g, '')) - (parseInt(totalDiscount.replace(/[$,]/g, '')) + parseInt(totalDownPayment.replace(/[$,]/g, '')));
+
+          if (getData.data.status_code == "ORDER_PAYMENT_COMPLETED") {
+            remainingPayment = 0;
+          }
+
+          if (totalDownPayment == 0 || totalDownPayment == null) {
+            totalDownPayment = parseFloat(totalDownPayment).toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          }
+
+          if (totalPpn == 0 || totalPpn == null) {
+            totalPpn = parseFloat(totalPpn).toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          }
+          
+          // get template invoice html
+          async function getTemplateHtml() {
+            console.log("Loading template file in memory")
+            try {
+              const invoicePath = path.resolve("./views/invoice_manual_pdf.html");
+              return await readFile(invoicePath, 'utf8');
+            } catch (err) {
+              return Promise.reject("Could not load html template");
+            }
+          }
+
+          // generate template invoice html into pdf
+          async function generatePdf() {
+            let data = {
+              partnerName: dataUser.data.partnername,
+              partnerAddress: dataUser.data.address,
+              packageName: reservation.package_name,
+              eventDate: moment(reservation.event_date).utcOffset(0).format("DD-MM-YYYY"),
+              eventTime: reservation.event_time,
+              eventAddress: reservation.event_address,
+              codeInvoice: reservation.reservation_no,
+              invoiceDate: moment(reservation.reservation_date).utcOffset(0).format("DD-MM-YYYY"),
+              customerName: detailUser.name,
+              customerAddress: detailUser.address,
+              completePayment: statusPayment,
+              totalPrice: totalPrice,
+              totalDiscount: totalDiscount,
+              totalPayment: totalPayment,
+              totalDownPayment: totalDownPayment,
+              totalPpn: totalPpn,
+              remainingPayment: remainingPayment.toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+              description: reservation.description,
+              bankName: detailBank == undefined ? "-" : detailBank.bank_name,
+              accountBank: detailBank == undefined ? "-" : detailBank.account_name,
+              rekBank: detailBank == undefined ? "-" : detailBank.account_no,
+              terms: termPartner.data.terms
+            }
+
+            getTemplateHtml().then(async (res) => {
+              // Now we have the html code of our template in res object
+              // you can check by logging it on console
+              // console.log(res)
+              console.log("Compiling the template with handlebars")
+              const template = hb.compile(res, { strict: true });
+              // we have compile our code with handlebars
+              const result = template(data);
+              // We can use this to add dyamic data to our handlebas template at run time from database or API as per need. you can read the official doc to learn more https://handlebarsjs.com/
+              const html = result;
+
+              // puppeteer only support vps cloud
+              // we are using headless mode
+              // const browser = await puppeteer.launch({headless: true});
+              // const page = await browser.newPage()
+              // // We set the page content as the generated html by handlebars
+              // await page.setContent(html)
+              // // We use pdf function to generate the pdf in the same folder as this file.
+              // await page.pdf({ 
+              //   path: './views/invoice_manual.pdf', 
+              //   format: 'A4',
+              //   printBackground: true,
+              //   displayHeaderFooter: true,
+              //   footerTemplate: `<div style="font-size: 9px; padding-top: 8px; text-align: center; width: 100%;color: #444444">
+              //   <span>HaiO Invoice</span> - <span class="pageNumber"></span>/<span class="totalPages"></span>
+              //   </div>
+              //   `,
+              //   margin: {top: '50px', right: '10px', bottom: '50px', left: '10px', }
+              // })
+              // await browser.close();
+              // console.log("PDF Generated");
+
+              // render file html
+              // fs.writeFile("./views/test.html", result, function(err) {
+              //   if(err) {
+              //       return console.log(err);
+              //   }
+              // });
+
+              var datenow = moment(new Date).format("DD MMM YYYY H:mm:ss");
+
+              var options = { 
+                format: 'A4',
+                orientation: "portrait",
+                header: {
+                  height: "20mm",
+                  contents: {
+                    first: `<div style="font-size: 11px; padding-top: 8px; text-align: center; width: 100%;color: #444">
+                      <span style="color: #444;">${datenow}</span>
+                    </div>`
+                  }
+                },
+                footer: {
+                  height: "30mm",
+                  contents: {
+                    default: `<div style="font-size: 11px; padding-top: 8px; text-align: center; width: 100%;color: #444">
+                    <span>HaiO Invoice</span> - <span style="color: #444;">{{page}}</span>/<span>{{pages}}</span>
+                    </div>`, // fallback value
+                  }
+                },
+              };
+
+              pdf.create(html, options).toFile('./views/invoice_manual.pdf', function(err, res) {
+                console.log('This is a toFile:', res);
+              });              
+
+            }).catch(err => {
+              console.error(err);
+            });
+          }
+
+          generatePdf().then(async (res) => {
+            setTimeout(() => {
+              let mailoptions = {
+                from: '"Haio Invoice" notify@haiorganizer.com',
+                to: getData.data.reservation_contact.email,
+                subject: `Invoice #${reservation.reservation_no} dari partner ${dataUser.data.partnername}`,
+                html: compileInvoice.render({
+                  partnerName: dataUser.data.partnername,
+                  partnerAddress: dataUser.data.address,
+                  packageName: reservation.package_name,
+                  eventDate: moment(reservation.event_date).utcOffset(0).format("DD-MM-YYYY"),
+                  eventTime: reservation.event_time,
+                  eventAddress: reservation.event_address,
+                  codeInvoice: reservation.reservation_no,
+                  invoiceDate: moment(reservation.reservation_date).utcOffset(0).format("DD-MM-YYYY"),
+                  customerName: detailUser.name,
+                  customerAddress: detailUser.address,
+                  completePayment: statusPayment,
+                  totalPrice: totalPrice,
+                  totalDiscount: totalDiscount,
+                  totalPayment: totalPayment,
+                  totalDownPayment: totalDownPayment,
+                  totalPpn: totalPpn,
+                  remainingPayment: remainingPayment.toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+                  description: reservation.description,
+                  bankName: detailBank == undefined ? "-" : detailBank.bank_name,
+                  accountBank: detailBank == undefined ? "-" : detailBank.account_name,
+                  rekBank: detailBank == undefined ? "-" : detailBank.account_no,
+                  terms: termPartner.data.terms
+                  // services: services
+                }),
+                attachments: {
+                  filename: `${reservation.package_name}` + '_' + `${detailUser.name}` + '_' + `${moment(reservation.event_date).utcOffset(0).format("DD-MM-YYYY")}` + '.pdf',
+                  contentType: 'application/pdf',
+                  path: './views/invoice_manual.pdf'
+                }
+              };
+              console.log("mailoptions :" + JSON.stringify(mailoptions));
+
+              smtpTransport.sendMail(mailoptions, function (error, res) {
+                if (error) {
+                  console.log(error);
+                } else {
+                  console.log("Message sent: " + res.response);
+                }
+                //smtpTransport.close();
+              });
+
+            }, 5000);
+          })
+        }
+     }
+
+    return res.status(200).send(data);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send({ data: err });
+  }
+};
+
+exports.updateTotalInvoice = async function (req, res, next) {
+  try {
+    const { reservationNo, userId } = req;
+
+    const params = {};
+    var where = " WHERE 1=1 "
+
+    params.partner_id = userId;
+    where += " AND rv.reservation_no = '" + reservationNo + "' ";
+
+    //  let reservation = await resv.findReservations(where);
+    let data = await resv.updateTotalInvoiceManual(req);
+
+    if (data.success == true) {
+      return res.status(200).send(data);
+    } else {
+      return res.status(500).send(data);
+    }
   } catch (err) {
     console.log(err);
     return res.status(500).send({ data: err });

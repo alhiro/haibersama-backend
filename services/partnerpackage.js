@@ -210,6 +210,55 @@ module.exports = {
     }
   },
 
+  createPackageDetail: async req => {
+    try {
+      const Id = req.body.Id;
+      
+      var arrDetails = [];
+
+      for (let i = 0; i < req.body.PackageDetails.length; i++) {
+        var objDetail = {
+          package_header_id: req.body.PackageDetails[i].PackageHeaderId,
+          // subservice_id: req.body.PackageDetails[i].SubServiceId,
+          sub_service_title: req.body.PackageDetails[i].SubServiceTitle,
+          price: req.body.PackageDetails[i].Price,
+          description: req.body.PackageDetails[i].Description,
+          duration: req.body.PackageDetails[i].Duration,
+          additional_services: req.body.PackageDetails[i].Additional,
+          terms: req.body.PackageDetails[i].Terms,
+          reservation_no: req.body.PackageDetails[i].ReservationNo
+        };
+        // TotalPrice += parseInt(req.body.PackageDetails[i].Price);
+        // Duration += req.body.PackageDetails[i].Duration;
+        arrDetails.push(objDetail);
+      }
+      console.log(arrDetails, "arrDetails");
+      
+      for (let i = 0; i < arrDetails.length; i++) {
+        var objDetail = arrDetails[i];
+        var res = await PartnerPackageDetail.create(objDetail,{ 
+          where: { reservation_no: objDetail.reservation_no }
+        });
+      }
+
+      var packageDetail = await PartnerPackageDetail.findOne({
+        where: { package_header_id: arrDetails[0].package_header_id }, 
+        // include: [
+        //   {
+        //     model: PartnerPackageDetail
+        //   }
+        // ], 
+      });
+
+      return { success: true, message: "Paket Detail Jasa/Produk Berhasil Ditambah", data: packageDetail };
+
+    } catch (error) {
+      console.log(error);
+      //await transaction.rollback();
+      throw error;
+    }
+  },
+
   updatePackageDetail: async req => {
     try {
       const Id = req.body.Id;
@@ -223,23 +272,24 @@ module.exports = {
       const Additional = req.body.Additional;
       const Terms = req.body.Terms;
 
-      // var arrDetails = [];
+      var arrDetails = [];
 
-      // for (let i = 0; i < req.body.PackageDetails.length; i++) {
-      //   var objDetail = {
-      //     //id: req.body.PackageDetails[i].Id,
-      //     package_header_id: req.body.PackageDetails[i].PackageHeaderId,
-      //     sub_service_title: req.body.PackageDetails[i].SubServiceTitle,
-      //     price: req.body.PackageDetails[i].Price,
-      //     description: req.body.PackageDetails[i].Description,
-      //     duration: req.body.PackageDetails[i].Duration,
-      //     additional_services: req.body.PackageDetails[i].Additional,
-      //     terms: req.body.PackageDetails[i].Terms
-      //   };
-      //   TotalPrice += parseInt(req.body.PackageDetails[i].Price);
-      //   Duration += req.body.PackageDetails[i].Duration;
-      //   arrDetails.push(objDetail);
-      // }
+      for (let i = 0; i < req.body.PackageDetails.length; i++) {
+        var objDetail = {
+          id: req.body.PackageDetails[i].Id,
+          package_header_id: req.body.PackageDetails[i].PackageHeaderId,
+          // subservice_id: req.body.PackageDetails[i].SubServiceId,
+          sub_service_title: req.body.PackageDetails[i].SubServiceTitle,
+          price: req.body.PackageDetails[i].Price,
+          description: req.body.PackageDetails[i].Description,
+          duration: req.body.PackageDetails[i].Duration,
+          additional_services: req.body.PackageDetails[i].Additional,
+          terms: req.body.PackageDetails[i].Terms
+        };
+        // TotalPrice += parseInt(req.body.PackageDetails[i].Price);
+        // Duration += req.body.PackageDetails[i].Duration;
+        arrDetails.push(objDetail);
+      }
 
       var objPackage = {
         id: Id,
@@ -252,7 +302,7 @@ module.exports = {
         description: Description,
         additional_services: Additional,
         terms: Terms,
-        //partner_package_details: arrDetails
+        partner_package_details: arrDetails
       };
 
       console.log(objPackage, "objPackage");
@@ -268,15 +318,15 @@ module.exports = {
 
           var package = await PartnerPackageHeader.findOne({
             where: { id: Id }, 
-            // include: [
-            //   {
-            //     model: PartnerPackageDetail
-            //   }
-            // ], 
+            include: [
+              {
+                model: PartnerPackageDetail
+              }
+            ], 
           });
 
-          return { success: true, message: "Paket Detail Jasa/Produk Berhasil Dibuat", data: package } })
-      .catch((err) => { return { success: false, message: "Paket Detail Jasa/Produk Gagal Dibuat", data: err } });
+          return { success: true, message: "Paket Detail Jasa/Produk Berhasil Ditambah", data: package } })
+      .catch((err) => { return { success: false, message: "Paket Detail Jasa/Produk Gagal Ditambah", data: err } });
 
     } catch (error) {
       console.log(error);
@@ -326,13 +376,17 @@ module.exports = {
   },
 
   destroyPackageDetail: async (id) => {
+    var packageDetail = await PartnerPackageDetail.findOne({
+      where: { id: id }
+    });
+    
     return await PartnerPackageDetail.destroy({
       where: {
         id: id
       }
     })
-      .then((data) => {
-        return (!data) ? { success: false, message: "Paket Detail Jasa/Produk Tidak Ditemukan", data: {} } : { success: true, message: "Package Found", data: {} }
+      .then(async (data) => {
+        return (!data) ? { success: false, message: "Paket Detail Jasa/Produk Tidak Ditemukan", data: {} } : { success: true, message: "Package Found", data: packageDetail }
       })
       .catch((err) => {
         console.log(err);
