@@ -120,16 +120,16 @@ module.exports = {
       return await PartnerPackageHeader.findAll({
         where: params,
         order: [["created_at", "ASC"]],
-        // include: [
-        //   {
-        //     model: PartnerPackageDetail,
-        //     // include: [
-        //     //   {
-        //     //     model: SubService
-        //     //   }
-        //     // ]
-        //   }
-        // ]
+        include: [
+          {
+            model: PartnerPackageDetail,
+            // include: [
+            //   {
+            //     model: SubService
+            //   }
+            // ]
+          }
+        ]
       });
     } catch (error) {
       throw error;
@@ -340,16 +340,16 @@ module.exports = {
         where: {
             id: id
         }, 
-        // include: [
-        //   {
-        //     model: PartnerPackageDetail,
-        //     // include: [
-        //     //   {
-        //     //     model: SubService
-        //     //   }
-        //     // ]
-        //   }
-        // ], 
+        include: [
+          {
+            model: PartnerPackageDetail,
+            // include: [
+            //   {
+            //     model: SubService
+            //   }
+            // ]
+          }
+        ], 
     })
     .then((data) => {
       return (!data) ? { success: false, message: "Paket Jasa/Produk Belum Ada!", data: {} } : { success: true, message: "Package Found", data: data }
