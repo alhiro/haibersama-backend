@@ -1284,22 +1284,23 @@ exports.sendEmailToCustomerManual = async function (req, res, next) {
      params.partner_id = userId;
      where += " AND rv.reservation_no = '" + reservationNo + "' "; 
 
-     var paramBank = { partner_id: userId };
+     var paramPartner = { partner_id: userId };
           
      //  let reservation = await resv.findReservations(where);
      let data = await resv.sendEmailReservationManual(req);
-     let bankPartner = await bank.getList(paramBank);  
+     let bankPartner = await bank.getList(paramPartner);  
 
      if (data.success) {
        var reservation = data.data;
        var detailBank = bankPartner.data[0];
        var termPartner = await term.getPackage(reservation.package_id);
-      
-        if (reservation.status_code == "ORDER_NEW" || reservation.status_code == "ORDER_PARTNER_CONFIRM" || reservation.status_code == "ORDER_DP_COMPLETED" || reservation.status_code == "ORDER_PAYMENT_COMPLETED")
+
+        if (reservation.status_code == "ORDER_NEW" || reservation.status_code == "ORDER_PARTNER_CONFIRM" || reservation.status_code == "ORDER_DP_COMPLETED" || reservation.status_code == "ORDER_PAYMENT_COMPLETED" || reservation.status_code == "ORDER_COMPLETED")
         {
           let getData = await resv.findReservation(reservationNo);   
           let dataUser = await partnerResv.getDetail(userId); 
-          
+          let packages = await term.getList(paramPartner);
+      
           console.log(reservation);
           //create user by email n password
           //hash email
@@ -1323,54 +1324,58 @@ exports.sendEmailToCustomerManual = async function (req, res, next) {
             statusPayment = "Sudah DP";
           } else if (reservation.status_code == "ORDER_PAYMENT_COMPLETED") {
             statusPayment = "Sudah Lunas";
+          } else if (reservation.status_code == "ORDER_COMPLETED") {
+            statusPayment = "Sudah Selesai";
           }
 
           var templateInvoice = fs.readFileSync('./views/invoice_manual.html', 'utf-8');
           var compileInvoice = Hogan.compile(templateInvoice);
 
           var zero = 0;
-          var totalPrice = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
-          var totalDiscount = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
-          var totalPayment = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
-          var totalDownPayment = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
-          var totalPpn = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
-          var remainingPayment = zero.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          var totalPrice = zero;
+          var totalDiscount = zero;
+          var totalPayment = zero;
+          var totalDownPayment = zero;
+          var totalPpn = zero;
+          var remainingPayment = zero;
 
           if(reservation.total_price){
-            totalPrice = reservation.total_price.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+            totalPrice = parseInt(reservation.total_price);
           }
 
           if(reservation.total_discount){
-            totalDiscount = reservation.total_discount.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
-          }          
+            totalDiscount = parseInt(reservation.total_discount);
+          }       
+          
+          // if(reservation.total_payment){
+          //   totalPayment = reservation.total_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          // }
 
           if(reservation.total_down_payment){
-            totalDownPayment = reservation.total_down_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
-          }
-
-          if(reservation.total_payment){
-            totalPayment = reservation.total_payment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+            totalDownPayment = parseInt(reservation.total_down_payment);
           }
 
           if(reservation.total_ppn){
-            totalPpn = reservation.total_ppn.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+            totalPpn = parseInt(reservation.total_ppn);
           }
 
           var detailUser = getData.data.reservation_contact;
 
-          remainingPayment = parseInt(totalPayment.replace(/[$,]/g, '')) - (parseInt(totalDiscount.replace(/[$,]/g, '')) + parseInt(totalDownPayment.replace(/[$,]/g, '')));
+          // if (totalDiscount == 0 || totalDiscount == null) {
+          //   totalDiscount = parseFloat(totalDiscount).toFixed(0).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          // }
 
-          if (getData.data.status_code == "ORDER_PAYMENT_COMPLETED") {
-            remainingPayment = 0;
-          }
+          // if (totalDownPayment == 0 || totalDownPayment == null) {
+          //   totalDownPayment = parseFloat(totalDownPayment).toFixed(0).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          // }
 
-          if (totalDownPayment == 0 || totalDownPayment == null) {
-            totalDownPayment = parseFloat(totalDownPayment).toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
-          }
+          // if (totalPpn == 0 || totalPpn == null) {
+          //   totalPpn = parseFloat(totalPpn).toFixed(0).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          // }
 
-          if (totalPpn == 0 || totalPpn == null) {
-            totalPpn = parseFloat(totalPpn).toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
-          }
+          // if (totalPayment == 0 || totalPayment == null) {
+          //   totalPayment = parseFloat(totalPayment).toFixed(0).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+          // }
           
           // get template invoice html
           async function getTemplateHtml() {
@@ -1383,12 +1388,71 @@ exports.sendEmailToCustomerManual = async function (req, res, next) {
             }
           }
 
+          let arrObjPackages = JSON.parse(JSON.stringify(packages));
+          // console.log("arrObjPackages");
+          // console.log(arrObjPackages[0]);
+          let arrPackagesMulti = arrObjPackages.map(data => data.partner_package_details.filter(val => val.reservation_no == reservation.reservation_no));
+          console.log("arrPackagesMulti");
+          console.log(arrPackagesMulti[0]);
+
+          var allPricePackage = arrPackagesMulti[0].map((e) => e.price);
+          console.log("allPricePackage");
+          console.log(allPricePackage);
+          var sumPricePackage = allPricePackage.reduce((a, b) => a + parseInt(b), 0);
+          var getSumPackage = sumPricePackage ? (sumPricePackage + totalPrice) : totalPrice;
+          console.log("getSumPackage");
+          console.log(getSumPackage);
+
+          var subTotal = getSumPackage - totalDiscount;
+          var sumPayment = subTotal + totalPpn;
+
+          console.log("subTotal");
+          console.log(subTotal);
+          console.log("totalPpn");
+          console.log(totalPpn);
+
+          var remainingPayment = sumPayment - totalDownPayment;
+          console.log("remainingPayment");
+          console.log(remainingPayment);
+
+          if (getData.data.status_code == "ORDER_PAYMENT_COMPLETED" || getData.data.status_code == "ORDER_COMPLETED") {
+            remainingPayment = 0;
+            totalPayment = totalDownPayment + remainingPayment;
+          } else {
+            totalPayment = totalDownPayment
+          }
+          console.log("totalPayment");
+          console.log(totalPayment);
+
+          let formatCurrencyPrice = [];
+          arrPackagesMulti[0].map(data => {
+            var format = {
+              id: data.id,
+              package_header_id: data.package_header_id,
+              reservation_no: data.reservation_no,
+              sub_service_title: data.sub_service_title,
+              price: data.price.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+              description: data.description,
+              duration: data.duration,
+              additional_services: data.additional_services,
+              terms: data.term,
+              created_by: data.created_by,
+              updated_by: data.updated_by,
+              createdAt: data.createdAt,
+              updatedAt: data.updatedAt
+            };
+            formatCurrencyPrice.push(format);
+          });
+          // console.log("formatCurrencyPrice");
+          // console.log(formatCurrencyPrice);
+
           // generate template invoice html into pdf
           async function generatePdf() {
             let data = {
               partnerName: dataUser.data.partnername,
               partnerAddress: dataUser.data.address,
               packageName: reservation.package_name,
+              packagesMulti: formatCurrencyPrice,
               eventDate: moment(reservation.event_date).utcOffset(0).format("DD-MM-YYYY"),
               eventTime: reservation.event_time,
               eventAddress: reservation.event_address,
@@ -1397,12 +1461,15 @@ exports.sendEmailToCustomerManual = async function (req, res, next) {
               customerName: detailUser.name,
               customerAddress: detailUser.address,
               completePayment: statusPayment,
-              totalPrice: totalPrice,
-              totalDiscount: totalDiscount,
-              totalPayment: totalPayment,
-              totalDownPayment: totalDownPayment,
-              totalPpn: totalPpn,
-              remainingPayment: remainingPayment.toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+              sumPackage: getSumPackage.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+              subTotal: subTotal.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+              sumPayment: sumPayment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+              totalPrice: totalPrice.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+              totalDiscount: totalDiscount.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+              totalPayment: totalPayment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+              totalDownPayment: totalDownPayment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+              totalPpn: totalPpn.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+              remainingPayment: remainingPayment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
               description: reservation.description,
               bankName: detailBank == undefined ? "-" : detailBank.bank_name,
               accountBank: detailBank == undefined ? "-" : detailBank.account_name,
@@ -1491,6 +1558,7 @@ exports.sendEmailToCustomerManual = async function (req, res, next) {
                   partnerName: dataUser.data.partnername,
                   partnerAddress: dataUser.data.address,
                   packageName: reservation.package_name,
+                  packagesMulti: formatCurrencyPrice,
                   eventDate: moment(reservation.event_date).utcOffset(0).format("DD-MM-YYYY"),
                   eventTime: reservation.event_time,
                   eventAddress: reservation.event_address,
@@ -1499,12 +1567,15 @@ exports.sendEmailToCustomerManual = async function (req, res, next) {
                   customerName: detailUser.name,
                   customerAddress: detailUser.address,
                   completePayment: statusPayment,
-                  totalPrice: totalPrice,
-                  totalDiscount: totalDiscount,
-                  totalPayment: totalPayment,
-                  totalDownPayment: totalDownPayment,
-                  totalPpn: totalPpn,
-                  remainingPayment: remainingPayment.toFixed(2).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+                  sumPackage: getSumPackage.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+                  subTotal: subTotal.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+                  sumPayment: sumPayment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+                  totalPrice: totalPrice.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+                  totalDiscount: totalDiscount.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+                  totalPayment: totalPayment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+                  totalDownPayment: totalDownPayment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+                  totalPpn: totalPpn.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
+                  remainingPayment: remainingPayment.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"),
                   description: reservation.description,
                   bankName: detailBank == undefined ? "-" : detailBank.bank_name,
                   accountBank: detailBank == undefined ? "-" : detailBank.account_name,
