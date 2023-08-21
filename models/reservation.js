@@ -103,6 +103,10 @@ const Reservation = dbSeq.define('reservation', {
     type: Sequelize.STRING(50),
     allowNull: true
   },
+  confirmation_payment: {
+    type: Sequelize.STRING(500),
+    allowNull: true
+  },
   created_at: {
     type: Sequelize.DATE,
     allowNull: true

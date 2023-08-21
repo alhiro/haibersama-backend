@@ -3,6 +3,41 @@ var reservationRouter = express.Router();
 var reservationController = require("../controllers/reservation");
 var headerAuth  =  require('../authMiddleware');
 
+const path = require('path');
+const multer = require('multer');
+// upload file path
+const FILE_PATH = 'imagehai';
+const ENV = process.env;
+const now = Date.now();
+
+var storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+      cb(null, './public/' + FILE_PATH)
+  },
+  filename: (req, file, cb) => {
+      cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname))
+  }
+});
+
+//will be using this for uplading
+const upload = multer({
+  storage: storage, 
+  limits: {
+    fileSize: 1024 * 2048, // 2 MB (max file size) & allow only 1 file per request
+    files: 1,
+  },
+  fileFilter: function (req, file, cb) {
+    let ext = path.extname(file.originalname);
+    console.log('ext file ' + ext);
+
+    if (ext !== '.png' && ext !== '.jpg' && ext !== '.jpeg' && ext !== '.pdf') {
+      req.fileValidationError = "Forbidden extension";
+      return cb(null, false, req.fileValidationError);
+    }
+    cb(null, true);
+  }
+});
+
 reservationRouter.post("/getdetail", headerAuth.isUserAuthenticated, (req, res, next) => {
   reservationController.getReservation(req, res);
 });
@@ -19,6 +54,78 @@ reservationRouter.post("/getlist", headerAuth.isUserAuthenticated, (req, res, ne
   };
   
   reservationController.getReservations(data, res);
+});
+
+reservationRouter.post("/getlistscart", headerAuth.isUserAuthenticated, (req, res, next) => {
+  const id = res.locals.auth.id;
+  const email = res.locals.auth.email;
+  const type = res.locals.auth.type;
+
+  const data = { 
+    categoryId: req.body.categoryId,
+    page: req.body.page,
+    limitItem: req.body.limitItem,
+    email: email,
+    userId: id,
+    type: type
+  };
+  
+  reservationController.getSuccessReservationsCart(data, res);
+});
+
+reservationRouter.post("/getliststransaction", headerAuth.isUserAuthenticated, (req, res, next) => {
+  const id = res.locals.auth.id;
+  const email = res.locals.auth.email;
+  const type = res.locals.auth.type;
+
+  const data = { 
+    categoryId: req.body.categoryId,
+    page: req.body.page,
+    limitItem: req.body.limitItem,
+    email: email,
+    userId: id,
+    type: type
+  };
+  
+  reservationController.getSuccessReservationsTransaction(data, res);
+});
+
+reservationRouter.post("/getalllists", headerAuth.isUserAuthenticated, (req, res, next) => {
+  const id = res.locals.auth.id;
+  const email = res.locals.auth.email;
+  const type = res.locals.auth.type;
+
+  const data = { 
+    statusCode: req.body.statusCode,
+    categoryId: req.body.categoryId,
+    page: req.body.page,
+    limitItem: req.body.limitItem,
+    email: email,
+    userId: id,
+    type: type
+  };
+  
+  reservationController.getSuccessReservationsAllList(data, res);
+});
+
+reservationRouter.post("/getlists", headerAuth.isUserAuthenticated, (req, res, next) => {
+  const id = res.locals.auth.id;
+  const email = res.locals.auth.email;
+  const type = res.locals.auth.type;
+
+  const data = { 
+    statusCode: req.body.statusCode,
+    categoryId: req.body.categoryId,
+    eventFrom: req.body.eventFrom, 
+    eventTo: req.body.eventTo,
+    page: req.body.page,
+    limitItem: req.body.limitItem,
+    email: email,
+    userId: id,
+    type: type
+  };
+  
+  reservationController.getSuccessReservationsList(data, res);
 });
 
 reservationRouter.post("/create", headerAuth.isUserAuthenticated , (req, res, next) => {  
@@ -125,6 +232,26 @@ reservationRouter.post("/updatestatusbookingmanual", headerAuth.isPartnerAuthent
   };
   
   reservationController.updateStatusBookingManual(data, res);
+});
+
+reservationRouter.put("/updatestatusbooking", headerAuth.isUserAuthenticated ,(req, res, next) => {
+  const id = res.locals.auth.id;
+  const type = res.locals.auth.type;
+  const email = res.locals.auth.email;
+
+  const data = { 
+    reservationNo: req.body.reservationNo, 
+    reservationType: "USER_ORDER",
+    statusCode: req.body.statusCode, 
+    totalDp: req.body.totalDp, 
+    totalDiscount: req.body.totalDiscount,
+    totalPpn: req.body.totalPpn,
+    userId: id, 
+    type: type,
+    email: email
+  };
+  
+  reservationController.updateStatusBooking(data, res);
 });
 
 reservationRouter.put("/update", headerAuth.isPartnerAuthenticated, (req, res, next) => {
@@ -340,6 +467,36 @@ reservationRouter.put("/updateTotalInvoice", headerAuth.isPartnerAuthenticated, 
   };
   
   reservationController.updateTotalInvoice(data, res);
+});
+
+reservationRouter.put("/confirmationPayment", headerAuth.isUserAuthenticated, upload.single('confirmationImage'), (req, res, next) => {
+  const id = res.locals.auth.id;
+  const email = res.locals.auth.email;
+  const type = res.locals.auth.type;
+
+  const confirmationImage = req.file;
+  // make sure file is available
+  if (!confirmationImage) {
+    const data = {
+      email: email,
+      userId: id,
+      reservationType: "USER_ORDER",
+      reservationNo: req.body.reservationNo,
+      confirmationPayment: req.body.confirmationImage,
+    };
+
+    reservationController.updateConfirmationPayment(data, res);
+  } else {
+    const data = {
+      email: email,
+      userId: id,
+      reservationType: "USER_ORDER", 
+      reservationNo: req.body.reservationNo,
+      confirmationPayment: ENV.API_URL + '/ftp/' + FILE_PATH + '/' + confirmationImage.filename,
+    };
+
+    reservationController.updateConfirmationPayment(data, res);
+  }
 });
 
 module.exports = reservationRouter;

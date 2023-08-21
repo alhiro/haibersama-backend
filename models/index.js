@@ -188,6 +188,12 @@
 //         console.log(`Table payment updated!`)
 //     })
 
+// const paymentConfirmation = require('./payment_confirmation');
+// paymentConfirmation.sequelize.sync({ alter: true })
+//     .then(() => {
+//         console.log(`Table payment confirmation updated!`)
+//     })
+
 // const paymentChannel = require('./paymentchannel');
 // paymentChannel.sequelize.sync({ alter: true })
 //     .then(() => {

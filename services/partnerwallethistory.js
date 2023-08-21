@@ -49,14 +49,14 @@ module.exports =
       try {
         const { partner_id, event_date, reservation_no, reservation_type, transaction_type, total_amount, status } = data;
 
-        if(!reservation_no){
-          if(transaction_type == "C"){
+        if (!reservation_no){
+          if (transaction_type == "C") {
             throw ({ success: false, message: "Silahkan Masukan Nomor Reservasi", data: {} });
-          }else{
+          } else {
             reservation_no = "";
           }
-        }else{
-          if(transaction_type == "C"){                    
+        } else {
+          if (transaction_type == "C") {                    
             //check amount transaction is exist
             const params2 = {
               partner_id: partner_id,
@@ -66,7 +66,7 @@ module.exports =
 
             const isExists = await wallethistory.findOne({ where: params2 });
             
-            if(isExists){
+            if (isExists) {
               return {
                 success: false,
                 message: "Riwayat Wallet Partner Sudah Ada",
@@ -76,7 +76,7 @@ module.exports =
           }
         }
 
-        if(total_amount == 0){
+        if (total_amount == 0) {
           console.log("error amount");
           throw ({ success: false, message: "Silahkan Masukan Jumlah Total", data: {} });
         }
@@ -131,38 +131,127 @@ module.exports =
           partner_id: partner_id
         };
 
-        const balance = await walletbalance.findOne({ where: paramBalance });
-        console.log(balance);
-        if(balance){
-          console.log("ini");
-          let newAmount = balance.current_balance;
-          if(transaction_type == "C"){    
-            newAmount = balance.current_balance + total_amount;
-          } else {
-            newAmount = balance.current_balance - total_amount;
-          }
-          
-          var paramUpdate = {
-            current_balance: newAmount,
-            updated_at: moment().utcOffset(0),
-            updated_by: partner_id
-          };
-          
-          walletbalance.update(paramUpdate, {where: {id: balance.id}} )
-        } else {      
-          console.log("itu");    
-          var paramInsert = {
-            current_balance: total_amount,
-            partner_id: partner_id,
-            created_at: moment().utcOffset(0),
-            created_by: partner_id
-          };          
+        if (reservation_type == 'MANUAL_ORDER') {
+          const balance = await walletbalance.findOne({ where: paramBalance });
+          console.log('balance value manual order');
+          console.log(balance);
+          if (balance) {
+            console.log("ini update balance");
+            let newAmount = balance.current_balance;
+            if (transaction_type == "C") {    
+              newAmount = balance.current_balance + total_amount;
+            } else {
+              newAmount = balance.current_balance - total_amount;
+            }
+            
+            var paramUpdate = {
+              current_balance: newAmount,
+              updated_at: moment().utcOffset(0),
+              updated_by: partner_id
+            };
 
-          const insertBalance = await walletbalance.findOrCreate({
-            where: paramBalance,
-            defaults: paramInsert
-          });
+            console.log('paramUpdate balance');
+            console.log(paramUpdate);
+            
+            walletbalance.update(paramUpdate, {where: {id: balance.id}} )
+          } else {      
+            console.log("create balance");    
+            var paramInsert = {
+              current_balance: total_amount,
+              partner_id: partner_id,
+              created_at: moment().utcOffset(0),
+              created_by: partner_id
+            };          
+
+            console.log('paramUpdate create');
+            console.log(paramInsert);
+
+            const insertBalance = await walletbalance.findOrCreate({
+              where: paramBalance,
+              defaults: paramInsert
+            });
+          }
+        } else {
+          const balance = await walletbalance.findOne({ where: paramBalance });
+          console.log('balance value user order');
+          console.log(balance);
+          if (balance) {
+            console.log("ini update balance");
+            let newAmount = balance.current_balance_user;
+            if (transaction_type == "C") {    
+              newAmount = balance.current_balance_user + total_amount;
+            } else {
+              newAmount = balance.current_balance_user - total_amount;
+            }
+            
+            var paramUpdate = {
+              current_balance_user: newAmount,
+              updated_at: moment().utcOffset(0),
+              updated_by: partner_id
+            };
+
+            console.log('paramUpdate balance');
+            console.log(paramUpdate);
+            
+            walletbalance.update(paramUpdate, {where: {id: balance.id}} )
+          } else {      
+            console.log("create balance");    
+            var paramInsert = {
+              current_balance_user: total_amount,
+              partner_id: partner_id,
+              created_at: moment().utcOffset(0),
+              created_by: partner_id
+            };          
+
+            console.log('paramUpdate create');
+            console.log(paramInsert);
+
+            const insertBalance = await walletbalance.findOrCreate({
+              where: paramBalance,
+              defaults: paramInsert
+            });
+          }
         }
+
+        // const balance = await walletbalance.findOne({ where: paramBalance });
+        // console.log('balance value');
+        // console.log(balance);
+        // if (balance) {
+        //   console.log("ini update balance");
+        //   let newAmount = balance.current_balance;
+        //   if (transaction_type == "C") {    
+        //     newAmount = balance.current_balance + total_amount;
+        //   } else {
+        //     newAmount = balance.current_balance - total_amount;
+        //   }
+          
+        //   var paramUpdate = {
+        //     current_balance: newAmount,
+        //     updated_at: moment().utcOffset(0),
+        //     updated_by: partner_id
+        //   };
+
+        //   console.log('paramUpdate balance');
+        //   console.log(paramUpdate);
+          
+        //   walletbalance.update(paramUpdate, {where: {id: balance.id}} )
+        // } else {      
+        //   console.log("create balance");    
+        //   var paramInsert = {
+        //     current_balance: total_amount,
+        //     partner_id: partner_id,
+        //     created_at: moment().utcOffset(0),
+        //     created_by: partner_id
+        //   };          
+
+        //   console.log('paramUpdate create');
+        //   console.log(paramInsert);
+
+        //   const insertBalance = await walletbalance.findOrCreate({
+        //     where: paramBalance,
+        //     defaults: paramInsert
+        //   });
+        // }
         
         return { success: true, message: "Riwayat Wallet Partner Berhasil Dibuat", data: Wallet[0].dataValues }
       } catch (error) {
@@ -192,7 +281,6 @@ module.exports =
       }
     },
 
-    
     getBalance: async (params) => {        
       return await walletbalance.findOne({ 
         where: params
@@ -208,7 +296,7 @@ module.exports =
           console.log(err);
           return { success: false, message: "Saldo Wallet Partner Wallet Belum Ada, Ada Kesalahan Server!", data: err } 
         });
-      },
+    },
       
     withdraw: async (data) => {
       try {
@@ -221,7 +309,7 @@ module.exports =
         const balance = await walletbalance.findOne({ where: paramBalance });
         console.log(balance);
         if(balance){
-          if(balance.current_balance < totalAmount)
+          if(balance.current_balance_user < totalAmount)
           {
             return { success: true, message: "Saldo Kurang Dari " + totalAmount, data: {} } 
           }
@@ -313,10 +401,10 @@ module.exports =
           
           const historyFee = await wallethistory.findOrCreate({ where: paramHistoryFee, defaults: objDataFee })
     
-          let newAmount = balance.current_balance - totalAmount - adminFee;
+          let newAmount = balance.current_balance_user - totalAmount - adminFee;
                     
           var paramUpdate = {
-            current_balance: newAmount,
+            current_balance_user: newAmount,
             updated_at: moment().utcOffset(0),
             updated_by: userId
           };

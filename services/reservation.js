@@ -280,6 +280,7 @@ module.exports =
             reservation_date, 
             user_id, 
             usr.name user_name,
+            usr.picture user_picture,
             partner_id, 
             prt.name partner_name,
             prt.picture partner_picture,
@@ -351,6 +352,7 @@ module.exports =
             reservation_date, 
             user_id, 
             usr.name user_name,
+            usr.picture user_picture,
             partner_id, 
             prt.name partner_name,
             prt.picture partner_picture,
@@ -478,8 +480,13 @@ module.exports =
                 where: { setting_name: "ORDER_FEE" }
               });
               
-              var countTotal = upReserv.total_price - upReserv.total_discount;
-
+              const ppn = upReserv.total_ppn == null ? parseInt(0) : parseInt(upReserv.total_ppn)
+              console.log("upReserv.total_price " + upReserv.total_price);
+              console.log("upReserv.total_discount " + upReserv.total_discount);
+              console.log("upReserv.total_ppn " + ppn);
+              var countTotal = (upReserv.total_price - upReserv.total_discount) + ppn;
+              console.log("countTotal " + countTotal);
+                
               var walletAmount = countTotal - (countTotal * (parseInt(feeSetting.setting_value) / 100));
               console.log(walletAmount);
 
@@ -571,16 +578,26 @@ module.exports =
             console.log("ini ke wallet");
             console.log("ini reservation_type " + upReserv.reservation_type);
 
+            // if(statusCode == "ORDER_DP_COMPLETED" || "ORDER_PAYMENT_COMPLETED")
+            // {
+            //   // create payment function into db payment
+              
+            // }
+
             if(statusCode == "ORDER_COMPLETED")
             {
-              if (reservationType == "MANUAL_ORDER") {
-                console.log("tambahkan saldo ke wallet");
+              if (upReserv.reservation_type == "MANUAL_ORDER") {
+                console.log("tambahkan saldo ke wallet manual order");
                 //fee order set 0 %
                 const feeSetting = await appSetting.findOne({
                   where: { setting_name: "ORDER_FEE" }
                 });
 
-                var countTotal = (upReserv.total_price - upReserv.total_discount) + parseInt(upReserv.total_ppn);
+                const ppn = upReserv.total_ppn == null ? parseInt(0) : parseInt(upReserv.total_ppn)
+                console.log("upReserv.total_price " + upReserv.total_price);
+                console.log("upReserv.total_discount " + upReserv.total_discount);
+                console.log("upReserv.total_ppn " + ppn);
+                var countTotal = (upReserv.total_price - upReserv.total_discount) + ppn;
                 console.log("countTotal " + countTotal);
                 
                 var walletAmount = countTotal - (countTotal * (parseInt(0) / 100));
@@ -602,7 +619,191 @@ module.exports =
   
                 const insertWallet = await wallethistory.findOrCreateWallet(objParam, objBalance);
                 console.log("insertWallet "  + JSON.stringify(insertWallet));
-              }             
+              } else {
+                console.log("tambahkan saldo ke wallet user order");
+                //fee order set 0 %
+                const feeSetting = await appSetting.findOne({
+                  where: { setting_name: "ORDER_FEE" }
+                });
+
+                const ppn = upReserv.total_ppn == null ? parseInt(0) : parseInt(upReserv.total_ppn)
+                console.log("upReserv.total_price " + upReserv.total_price);
+                console.log("upReserv.total_discount " + upReserv.total_discount);
+                console.log("upReserv.total_ppn " + ppn);
+                var countTotal = (upReserv.total_price - upReserv.total_discount) + ppn;
+                console.log("countTotal " + countTotal);
+                
+                var walletAmount = countTotal - (countTotal * (parseInt(feeSetting.setting_value) / 100));
+                console.log("walletAmount ", + walletAmount);
+  
+                var objBalance = {
+                  partner_id: upReserv.partner_id,
+                  event_date: upReserv.event_date,
+                  reservation_no: upReserv.reservation_no,
+                  reservation_type: upReserv.reservation_type,
+                  transaction_type: "C",
+                  total_amount: walletAmount,
+                  status: statusCode
+                }
+  
+                var objParam = {
+                  reservation_no: upReserv.reservation_no
+                }
+  
+                const insertWallet = await wallethistory.findOrCreateWallet(objParam, objBalance);
+                console.log("insertWallet "  + JSON.stringify(insertWallet));
+              }
+            }
+
+            if (statusCode == "ORDER_CANCEL_BY_PARTNER" || statusCode == "ORDER_CANCEL_BY_USER") {
+              return { success: true, message: "Reservasi " +reservationNo+ " Dibatalkan", data: upReserv }
+            }
+
+            if (statusCode == "ORDER_COMPLETED") {
+              return { success: true, message: "Reservasi " +reservationNo+ " Sudah Selesai", data: upReserv }
+            }
+            
+            // return { success: true, message: "Invoice " +reservationNo+ " Berhasil Dikirim Ke Email", data: upReserv } })
+            return { success: true, message: "Invoice " +reservationNo+ " Berhasil Ubah Status Booking", data: upReserv } })
+        .catch((err) => { return { success: false, message: "Invoice Gagal diubah", data: err } });
+      } catch (error) {
+        throw (error)
+      }
+    },
+
+    updateStatusReservationGlobal: async (req) => {
+      try {
+        const { reservationNo, reservationType, statusCode, totalDp, totalDiscount, totalPpn, userId } = req;
+        
+        let transactionStatusCode = "NEW";
+
+        if(statusCode == "ORDER_COMPLETED"){
+          transactionStatusCode = "SUCCESS";
+        } else if (statusCode == "ORDER_CANCEL_BY_PARTNER"){
+          transactionStatusCode = "CANCEL";
+        } else if (statusCode == "ORDER_CANCEL_BY_USER"){
+          transactionStatusCode = "CANCEL";
+        } else if (statusCode == "ORDER_DP_REQUEST"){
+          transactionStatusCode = "NEW";
+        } else if (statusCode == "ORDER_DP_COMPLETED"){
+          transactionStatusCode = "ON_PROCESS";
+        } else if (statusCode == "ORDER_PARTNER_CONFIRM"){
+          transactionStatusCode = "ON_PROCESS";
+        } else if (statusCode == "ORDER_REPAYMENT_REQUEST"){
+          transactionStatusCode = "ON_PROCESS";
+        } else if (statusCode == "ORDER_PAYMENT_COMPLETED"){
+          transactionStatusCode = "ON_PROCESS";
+        }
+
+        // total dp blum dieksekusi
+        var objReservation = {
+          status_code: statusCode, 
+          // total_down_payment: totalDp,
+          transaction_status_code: transactionStatusCode,
+          updated_at: moment().utcOffset(0),
+          updated_by: userId
+        }
+
+        if(totalDp){
+          objReservation.total_down_payment = totalDp;
+        }
+
+        if(totalDiscount){
+          objReservation.total_discount = totalDiscount;
+        }
+
+        if(totalPpn){
+          objReservation.total_ppn = totalPpn;
+        }
+
+        console.log(JSON.stringify(objReservation), "objReservation")
+
+        return Reservation.update(objReservation, {where: {reservation_no: reservationNo}} )
+        .then(async (updated) => { 
+            const upReserv = await Reservation.findOne({ where: { reservation_no: reservationNo } })
+            console.log(JSON.stringify(upReserv), "upReserv")
+
+            const history = {status_code: statusCode, reservation_id: upReserv.id, updatedcreated_at: moment().utcOffset(0), created_by: userId };
+            const upHistory = await ReservationStatusHistory.create(history);
+          
+            console.log("ini ke wallet");
+            console.log("ini reservation_type " + upReserv.reservation_type);
+
+            // if(statusCode == "ORDER_DP_COMPLETED" || "ORDER_PAYMENT_COMPLETED")
+            // {
+            //   // create payment function into db payment
+              
+            // }
+
+            if(statusCode == "ORDER_COMPLETED")
+            {
+              if (upReserv.reservation_type == "MANUAL_ORDER") {
+                console.log("tambahkan saldo ke wallet. ini manual tipe");
+                //fee order set 2 %
+                const feeSetting = await appSetting.findOne({
+                  where: { setting_name: "ORDER_FEE" }
+                });
+
+                const ppn = upReserv.total_ppn == null ? parseInt(0) : parseInt(upReserv.total_ppn)
+                console.log("upReserv.total_price " + upReserv.total_price);
+                console.log("upReserv.total_discount " + upReserv.total_discount);
+                console.log("upReserv.total_ppn " + ppn);
+                var countTotal = (upReserv.total_price - upReserv.total_discount) + ppn;
+                console.log("countTotal " + countTotal);
+                
+                var walletAmount = countTotal - (countTotal * (parseInt(0) / 100));
+                console.log("walletAmount ", + walletAmount);
+  
+                var objBalance = {
+                  partner_id: upReserv.partner_id,
+                  event_date: upReserv.event_date,
+                  reservation_no: upReserv.reservation_no,
+                  reservation_type: upReserv.reservation_type,
+                  transaction_type: "C",
+                  total_amount: walletAmount,
+                  status: statusCode
+                }
+  
+                var objParam = {
+                  reservation_no: upReserv.reservation_no
+                }
+  
+                const insertWallet = await wallethistory.findOrCreateWallet(objParam, objBalance);
+                console.log("insertWallet "  + JSON.stringify(insertWallet));
+              } else {
+                console.log("tambahkan saldo ke wallet. ini user tipe");
+                //fee order set 2 %
+                const feeSetting = await appSetting.findOne({
+                  where: { setting_name: "ORDER_FEE" }
+                });
+
+                const ppn = upReserv.total_ppn == null ? parseInt(0) : parseInt(upReserv.total_ppn);
+                console.log("upReserv.total_price " + upReserv.total_price);
+                console.log("upReserv.total_discount " + upReserv.total_discount);
+                console.log("upReserv.total_ppn " + ppn);
+                var countTotal = (upReserv.total_price - upReserv.total_discount) + ppn;
+                console.log("countTotal " + countTotal);
+                
+                var walletAmount = countTotal - (countTotal * (parseInt(feeSetting.setting_value) / 100));
+                console.log("walletAmount ", + walletAmount);
+  
+                var objBalance = {
+                  partner_id: upReserv.partner_id,
+                  event_date: upReserv.event_date,
+                  reservation_no: upReserv.reservation_no,
+                  reservation_type: upReserv.reservation_type,
+                  transaction_type: "C",
+                  total_amount: walletAmount,
+                  status: statusCode
+                }
+  
+                var objParam = {
+                  reservation_no: upReserv.reservation_no
+                }
+  
+                const insertWallet = await wallethistory.findOrCreateWallet(objParam, objBalance);
+                console.log("insertWallet "  + JSON.stringify(insertWallet));
+              }
             }
 
             if (statusCode == "ORDER_CANCEL_BY_PARTNER" || statusCode == "ORDER_CANCEL_BY_USER") {
@@ -1091,6 +1292,7 @@ module.exports =
         reservation_date, 
         user_id, 
         usr.name user_name,
+        usr.picture user_picture,
         partner_id, 
         prt.name partner_name,
         prt.picture partner_picture,
@@ -1158,6 +1360,7 @@ module.exports =
         reservation_date, 
         user_id, 
         usr.name user_name,
+        usr.picture user_picture,
         partner_id, 
         prt.name partner_name,
         prt.picture partner_picture,
@@ -1301,6 +1504,7 @@ module.exports =
               reservation_date, 
               user_id, 
               usr.name user_name,
+              usr.picture user_picture,
               partner_id, 
               prt.name partner_name,
               prt.picture partner_picture,
@@ -1370,6 +1574,7 @@ module.exports =
               reservation_date, 
               user_id, 
               usr.name user_name,
+              usr.picture user_picture,
               partner_id, 
               prt.name partner_name,
               prt.picture partner_picture,
@@ -1429,6 +1634,35 @@ module.exports =
       //     console.log(err);
       //     return { success: false, message: "Reservation Not Found", data: err } 
       //   });
+    },
+
+    updateConfirmationPaymentImage: async (req) => {
+      try {
+        const { reservationNo, reservationType, confirmationPayment, userId } = req;
+
+        // total dp blum dieksekusi
+        var objReservationConfirmationPayment = {
+          confirmation_payment: confirmationPayment,
+          updated_at: moment().utcOffset(0),
+          updated_by: userId
+        }
+
+        console.log("objReservationConfirmationPayment");
+        console.log(objReservationConfirmationPayment);
+
+        return Reservation.update(objReservationConfirmationPayment, { where: { reservation_no: reservationNo } })
+          .then(async (updated) => {
+            const upReserv = await Reservation.findOne({ where: { reservation_no: reservationNo } });
+            console.log(JSON.stringify(upReserv), "upReserv");
+            
+            if (reservationType == "USER_ORDER") {
+              return { success: true, message: "Success Update Confirmation Payment", data: upReserv }
+            };
+          })
+          .catch((err) => { return { success: false, message: "Confirmation Payment Failed To Update", data: err } });
+      } catch (error) {
+        throw (error)
+      }
     },
 
   }
