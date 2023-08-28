@@ -6,6 +6,7 @@ const PartnerCertificate = require('../models/partnercertificate');
 const PartnerExperience = require('../models/partnerexperience');
 const PartnerPortfolio = require('../models/partnerportfolio');
 const PartnerPackage = require('../models/partnerPackageHeader');
+const PartnerFollower = require("../models/partnerFollower");
 const { VERIFY_URL, EMAIL_PASSWORD, EMAIL_USERNAME } = process.env;
 const nodemailer = require("nodemailer");
 //const Otp = require('../models/otp');
@@ -34,6 +35,9 @@ var async = require('async');
 var cryptos = require('crypto');
 const resetSecret = process.env.TOKEN_JWT_SECRET;
 const {check, validationResult} = require('express-validator');
+const partnerfollower = require("./partnerfollower");
+
+const sequelize = require("../config/sequelize");
 
 module.exports = {
   login: async (users, revoke) => {
@@ -82,8 +86,11 @@ module.exports = {
       return await User.findAll({
         include: [
           {
-            model: PartnerCategory
-          }
+            model: PartnerCategory,
+          },
+          // {
+          //   model: PartnerFollower,
+          // }
         ]
       }).then(users => {
         //delete users.dataValues.password
@@ -115,10 +122,26 @@ module.exports = {
       });
   },
 
-  findUserProfile: async (params) => {    
+  findUserProfile: async (params, req) => {    
     try {
+      console.log('req me' )
+      console.log(req)
+
       var users = await User.findOne({ 
         where: params,
+        attributes: [
+          "id", "email", "name", "picture", "given_name", "family_name", "phone_number", "active", "token", "address", "nation", "dob", "province", "city", "postalcode", "type", "title", "description", "longitude", "latitude", "whatsapp_number", "last_login", "refresh_token", "reset_token", "expired_reset_token", "verified_document", "is_verified", "process_verified", "created_at", "created_by", "updated_at", "updated_by", "createdAt", "updatedAt",
+          [
+            sequelize.literal(`(
+            SELECT COUNT(reservation_no)
+                FROM reservation rv
+                WHERE rv.status_code = 'ORDER_NEW' 
+                OR rv.status_code = 'ORDER_PARTNER_CONFIRM'
+                ORDER BY COUNT(reservation_no) DESC
+            )`),
+            'cart_length',
+          ],
+        ],
         include: [
           {
             model: PartnerAward
@@ -134,6 +157,9 @@ module.exports = {
           },
           {
             model: PartnerPackage
+          },
+          {
+            model: PartnerFollower
           }
         ]
       });
@@ -144,6 +170,8 @@ module.exports = {
       } 
       else 
       {
+        console.log('users.type');
+        console.log(users);
         if(users.type == "2")
         {
           var partnerResult = await PartnerService.getDetail(users.id);
@@ -189,7 +217,8 @@ module.exports = {
               partner_portfolios: users.partner_portfolios,
               partner_experiences: users.partner_experiences,
               partner_certificates: users.partner_certificates,
-              partner_packages: users.partner_package_headers
+              partner_packages: users.partner_package_headers,
+              partner_followers: users.partner_followers,
             }
             
             return { success: true, message: "User Ditemukan", data: user };              

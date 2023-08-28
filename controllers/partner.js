@@ -17,6 +17,31 @@ exports.getDetail = async function (req, res, next) {
   }
 };
 
+exports.getDetailUser = async function (req, res, next) {
+  console.log("controller partner");
+  
+  // const { body } = req;
+  // const partner_id = req.query.id;
+
+  const params = { 
+    partner_id: req.partner_id,
+    user_id: req.user_id,
+    user_email: req.user_email 
+  };
+  console.log('params get detail');
+  console.log(params);
+
+  try {
+        var partnerDetail = await partner.getDetailUser(params, req);
+        console.log("controller test test");
+        return res.status(200).json({ status: 200, data: partnerDetail.data, message: "Detail User Berhasil Diambil" });
+  } catch (err) {
+    return res
+      .status(500)
+      .send({ code: 500, success: false, message: err.message, data: { err } });
+  }
+};
+
 exports.getPartner = async function (req, res, next) {
   console.log("controller partner");
 
@@ -39,6 +64,25 @@ exports.searchPartner = async function (req, res, next) {
         var partners = await partner.getSearchPartner(body);
         console.log("controller search");
         return res.status(200).json({ status: 200, data: partners, message: "Pencarian Partner Berhasil Diambil" });
+  } catch (err) {
+    return res
+      .status(500)
+      .send({ code: 500, success: false, message: err.message, data: { err } });
+  }
+};
+
+exports.searchPartnerGlobal = async function (req, res, next) {
+  console.log("controller search partner " + JSON.stringify(req.query));
+  try {
+        var partners = await partner.searchPartnerGlobal(req.query);
+        console.log('search partners');
+        console.log(partners);
+        if (partners.length > 0) {
+          res.status(200).json({ status: 200, data: partners, message: "Success Find Partner" });
+        } else {
+          res.status(200).json({ status: 200, data: partners, message: "Partner Not Exist" })
+        }
+        // return res.status(200).json({ status: 200, data: partners, message: "Success Find Partner" });
   } catch (err) {
     return res
       .status(500)

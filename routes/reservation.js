@@ -73,6 +73,18 @@ reservationRouter.post("/getlistscart", headerAuth.isUserAuthenticated, (req, re
   reservationController.getSuccessReservationsCart(data, res);
 });
 
+reservationRouter.get("/getcountcart", headerAuth.isUserAuthenticated, (req, res, next) => {
+  const id = res.locals.auth.id;
+  const type = res.locals.auth.type;
+
+  const data = { 
+    userId: id, 
+    type: type
+  };
+  
+  reservationController.getCountCart(data, res);
+});
+
 reservationRouter.post("/getliststransaction", headerAuth.isUserAuthenticated, (req, res, next) => {
   const id = res.locals.auth.id;
   const email = res.locals.auth.email;

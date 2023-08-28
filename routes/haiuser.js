@@ -210,10 +210,15 @@ authRouter.get(
 
 authRouter.get("/me", headerAuth.isUserAuthenticated , (req, res, next) => {
   console.log("endpoint : get Profile")
+  const partner_id = res.locals.auth.id;
   const email = res.locals.auth.email
-  console.log("email :", email)
 
-  authController.getProfile(email, res);
+  const data = { 
+    partner_id: partner_id,
+    email: email
+  };
+  
+  authController.getProfile(data, res);
 });
 
 authRouter.delete("/delete", headerAuth.isPartnerAuthenticated, (req, res, next) => {

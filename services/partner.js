@@ -8,6 +8,8 @@ const City = require('../models/city');
 // const PartnerCertificateService = require('../services/partnercertificate');
 
 const sequelize = require("../config/sequelize");
+const Sequelizes = require('sequelize');
+
 const { count } = require('sequelize/lib/model');
 
 module.exports =
@@ -35,6 +37,25 @@ module.exports =
               return results;
           });
 
+      } catch (error) {
+        console.log(error);
+        throw error
+      }
+    },
+
+    searchPartnerGlobal: async (params) => {
+      const Op = Sequelizes.Op;
+
+      try {
+        // search multi word in table hai user column name with %foo%
+        return await Partner.findAll({
+          where: {
+            [Op.or]: [
+              {name :  { [Sequelizes.Op.iLike]: `%${params.name}%` }}, 
+            ]
+          },
+          order: [["created_at", "ASC"]],
+        });
       } catch (error) {
         console.log(error);
         throw error
@@ -91,15 +112,138 @@ module.exports =
     },
 
     getDetail: async (partnerID) => {
+      try{
+        var totalPoint = await sequelize.query(`SELECT coalesce(sum(point), 0) AS point FROM point_history AS point_history WHERE point_history.user_id = ` + partnerID,
+        {
+            raw: true,
+            type: sequelize.QueryTypes.SELECT
+        });
+
+        console.log("totalPoint ", + totalPoint);
+
+        var partners = await sequelize.query(
+          `SELECT
+              part.id partnerid, 
+              part.name partnername,
+              part.description,
+              part.address, 
+              part.nation, 
+              part.picture,
+              part.is_verified,
+              part.title,
+              part.dob,
+              part.province,
+              part.phone_number,
+              part.whatsapp_number,
+              coalesce(rating, 0) rating,
+              coalesce(reviewcount, 0) reviewcount,
+              coalesce(follower, 0) follower,
+              coalesce(successjob, 0) successjob,
+              coalesce(pbb.current_balance, 0) currentbalance,
+              coalesce(points, 0) points,
+              coalesce(pt.tier_name, 'Perintis') tiername
+              FROM hai_user part
+              left join lateral (
+                select sum(point) points
+                from point_history poo
+                where poo.user_id = part.id
+              ) po on true
+              left join lateral (
+                select avg(rating) rating, count(prr.user_id) reviewcount
+                from partner_rating prr
+                where prr.partner_id = part.id
+              ) pr on true
+              left join lateral (
+                select count(user_id) follower
+                from partner_follower pff
+                where pff.partner_id = part.id
+              ) pf on true
+              left join lateral (
+                select count(reservation_no) successjob
+                from reservation rvv
+                where rvv.partner_id = part.id
+                and rvv.transaction_status_code = 'SUCCESS'
+              ) rv on true
+              left join lateral (
+                select current_balance
+                from partner_wallet_balance pb
+                where pb.partner_id = part.id
+              ) pbb on true
+              left join lateral (
+                select tier_name
+                from tier_history ppt
+                where ppt.user_id = part.id
+                AND date(start_date) <= date(now()) 
+                AND date(end_date) >= date(now()) 
+              ) pt on true
+            WHERE part.type = 2
+            and part.id = `+partnerID+`;`,
+          {
+              raw: true,
+              type: sequelize.QueryTypes.SELECT
+          }
+      );
+
+      if(partners.length > 0){
+          var params = { partner_id: partnerID };
+          var partner = partners[0];
+          console.log(partner);
+
+          // var awardsData = await PartnerAwardsService.getList(params);
+          // var awards = awardsData.success ? awardsData.data : [];
+          
+          // var portfolioData = await PartnerPortfolioService.getList(params);
+          // var portfolios = portfolioData.success ? portfolioData.data : [];
+
+          // var experienceData = await PartnerExperienceService.getList(params);
+          // var experiences = experienceData.success ? experienceData.data : [];
+          
+          // var certificateData = await PartnerCertificateService.getList(params);
+          // var certificates = certificateData.success ? certificateData.data : [];
+
+          // partner.awards = awards;
+          // partner.portfolios = portfolios;
+          // partner.experiences = experiences;
+          // partner.certificates = certificates;         
+
+          return { success: true, data: partner }
+        
+      } else {
+        return { success: false, message: "Informasi Partner Tidak Ada", data: {} };
+      }
+      } catch (error) {
+        console.log(error);
+      throw error
+      }
+    },
+
+    getDetailUser: async (params, data) => {
         try{
-          var totalPoint = await sequelize.query(`SELECT coalesce(sum(point), 0) AS point FROM point_history AS point_history WHERE point_history.user_id = ` + partnerID,
+          const { partner_id, user_id, user_email } = data;
+
+          var objData = {
+            partner_id: partner_id,
+            user_id: user_id,
+            user_email: user_email,
+          };
+  
+          console.log("data get detail");
+          console.log(objData);
+
+          var totalPoint = await sequelize.query(`SELECT coalesce(sum(point), 0) AS point FROM point_history AS point_history WHERE point_history.user_id = ` + objData.partner_id,
           {
               raw: true,
               type: sequelize.QueryTypes.SELECT
           });
-
           console.log("totalPoint ", + totalPoint);
 
+          // const query = `SELECT * FROM partner_follower WHERE user_id IN (${JSON.stringify('user_id')})`;
+
+          // // Execute the query
+          // sequelize.query(query).then(users => {
+          //   // Send the response
+          //   console.log("users ", + users);
+          // });
 
           var partners = await sequelize.query(
             `SELECT
@@ -115,6 +259,7 @@ module.exports =
                 part.province,
                 part.phone_number,
                 part.whatsapp_number,
+                ph.user_id following_id,
                 coalesce(rating, 0) rating,
                 coalesce(reviewcount, 0) reviewcount,
                 coalesce(follower, 0) follower,
@@ -139,6 +284,12 @@ module.exports =
                   where pff.partner_id = part.id
                 ) pf on true
                 left join lateral (
+                  select user_id
+                  from partner_follower pfh
+                  WHERE pfh.partner_id = ${objData.partner_id}
+                  AND pfh.user_id = ${objData.user_id}
+                ) ph on true
+                left join lateral (
                   select count(reservation_no) successjob
                   from reservation rvv
                   where rvv.partner_id = part.id
@@ -157,7 +308,7 @@ module.exports =
                   AND date(end_date) >= date(now()) 
                 ) pt on true
               WHERE part.type = 2
-              and part.id = `+partnerID+`;`,
+              and part.id = `+objData.partner_id+`;`,
             {
                 raw: true,
                 type: sequelize.QueryTypes.SELECT
@@ -165,9 +316,16 @@ module.exports =
         );
 
         if(partners.length > 0){
-            var params = { partner_id: partnerID };
+            var params = { partner_id: objData.partner_id };
             var partner = partners[0];
+            console.log('detail partner');
             console.log(partner);
+
+            // return sequelize.query(partners,{ type : sequelize.QueryTypes.SELECT}).then(results => {
+            //   console.log('results partner');
+            //   console.log(results);
+             
+            // });
 
             // var awardsData = await PartnerAwardsService.getList(params);
             // var awards = awardsData.success ? awardsData.data : [];

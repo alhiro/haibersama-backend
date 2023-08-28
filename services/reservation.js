@@ -58,6 +58,8 @@ module.exports =
         console.log('params')
         console.log(params)
         const isDuplicate = await Reservation.findOne({ where: params });
+        console.log('isDuplicate')
+        console.log(isDuplicate)
         
         if(isDuplicate != null){
           return {
@@ -342,6 +344,60 @@ module.exports =
       //     console.log(err);
       //     return { success: false, message: "Reservation Not Found", data: err } 
       //   });
+
+      // SELECT 
+      //       rv.id, 
+      //       reservation_no, 
+      //       reservation_date, 
+      //       usr.name user_name,
+      //       usr.picture user_picture,
+      //       partner_id, 
+      //       prt.name partner_name,
+      //       prt.picture partner_picture,
+      //       rv.category_id, 
+      //       cat.description category,
+      //       service_id, 
+      //       srv.description service,
+      //       rv.name,
+      //       rc.email,
+      //       rc.address,
+      //       rc.other_description,
+      //       rv.package_id,
+      //       rv.package_name,
+      //       rv.description,
+      //       event_date, 
+      //       event_time, 
+      //       event_address, 
+      //       total_price, 
+      //       total_discount, 
+      //       total_payment, 
+      //       total_down_payment,
+      //       status_code, 
+      //       ci.description status,
+      //       duration, 
+      //       reservation_type,
+      //       rt.description reservation_type_desc,
+      //       rvl.user_id cart_length
+      //     FROM public.reservation rv
+      //     inner join hai_user prt on prt.id = rv.partner_id
+      //     left join hai_user usr on usr.id = rv.user_id
+      //     inner join category cat on cat.id = rv.category_id
+      //     inner join service srv on srv.id = rv.service_id
+      //     left join info_code ci on ci.code = rv.status_code
+      //     left join info_code rt on rt.code = rv.reservation_type
+      //     left join reservation_contact rc on rc.reservation_id = rv.id
+      //     left join lateral (
+      //       select user_id, count(reservation_no) reservation_length
+      //       FROM reservation rv 
+      //       where rv.status_code = 'ORDER_NEW' 
+      //       or rv.status_code = 'ORDER_PARTNER_CONFIRM'
+      //       group by user_id 
+      //       order by count(reservation_no) desc
+      //     ) rvl on true
+      //     where rv.user_id = 12
+      //     group by rv.id, usr.name, usr.picture, prt.name, prt.picture, cat.description, srv.description, rc.email, rc.address,
+      //     rc.other_description, rv.package_id, rv.package_name, rv.description, ci.description, rt.description, rvl.user_id
+      //     order by event_date desc;
     },
 
     findSuccessReservations: async (where, limitItem, page) => {

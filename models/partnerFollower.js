@@ -52,4 +52,5 @@ const PartnerFollower = dbSeq.define('partner_follower', {
 
 module.exports = PartnerFollower
 
-PartnerFollower.belongsTo(HaiUser, { foreignKey: "partner_id" });
+// PartnerFollower.belongsTo(HaiUser, { foreignKey: "partner_id" });
+// HaiUser.hasMany(PartnerFollower, { foreignKey: "partner_id" });

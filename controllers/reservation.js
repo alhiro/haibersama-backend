@@ -545,6 +545,34 @@ exports.getReservations = async function(req, res, next) {
       }    
 };
 
+exports.getCountCart = async function(req, res, next) {
+  try {
+      const { userId, type } = req;
+      
+      const params = { };
+      var where = " WHERE 1=1 "
+
+      if(type == 2){
+          params.partner_id = userId;
+          where += " AND rv.partner_id = " + userId;
+      }else{
+          params.user_id = userId;
+          where += " AND rv.user_id = " + userId;
+      }        
+
+      where += " AND (rv.status_code = '" + "ORDER_NEW" + "' OR rv.status_code = '" + "ORDER_PARTNER_CONFIRM" + "' OR rv.transaction_status_code = '" + "ORDER_NEW" + "'OR rv.transaction_status_code = '" + "ORDER_PARTNER_CONFIRM" + "') ";
+          
+      console.log(where);
+      let data = await resv.findReservations(where);
+      data.code = data.success ? 200 : 500;
+      return res.status(200).send(data);
+  
+    } catch (err) {
+      console.log(err);
+      return res.status(500).send({ data: err });
+    }    
+};
+
 // exports.getAgendaItems = async function(req, res, next) {
 //   try {            
 //       let data = await resv.getPartnerAgendaItems(req);

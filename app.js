@@ -22,9 +22,11 @@ const paymentRouter = require('./routes/payment');
 const paymentMidtransRouter = require('./routes/paymentmidtrans');
 const bannerRouter = require('./routes/banner');
 const eventRouter = require('./routes/event');
+const followerRouter = require('./routes/partnerfollower');
 const partnerBankAccountRouter = require('./routes/partnerbankaccount');
 const partnerRatingRouter = require('./routes/partnerrating');
 const walletRouter = require('./routes/wallet');
+const settingRouter = require('./routes/appsetting');
 const serveIndex = require('serve-index');
 const initDB = require('./models/index');
 const path = require('path');
@@ -73,6 +75,8 @@ app.use(process.env.APP_API_PREFIX + '/partnerbankaccount', partnerBankAccountRo
 app.use(process.env.APP_API_PREFIX + '/rating', partnerRatingRouter);
 app.use(process.env.APP_API_PREFIX + '/wallet', walletRouter);
 app.use(process.env.APP_API_PREFIX + '/event', eventRouter);
+app.use(process.env.APP_API_PREFIX + '/follower', followerRouter);
+app.use(process.env.APP_API_PREFIX + '/setting', settingRouter);
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to Hai organizer application." });
