@@ -20,10 +20,10 @@ module.exports = {
         password: joi
           .string()
           .required()
-          .min(8)
+          .min(7)
           .options({
             language: {
-              string: { min: 'Kata sandi minimal harus 8 karakter' },
+              string: { min: 'Kata sandi minimal harus 7 karakter' },
             },
           }),
       })

@@ -76,7 +76,7 @@ authRouter.get("/resetPassword", (req, res, next) => {
 });
 
 authRouter.post("/resetPassword", [
-  check('password', 'password minimal 8 karakter!').isLength({ min: 8 }),
+  check('password', 'password minimal 7 karakter!').isLength({ min: 7 }),
 ], (req, res, next) => {
   const tokenExpired = req.query.token_expired;
 

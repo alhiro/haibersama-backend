@@ -135,7 +135,8 @@ module.exports = {
             sequelize.literal(`(
             SELECT COUNT(reservation_no)
                 FROM reservation rv
-                WHERE rv.status_code = 'ORDER_NEW' 
+                WHERE rv.user_id = `+req.partner_id+`
+                AND rv.status_code = 'ORDER_NEW' 
                 OR rv.status_code = 'ORDER_PARTNER_CONFIRM'
                 ORDER BY COUNT(reservation_no) DESC
             )`),
