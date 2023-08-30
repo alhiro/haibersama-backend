@@ -7,8 +7,22 @@ packageRouter.get("/getall", headerAuth.isUserAuthenticated, (req, res, next) =>
   packageController.getAllPackage(req, res);
 });
 
-packageRouter.get("/getlist", (req, res, next) => {
-  packageController.getList(req, res);
+packageRouter.get("/getlist", headerAuth.isUserAuthenticated, (req, res, next) => {
+  const partner_id = parseInt(req.query.partnerid);
+  const user_id = res.locals.auth.id;
+  const user_email = res.locals.auth.email;
+  const type = res.locals.auth.type;
+
+  const data = {
+    partner_id: partner_id,
+    user_id: user_id,
+    user_email: user_email,
+    type: type
+  };
+  console.log('data get package');
+  console.log(data);
+  
+  packageController.getList(data, res);
 });
 
 packageRouter.post("/add", headerAuth.isUserAuthenticated, (req, res, next) => {

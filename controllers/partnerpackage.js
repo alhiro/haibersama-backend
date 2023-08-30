@@ -52,12 +52,30 @@ exports.addPackage = async function(req, res, next) {
   };
 
   exports.getList = async function (req, res, next) {
-    const { body } = req;
-    const partner_id = parseInt(req.query.partnerid);
+    // const { body } = req;
+    // const partner_id = parseInt(req.query.partnerid);
+
+    const data = { 
+      partner_id: req.partner_id,
+      user_id: req.user_id,
+      user_email: req.user_email,
+      type: req.type
+    };
+    console.log('data get list package');
+    console.log(data);
+
     try {
-          var params = { partner_id: partner_id };
-          var packages = await package.getList(params);
-          return res.status(200).json({ status: 200, data: packages, message: "Daftar Jasa/Produk Partner Berhasil Diambil" });
+      var params;
+      if (data.type == 2) {
+        params = { partner_id: data.partner_id };
+      } else {
+        params = { partner_id: data.partner_id, public: true };
+      }
+      console.log('param list package');
+      console.log(params);
+          
+      var packages = await package.getList(params);
+      return res.status(200).json({ status: 200, data: packages, message: "Daftar Jasa/Produk Partner Berhasil Diambil" });
     } catch (err) {
       return res
         .status(500)

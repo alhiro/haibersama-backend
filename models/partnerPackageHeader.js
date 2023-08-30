@@ -60,6 +60,10 @@ const PartnerPackageHeader = dbSeq.define('partner_package_header', {
     type: Sequelize.STRING(5000),
     allowNull: false
   },
+  public: {
+    type: Sequelize.BOOLEAN,
+    allowNull: false
+  },
   created_at: {
     type: Sequelize.DATE,
     allowNull: true
