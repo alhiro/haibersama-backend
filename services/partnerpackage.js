@@ -43,7 +43,8 @@ module.exports = {
       const Description = req.body.Description;
       const Additional = req.body.Additional;
       const Terms = req.body.Terms;
-
+      const Public = req.body.Public != undefined ? req.body.Public : false;
+      console.log("Public :", Public);
       // var arrDetails = [];
 
       // for (let i = 0; i < req.body.PackageDetails.length; i++) {
@@ -71,6 +72,7 @@ module.exports = {
         description: Description,
         additional_services: Additional,
         terms: Terms,
+        public: Public
         //partner_package_details: arrDetails
       };
 
@@ -148,6 +150,8 @@ module.exports = {
       const Description = req.body.Description;
       const Additional = req.body.Additional;
       const Terms = req.body.Terms;
+      const Public = req.body.Public != undefined ? req.body.Public : false;
+      console.log("Public :", Public);
 
       // var arrDetails = [];
 
@@ -179,6 +183,7 @@ module.exports = {
         description: Description,
         additional_services: Additional,
         terms: Terms,
+        public: Public
         //partner_package_details: arrDetails
       };
 
