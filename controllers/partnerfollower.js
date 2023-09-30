@@ -18,9 +18,9 @@ exports.getAllFollower = async function (req, res, next) {
 
 exports.getByIdFollower = async function (req, res, next) {
   try {
-    const { limitItem, page, email, userId, type } = req;
+    const { limitItem, page, partnerId, email, userId, type } = req;
 
-    let data = await follower.getById(res, limitItem, page);
+    let data = await follower.getById(res, partnerId, limitItem, page);
     data.code = data.success ? 200 : 500;
     return res.status(200).send(data);
 

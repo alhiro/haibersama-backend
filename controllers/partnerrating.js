@@ -8,8 +8,22 @@ exports.getAllRating = async function(req, res, next) {
     var params = { reservation_id: reservationId };
     var rating = await partnerrating.getList(params);
     return res
-      .status(rating.status == "200" ? 200 : 500)
-      .json({ status: rating.status, data: rating.data, message: "Retrieved data" });
+      .status(rating.success ? 200 : 500)
+      .json({ success: rating.success, data: rating.data, message: "Retrieved data" });
+  } catch (err) {
+    return res
+      .status(500)
+      .send({ code: 500, success: false, message: err.message, data: { err } });
+  }
+};
+
+exports.getAllRatingPartner = async function(req, res, next) {
+  try {
+    const { limitItem, page, partnerId, partner_id } = req;
+
+    var rating = await partnerrating.getListPagination(res, limitItem, page, partnerId, partner_id);
+    rating.code = rating.success ? 200 : 500;
+    return res.status(200).send(rating);
   } catch (err) {
     return res
       .status(500)

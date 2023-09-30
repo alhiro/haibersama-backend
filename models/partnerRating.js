@@ -21,9 +21,17 @@ const PartnerRating = dbSeq.define('partner_rating', {
     type: Sequelize.INTEGER,
     allowNull: false
   },
+  user_name: {
+    type: Sequelize.STRING(200),
+    allowNull: true
+  },
   reservation_id: {
     type: Sequelize.BIGINT,
     allowNull: false
+  },
+  package_name: {
+    type: Sequelize.STRING(100),
+    allowNull: true
   },
   rating: {
     type: Sequelize.INTEGER,

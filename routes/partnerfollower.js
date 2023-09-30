@@ -13,12 +13,14 @@ followerRouter.post("/getbyid", headerAuth.isUserAuthenticated, (req, res, next)
   const type = res.locals.auth.type;
 
   const data = { 
+    // partnerId: req.body.partnerId,
     page: req.body.page,
     limitItem: req.body.limitItem,
     email: email,
     userId: id,
     type: type
   };
+  console.log(data);
 
   followerController.getByIdFollower(data, res);
 });

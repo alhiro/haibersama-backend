@@ -1,7 +1,10 @@
 const Rating = require('../models/partnerRating');
 const Reservation = require('../models/reservation');
+const HaiUser = require('../models/haiuser');
 const moment = require("moment");
 const PartnerRating = require('../models/partnerRating');
+
+const sequelize = require("../config/sequelize");
 
 module.exports =
   {  
@@ -18,6 +21,68 @@ module.exports =
           return { success: false, message: "Partner Rating Belum Ada, Ada Kesalahan Server!", data: err } 
         });
       },
+
+    getListPagination: async (res, limitItem, page, partnerId, partner_id) => {
+      console.log('user Id');
+
+      var queryId;
+      if (partner_id) {
+        queryId = partner_id;
+      } else if (partnerId) {
+        queryId = partnerId;
+      }
+      console.log(queryId);
+      var result = await Rating.findAll({
+        where: {
+          partner_id: queryId,
+        },
+        order: [
+          ["created_at", "DESC"]
+        ],
+        // attributes: [
+        //   "id",
+        //   "user_id",
+        //   "user_name",
+        //   "partner_id",
+        //   "reservation_id",
+        //   "rating",
+        //   "review",
+        //   "review_date",
+        //   "review_reply",
+        //   "review_reply_date",
+        //   "created_at",
+        //   "created_by",
+        // ],
+      });
+
+      console.log('result');
+      console.log(result);
+
+      const pageCount = Math.ceil(result.length / limitItem);
+      let pages = parseInt(page);
+      if (!pages) { pages }
+      if (pages > pageCount) {
+        pages = pageCount
+      }
+
+      if (result.length > 0) {
+        return (!result) ? {
+          success: false,
+          message: "Partner Rating Tidak Ditemukan",
+          data: {},
+          page: pages,
+          pageCount: pageCount
+        } : {
+          success: true,
+          message: "Partner Rating Ditemukan",
+          data: result.slice(pages * limitItem - limitItem, pages * limitItem),
+          page: pages,
+          pageCount: pageCount
+        }
+      } else {
+        return { success: false, message: "Partner Rating Belum Ada!", data: {}, page: pages, pageCount: pageCount }
+      }
+    },
 
     findOrCreateRating: async (params, data) => {
       try {
@@ -36,11 +101,23 @@ module.exports =
           }
         }
 
+        var convertRating = parseInt(rating.toString().replace(/[^0-9,-]/g, ''));
+
+        if (convertRating > 5) {
+          return { success: false, message: "Rating tidak boleh dari angka 5!", data: {} } 
+        }
+
+        const userName = await HaiUser.findOne({ where: { id: userId } });
+        console.log('username');
+        console.log(userName);
+
         var objData = {
           user_id: userId,
+          user_name: userName.name,
           partner_id: order.partner_id,
           reservation_id: reservationId,
-          rating: rating,
+          package_name: order.package_name,
+          rating: convertRating,
           review: review,
           review_date: moment().utcOffset(0),
           created_at: moment().utcOffset(0),

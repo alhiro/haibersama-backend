@@ -25,25 +25,25 @@ module.exports =
       }
     },
 
-    getById: async (res, limitItem, page) => {
+    getById: async (res, partnerId, limitItem, page) => {
       try {
         const user_id = res.locals.auth.id;
 
-        // var queryFollower = await sequelize.query(
-        //   `SELECT * FROM partner_follower part
-        //     WHERE part.user_id = `+ user_id + `;`,
+        // var queryFollowerRating = await sequelize.query(
+        //   `SELECT avg(rating) rating
+        //     from partner_rating part
+        //     WHERE part.partner_id = `+ partnerId + `;`,
         //   {
         //     raw: true,
         //     type: sequelize.QueryTypes.SELECT,
         //     model: user,
         //     mapToModel: true,
         //     nest: true,
-        //     raw: true,
         //   }
         // );
 
-        // console.log('queryFollower');
-        // console.log(queryFollower);
+        // console.log('queryFollowerRating');
+        // console.log(queryFollowerRating[0].rating);
 
         // const qry = 'select count(*) from hai_user';
 
@@ -70,12 +70,13 @@ module.exports =
                 "description",
                 "is_verified",
                 // [
-                //   sequelize.literal(`(${queryFollower[0].user_id})`), 'counter',
+                //   sequelize.literal(`(${queryFollowerRating[0].rating})`), 'rating',
                 // ],
               ],
             }
           ]
         });
+        console.log(result);
 
         const pageCount = Math.ceil(result.length / limitItem);
         let pages = parseInt(page);
