@@ -17,7 +17,7 @@ module.exports =
             //             'image_url'
             // ],
             order:[
-                ["created_at", "ASC"]
+                ["created_at", "DESC"]
             ]
         });
       } catch (error) {
