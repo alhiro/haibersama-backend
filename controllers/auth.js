@@ -106,7 +106,7 @@ exports.registerUser = async function(req, res, next) {
         console.log("register test" + register.data);
 
         var smtpTransport = nodemailer.createTransport({
-          host: "missandei.id.rapidplex.com",
+          host: "roselia.id.domainesia.com",
           port: 465,
           secure: true,
           auth: {
@@ -119,7 +119,7 @@ exports.registerUser = async function(req, res, next) {
         var compileInvoice = Hogan.compile(templateInvoice);
 
         let mailoptions = {
-          from: '"Haio Notify" notify@haiorganizer.com',
+          from: '"Haio Notify" notify@haibersama.com',
           to: email,
           subject: `Hai ${register.data.name}, silahkan verifikasi akun Haio`,
           html: compileInvoice.render({
@@ -194,7 +194,7 @@ exports.registerPartner = async function(req, res, next) {
       console.log("register partner" + register.data);
 
       var smtpTransport = nodemailer.createTransport({
-        host: "missandei.id.rapidplex.com",
+        host: "roselia.id.domainesia.com",
         port: 465,
         secure: true,
         auth: {
@@ -207,7 +207,7 @@ exports.registerPartner = async function(req, res, next) {
       var compileInvoice = Hogan.compile(templateInvoice);
 
       let mailoptions = {
-        from: '"Haio Aktifasi" notify@haiorganizer.com',
+        from: '"Haio Aktifasi" notify@haibersama.com',
         to: email,
         subject: `Hai ${register.data.name}, silahkan verifikasi akun Haio`,
         html: compileInvoice.render({
@@ -289,7 +289,7 @@ exports.registerGoogle = async function(req, res, next) {
       console.log("register test" + register.data);
 
       var smtpTransport = nodemailer.createTransport({
-        host: "missandei.id.rapidplex.com",
+        host: "roselia.id.domainesia.com",
         port: 465,
         secure: true,
         auth: {
@@ -299,7 +299,7 @@ exports.registerGoogle = async function(req, res, next) {
       });
 
       let mailoptions = {
-        from: '"<notify>" notify@haiorganizer.com',
+        from: '"<notify>" notify@haibersama.com',
         to: email,
         subject: "Verifikasi Akun Haio",
         html:
@@ -405,7 +405,7 @@ exports.forgetPassword = async function(req, res, next) {
       console.log("forget password response " + JSON.stringify(resetPassword.data));
       
       var smtpTransport = nodemailer.createTransport({
-        host: "missandei.id.rapidplex.com",
+        host: "roselia.id.domainesia.com",
         port: 465,
         secure: true,
         auth: {
@@ -418,7 +418,7 @@ exports.forgetPassword = async function(req, res, next) {
       var compileInvoice = Hogan.compile(templateInvoice);
 
       let mailoptions = {
-        from: '"HaiO Reset Password" notify@haiorganizer.com',
+        from: '"HaiO Reset Password" notify@haibersama.com',
         to: email,
         subject: 'Permintaan Reset Password HaiO',
         html: compileInvoice.render({
@@ -593,17 +593,17 @@ exports.googleLoginCallBack = async function(req, res, next) {
 
       /* 
       var smtpTransport = nodemailer.createTransport({
-        host: "missandei.id.rapidplex.com",
+        host: "roselia.id.domainesia.com",
         port: 465,
         secure: true,
         auth: {
-          user: "notify@haiorganizer.com",
+          user: "notify@haibersama.com",
           pass: "shasmeen11!"
         }
       });
 
       let mailoptions = {
-        from: '"<notify>" notify@haiorganizer.com',
+        from: '"<notify>" notify@haibersama.com',
         to: email,
         subject: "verify your hai account",
         html:

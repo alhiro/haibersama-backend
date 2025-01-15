@@ -4,7 +4,7 @@
      
      tasks:
      
-     - export DEPLOYPATH=/home/haiorgan/api.haiorganizer.com
+     - export DEPLOYPATH=/home/haibersa/api.haibersama.com
      - /bin/cp .htaccess $DEPLOYPATH
      - /bin/cp .env $DEPLOYPATH
      - /bin/cp -r * $DEPLOYPATH

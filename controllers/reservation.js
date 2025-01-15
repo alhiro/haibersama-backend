@@ -74,7 +74,7 @@ exports.updateStatus = async function(req, res, next) {
             //console.log(dataUser);     
   
             var smtpTransport = nodemailer.createTransport({
-              host: "missandei.id.rapidplex.com",
+              host: "roselia.id.domainesia.com",
               port: 465,
               secure: true,
               auth: {
@@ -137,7 +137,7 @@ exports.updateStatus = async function(req, res, next) {
             // );
 
             let mailoptions = {
-              from: '"Hai Info" notify@haiorganizer.com',
+              from: '"Hai Info" notify@haibersama.com',
               to: req.email,
               subject: "Invoice",
               html: compileInvoice.render({
@@ -203,7 +203,7 @@ exports.updateStatusManual = async function(req, res, next) {
           //console.log(dataUser);
 
           var smtpTransport = nodemailer.createTransport({
-            host: "missandei.id.rapidplex.com",
+            host: "roselia.id.domainesia.com",
             port: 465,
             secure: true,
             auth: {
@@ -388,7 +388,7 @@ exports.updateStatusManual = async function(req, res, next) {
           generatePdf().then(async (res) => {
             setTimeout(() => {
               let mailoptions = {
-                from: '"Haio Invoice" notify@haiorganizer.com',
+                from: '"Haio Invoice" notify@haibersama.com',
                 to: getData.data.reservation_contact.email,
                 subject: `Invoice #${reservation.reservation_no} dari partner ${dataUser.data.partnername}`,
                 html: compileInvoice.render({
@@ -964,7 +964,7 @@ exports.getSuccessReservationsEmail = async function(req, res, next) {
       //hash email
 
       var smtpTransport = nodemailer.createTransport({
-        host: "missandei.id.rapidplex.com",
+        host: "roselia.id.domainesia.com",
         port: 465,
         secure: true,
         auth: {
@@ -990,7 +990,7 @@ exports.getSuccessReservationsEmail = async function(req, res, next) {
       // console.log(emailBody);
 
       let mailoptions = {
-        from: '"<notify>" notify@haiorganizer.com',
+        from: '"<notify>" notify@haibersama.com',
         to: email,
         subject: "Invoice",
         html: emailBody
@@ -1052,7 +1052,7 @@ exports.getSuccessReservationEmail = async function(req, res, next) {
        //hash email
  
        var smtpTransport = nodemailer.createTransport({
-         host: "missandei.id.rapidplex.com",
+         host: "roselia.id.domainesia.com",
          port: 465,
          secure: true,
          auth: {
@@ -1106,7 +1106,7 @@ exports.getSuccessReservationEmail = async function(req, res, next) {
        }
 
        let mailoptions = {
-         from: '"Haio Invoice" notify@haiorganizer.com',
+         from: '"Haio Invoice" notify@haibersama.com',
          to: getData.data.reservation_contact.email,
          subject: `Invoice #${getData.data.reservation_no} dari partner ${dataUser.data.partnername}`,
          html: compileInvoice.render({
@@ -1221,7 +1221,7 @@ exports.sendEmailToCustomer = async function (req, res, next) {
           //hash email
     
           var smtpTransport = nodemailer.createTransport({
-            host: "missandei.id.rapidplex.com",
+            host: "roselia.id.domainesia.com",
             port: 465,
             secure: true,
             auth: {
@@ -1400,7 +1400,7 @@ exports.sendEmailToCustomer = async function (req, res, next) {
           generatePdf().then(async (res) => {
             setTimeout(() => {
               let mailoptions = {
-                from: '"Haio Invoice" notify@haiorganizer.com',
+                from: '"Haio Invoice" notify@haibersama.com',
                 to: getData.data.reservation_contact.email,
                 subject: `Invoice #${reservation.reservation_no} dari partner ${dataUser.data.partnername}`,
                 html: compileInvoice.render({
@@ -1517,7 +1517,7 @@ exports.sendEmailToCustomerManual = async function (req, res, next) {
           //hash email
     
           var smtpTransport = nodemailer.createTransport({
-            host: "missandei.id.rapidplex.com",
+            host: "roselia.id.domainesia.com",
             port: 465,
             secure: true,
             auth: {
@@ -1762,7 +1762,7 @@ exports.sendEmailToCustomerManual = async function (req, res, next) {
           generatePdf().then(async (res) => {
             setTimeout(() => {
               let mailoptions = {
-                from: '"Haio Invoice" notify@haiorganizer.com',
+                from: '"Haio Invoice" notify@haibersama.com',
                 to: getData.data.reservation_contact.email,
                 subject: `Invoice #${reservation.reservation_no} dari partner ${dataUser.data.partnername}`,
                 html: compileInvoice.render({
