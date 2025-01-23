@@ -106,7 +106,7 @@ exports.registerUser = async function(req, res, next) {
         console.log("register test" + register.data);
 
         var smtpTransport = nodemailer.createTransport({
-          host: "mail.haibersama.com",
+          host: "roselia.id.domainesia.com",
           port: 465,
           secure: true,
           auth: {
@@ -194,7 +194,7 @@ exports.registerPartner = async function(req, res, next) {
       console.log("register partner" + register.data);
 
       var smtpTransport = nodemailer.createTransport({
-        host: "mail.haibersama.com",
+        host: "roselia.id.domainesia.com",
         port: 465,
         secure: true,
         auth: {
@@ -289,7 +289,7 @@ exports.registerGoogle = async function(req, res, next) {
       console.log("register test" + register.data);
 
       var smtpTransport = nodemailer.createTransport({
-        host: "mail.haibersama.com",
+        host: "roselia.id.domainesia.com",
         port: 465,
         secure: true,
         auth: {
@@ -405,7 +405,7 @@ exports.forgetPassword = async function(req, res, next) {
       console.log("forget password response " + JSON.stringify(resetPassword.data));
       
       var smtpTransport = nodemailer.createTransport({
-        host: "mail.haibersama.com",
+        host: "roselia.id.domainesia.com",
         port: 465,
         secure: true,
         auth: {
@@ -593,7 +593,7 @@ exports.googleLoginCallBack = async function(req, res, next) {
 
       /* 
       var smtpTransport = nodemailer.createTransport({
-        host: "mail.haibersama.com",
+        host: "roselia.id.domainesia.com",
         port: 465,
         secure: true,
         auth: {
