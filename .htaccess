@@ -1,7 +1,7 @@
 # DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION BEGIN
 PassengerAppRoot "/home/haiorgan/development.haiorganizer.com"
 PassengerBaseURI "/"
-PassengerNodejs "/home/haibersa/nodevenv/development.haiorganizer.com/8/bin/node"
+PassengerNodejs "/home/haiorgan/nodevenv/development.haiorganizer.com/8/bin/node"
 PassengerAppType node
 PassengerStartupFile app.js
 PassengerAppLogFile "/home/haiorgan/logs"
