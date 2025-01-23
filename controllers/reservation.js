@@ -74,7 +74,7 @@ exports.updateStatus = async function(req, res, next) {
             //console.log(dataUser);     
   
             var smtpTransport = nodemailer.createTransport({
-              host: "roselia.id.domainesia.com",
+              host: "mail.haibersama.com",
               port: 465,
               secure: true,
               auth: {
@@ -203,7 +203,7 @@ exports.updateStatusManual = async function(req, res, next) {
           //console.log(dataUser);
 
           var smtpTransport = nodemailer.createTransport({
-            host: "roselia.id.domainesia.com",
+            host: "mail.haibersama.com",
             port: 465,
             secure: true,
             auth: {
@@ -964,7 +964,7 @@ exports.getSuccessReservationsEmail = async function(req, res, next) {
       //hash email
 
       var smtpTransport = nodemailer.createTransport({
-        host: "roselia.id.domainesia.com",
+        host: "mail.haibersama.com",
         port: 465,
         secure: true,
         auth: {
@@ -1052,7 +1052,7 @@ exports.getSuccessReservationEmail = async function(req, res, next) {
        //hash email
  
        var smtpTransport = nodemailer.createTransport({
-         host: "roselia.id.domainesia.com",
+         host: "mail.haibersama.com",
          port: 465,
          secure: true,
          auth: {
@@ -1221,7 +1221,7 @@ exports.sendEmailToCustomer = async function (req, res, next) {
           //hash email
     
           var smtpTransport = nodemailer.createTransport({
-            host: "roselia.id.domainesia.com",
+            host: "mail.haibersama.com",
             port: 465,
             secure: true,
             auth: {
@@ -1517,7 +1517,7 @@ exports.sendEmailToCustomerManual = async function (req, res, next) {
           //hash email
     
           var smtpTransport = nodemailer.createTransport({
-            host: "roselia.id.domainesia.com",
+            host: "mail.haibersama.com",
             port: 465,
             secure: true,
             auth: {
