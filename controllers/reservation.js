@@ -1523,7 +1523,9 @@ exports.sendEmailToCustomerManual = async function (req, res, next) {
             auth: {
               user: EMAIL_USERNAME,
               pass: EMAIL_PASSWORD
-            }
+            },
+            debug: true,
+            logger: true
           });
 
           //console.log('reservation[0] ' + JSON.stringify(getData.data.reservation_no));
