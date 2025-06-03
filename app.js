@@ -1,18 +1,43 @@
+// Require necessary modules
+const fs = require('fs');
+const path = require('path');
+const dotenv = require('dotenv');
+
+// Set the NODE_ENV variable
+const env = process.env.NODE_ENV || 'development';
+console.log('Run server env ' + env);
+const envFile = env === 'production' ? '.env-production' : '.env';
+console.log('Run env file ' + envFile);
+
+// Load environment variables
+const envPath = path.resolve(__dirname, envFile);
+
+if (fs.existsSync(envPath)) {
+  dotenv.config({ path: envPath });
+} else {
+  console.error(`Environment file ${envFile} not found.`);
+  process.exit(1);
+}
+
 const express = require("express");
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const app = express();
 const config = require('./config/config');
+const passport = require('passport');
+const cookieSession = require('cookie-session');
+const serveIndex = require('serve-index');
+const initDB = require('./models/index');
+
+// Router
 const authRouter = require('./routes/haiuser');
 const categoryRouter = require('./routes/category');
 const partnerRouter = require('./routes/partner');
 const reservationRouter = require('./routes/reservation');
-const passport = require('passport');
 const serviceRouter = require('./routes/service');
 const subServiceRouter = require('./routes/subservice');
 const packageRouter = require('./routes/partnerpackage');
-const cookieSession = require('cookie-session');
 const dashboardRouter = require('./routes/dashboard');
 const awardsRouter = require('./routes/partnerawards');
 const portfolioRouter = require('./routes/partnerportfolio');
@@ -27,9 +52,6 @@ const partnerBankAccountRouter = require('./routes/partnerbankaccount');
 const partnerRatingRouter = require('./routes/partnerrating');
 const walletRouter = require('./routes/wallet');
 const settingRouter = require('./routes/appsetting');
-const serveIndex = require('serve-index');
-const initDB = require('./models/index');
-const path = require('path');
 
 // Seed model into table
 // const haiuser = require("./models/reservation");
@@ -79,7 +101,7 @@ app.use(process.env.APP_API_PREFIX + '/follower', followerRouter);
 app.use(process.env.APP_API_PREFIX + '/setting', settingRouter);
 
 app.get("/", (req, res) => {
-  res.json({ message: "Welcome to Hai organizer application." });
+  res.json({ message: "Welcome to Io application." });
 });
 
 // catch 404 and forward to error handler

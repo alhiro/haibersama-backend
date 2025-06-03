@@ -5,7 +5,7 @@ var headerAuth  =  require('../authMiddleware');
 const path = require('path');
 const multer = require('multer');
 // upload file path
-const FILE_PATH = 'imagehai';
+const FILE_PATH = 'event';
 const ENV = process.env;
 const now = Date.now();
 // configure multer

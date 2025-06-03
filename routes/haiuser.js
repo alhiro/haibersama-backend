@@ -6,10 +6,9 @@ var authController = require("../controllers/auth");
 const passportConf = require("../lib/passport");
 const jwt = require("../lib/jwt");
 const path = require('path');
-const bcrypt = require("bcrypt-nodejs");
 const multer = require('multer');
 // upload file path
-const FILE_PATH = 'imagehai';
+const FILE_PATH = 'profile';
 const ENV = process.env;
 const now = Date.now();
 const {check, validationResult} = require('express-validator');
