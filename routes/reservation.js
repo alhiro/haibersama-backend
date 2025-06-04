@@ -372,9 +372,11 @@ reservationRouter.post("/getlistsdynamic", headerAuth.isPartnerAuthenticated, (r
     page: req.body.page,
     limitItem: req.body.limitItem,
     userId: id, 
-    type: type
+    type: type,
+    search: req.body.search
   };
-  
+  console.log("data resrvation");
+  console.log(req.body);
   reservationController.getReservationsGroupByDynamic(data, res);
 });
 

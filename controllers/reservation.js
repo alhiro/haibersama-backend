@@ -671,7 +671,7 @@ exports.getReservationsGroupByCategories = async function(req, res, next) {
 
 exports.getReservationsGroupByDynamic = async function(req, res, next) {
   try {
-      const { statusCode, categoryId, eventFrom, eventTo, limitItem, page, userId, type } = req;
+      const { statusCode, categoryId, eventFrom, eventTo, limitItem, page, userId, type, search } = req;
       //const paging = { limit: pageSize, offset: (page - 1) *  pageSize};
 
       const params = { };
@@ -710,7 +710,12 @@ exports.getReservationsGroupByDynamic = async function(req, res, next) {
         params.category_id = categoryId;
         where += " AND rv.category_id = " + categoryId + " ";
       }
-          
+
+      if (search.trim().length >= 4) {
+        const keyword = search.trim();
+        where += ` AND (reservation_no ILIKE '%${keyword}%' OR rv.name ILIKE '%${keyword}%')`;
+      }
+      
       console.log('where ' + where);
       let data = await resv.findSuccessReservations(where, limitItem, page);
       data.code = data.success ? 200 : 500;
