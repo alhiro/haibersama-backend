@@ -68,7 +68,10 @@ module.exports = {
           .allow(""),
         city: joi
           .string()
-          .allow(""),        
+          .allow(""),    
+        firebaseUid: joi
+          .string()
+          .required(),     
         // dob: joi.string().regex(patternDob),
         // nation: joi.string(),
       })

@@ -10,6 +10,10 @@ const HaiUser = dbSeq.define('hai_user', {
     primaryKey: true,
     autoIncrement: true
   },  
+  uid_firebase: {
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
   email: {
     type: Sequelize.STRING(50),
     allowNull: true

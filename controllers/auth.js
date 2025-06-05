@@ -48,7 +48,11 @@ exports.login = async function(req, res, next) {
         code: 401,
         success: false,
         message: "Nama Pengguna Saat Ini Tidak Aktif",
-        data: {}
+        data: {
+          email: users.data.email,
+          phone: users.data.phone_number,
+          active: users.data.active
+        }
       });
     } else {
       console.log("pass hash: " + users.data.password);
@@ -534,6 +538,30 @@ exports.resetNewPassword = async function(req, res, next) {
     return res
       .status(500)
       .send({ code: 500, success: false, message: err.message, data: { err } });
+  }
+};
+
+exports.activatedUser = async (req, res) => {
+  console.log("controller activation user profile");
+  try {
+    console.log(req);
+    const firebaseEmail = req.user.email;
+    const emailFromBody = req.body.email;
+
+    if (firebaseEmail !== emailFromBody) {
+      return res
+        .status(403)
+        .send({ code: 403, success: false, message: err.message, data: {} });
+    }
+
+    var response = await auth.updateActivatedUser(req);
+
+    response.code = response.success ? 200 : 500;
+    return res.status(response.code).send(response);
+  } catch (err) {
+    return res
+      .status(500)
+      .send({ code: 500, success: false, message: err.message, data: {} });
   }
 };
 

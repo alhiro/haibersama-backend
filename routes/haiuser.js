@@ -66,6 +66,10 @@ authRouter.get("/verify", (req, res, next) => {
   authController.verify(req, res);
 });
 
+authRouter.post("/activatedUser", headerAuth.verifyFirebaseToken, (req, res, next) => {
+  authController.activatedUser(req, res);
+});
+
 authRouter.post("/forgetPassword", (req, res, next) => {
   authController.forgetPassword(req, res);
 });

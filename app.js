@@ -3,6 +3,9 @@ const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
 
+// Firebase Admin SDK
+const admin = require('./firebase');
+
 // Set the NODE_ENV variable
 const env = process.env.NODE_ENV || 'development';
 console.log('Run server env ' + env);

@@ -63,12 +63,16 @@ module.exports = {
       returning: true,
       plain: true })
       .then(updated => {
-        console.log("updated : ", updated[1].dataValues)
+        const user = updated[1].dataValues;
+        console.log("updated : ", user)
+
         return {
           success: true,
           message: "Berhasil Login",
           data: {
-            type: updated[1].dataValues.type == 1 ? "user" : "partner",
+            type: user.type == 1 ? "user" : "partner",
+            active: user.active,
+            phone: user.phone_number,
             token,
             expiresIn: new Date(decoded.exp * 1000),
             refresh_token
@@ -595,6 +599,36 @@ module.exports = {
       });
   },
 
+  updateActivatedUser: async params => {
+    console.log("Update profile service");
+
+    const {
+      email,
+    } = params.body;
+    console.log("params email :", email);
+    let data = {
+      active: 1
+    };
+
+    return User.update(data, {
+      where: { email: email },
+      returning: true,
+      plain: true
+    })
+      .then(updated => {
+        console.log(updated[1].dataValues);
+        delete updated[1].dataValues.password;
+        return {
+          success: true,
+          message: "Akun berhasil diaktifkan",
+          data: updated[1]
+        };
+      })
+      .catch(err => {
+        return { success: false, message: "Gagal mengaktifkan akun", data: err };
+      });
+  },
+
   updatePassword: async params => {
     console.log("Update profile password service");    
 
@@ -636,9 +670,12 @@ module.exports = {
         name,
         address,
         phone,
-        whatsapp// ,
+        whatsapp,
+        firebaseUid
         // categoryid
       } = params;
+      console.log("params register partner");
+      console.log(params);
       const generateHashPassword = await jwt.hash(password, 10);
 
       const token = crypto({ length: 16 });
@@ -653,6 +690,7 @@ module.exports = {
         name: name,
         token: token,
         whatsapp_number: whatsapp,
+        uid_firebase: firebaseUid,
         active: 0,
         type: 2
       };

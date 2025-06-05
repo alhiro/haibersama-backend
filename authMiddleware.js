@@ -1,4 +1,5 @@
 var jwt = require("./lib/jwt");
+var admin = require('firebase-admin');
 
 module.exports = {
   isUserAuthenticated: async (req, res, next) => {
@@ -197,6 +198,22 @@ module.exports = {
           message: "FORBIDDEN"
         });
       }
+    }
+  },
+
+  verifyFirebaseToken: async (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[0];
+    // console.log("req.headers : " + JSON.stringify(token));
+  
+    if (!token) return res.status(401).json({ message: 'Token tidak ditemukan' });
+  
+    try {
+      const decoded = await admin.auth().verifyIdToken(token);
+      console.log("next decoded : ", decoded);
+      req.user = decoded;
+      next();
+    } catch (err) {
+      return res.status(401).json({ message: 'Token tidak valid', error: err.message });
     }
   }
 };
