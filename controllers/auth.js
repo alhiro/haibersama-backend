@@ -44,18 +44,27 @@ exports.login = async function(req, res, next) {
     }
 
     if (users.data.active === 0) {
-      return res.status(401).send({
-        code: 401,
-        success: false,
-        message: "Nama Pengguna Saat Ini Tidak Aktif",
-        data: {
-          email: users.data.email,
-          phone: users.data.phone_number,
-          active: users.data.active
-        }
-      });
+      console.log("pass hash active 0: " + users.data.password);
+
+      const hashPass = await jwt.hash(password, 10);
+      console.log("hash: " + hashPass);
+      jwt
+        .compare(password, users.data.password)
+        .then(async function(done) {
+          let response = await auth.login(users.data, false, 1);
+          response.code = response.success ? 401 : 500;
+          return res.status(response.code).send(response);
+        })
+        .catch(function(error) {
+          return res.status(400).send({
+            code: 400,
+            success: false,
+            message: "Nama Pengguna / Kata Sandi Tidak Benar",
+            data: {}
+          });
+        });
     } else {
-      console.log("pass hash: " + users.data.password);
+      console.log("pass hash active 1: " + users.data.password);
 
       const hashPass = await jwt.hash(password, 10);
       console.log("hash: " + hashPass);

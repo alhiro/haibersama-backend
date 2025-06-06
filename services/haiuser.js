@@ -214,6 +214,7 @@ module.exports = {
               successjob: partner.successjob, 
               currentbalance: partner.currentbalance, 
               tiername: partner.tiername,  
+              tiernames: partner.tiernames,  
               points: partner.points, 
               is_verified: !partner.is_verified ? false : partner.is_verified,
               process_verified: users.process_verified,     

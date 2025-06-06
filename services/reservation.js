@@ -677,6 +677,14 @@ module.exports =
   
                 const insertWallet = await wallethistory.findOrCreateWallet(objParam, objBalance);
                 console.log("insertWallet "  + JSON.stringify(insertWallet));
+
+                var objParamPoint = {
+                  user_id: upReserv.partner_id, 
+                  reservation_no: upReserv.reservation_no, 
+                  reservation_date: upReserv.reservation_date, 
+                  total_price: upReserv.total_price
+                };
+                const pointinput = await pointprocess.setPoint(objParamPoint);
               } else {
                 console.log("tambahkan saldo ke wallet user order");
                 //fee order set 0 %
@@ -710,6 +718,14 @@ module.exports =
   
                 const insertWallet = await wallethistory.findOrCreateWallet(objParam, objBalance);
                 console.log("insertWallet "  + JSON.stringify(insertWallet));
+
+                var objParamPoint = {
+                  user_id: upReserv.partner_id, 
+                  reservation_no: upReserv.reservation_no, 
+                  reservation_date: upReserv.reservation_date, 
+                  total_price: upReserv.total_price
+                };
+                const pointinput = await pointprocess.setPoint(objParamPoint);
               }
             }
 
@@ -828,6 +844,14 @@ module.exports =
   
                 const insertWallet = await wallethistory.findOrCreateWallet(objParam, objBalance);
                 console.log("insertWallet "  + JSON.stringify(insertWallet));
+
+                var objParamPoint = {
+                  user_id: upReserv.partner_id, 
+                  reservation_no: upReserv.reservation_no, 
+                  reservation_date: upReserv.reservation_date, 
+                  total_price: upReserv.total_price
+                };
+                const pointinput = await pointprocess.setPoint(objParamPoint);
               } else {
                 console.log("tambahkan saldo ke wallet. ini user tipe");
                 //fee order set 2 %
@@ -861,6 +885,14 @@ module.exports =
   
                 const insertWallet = await wallethistory.findOrCreateWallet(objParam, objBalance);
                 console.log("insertWallet "  + JSON.stringify(insertWallet));
+
+                var objParamPoint = {
+                  user_id: upReserv.partner_id, 
+                  reservation_no: upReserv.reservation_no, 
+                  reservation_date: upReserv.reservation_date, 
+                  total_price: upReserv.total_price
+                };
+                const pointinput = await pointprocess.setPoint(objParamPoint);
               }
             }
 

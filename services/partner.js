@@ -141,7 +141,8 @@ module.exports =
               coalesce(successjob, 0) successjob,
               coalesce(pbb.current_balance, 0) currentbalance,
               coalesce(points, 0) points,
-              coalesce(pt.tier_name, 'Perintis') tiername
+              COALESCE(pt.tier_name, 'Perintis') AS tiernames,
+              COALESCE(ts.tier_name, 'Perintis') AS tiername
               FROM hai_user part
               left join lateral (
                 select sum(point) points
@@ -176,6 +177,13 @@ module.exports =
                 AND date(start_date) <= date(now()) 
                 AND date(end_date) >= date(now()) 
               ) pt on true
+              LEFT JOIN LATERAL (
+              SELECT tier_name
+                FROM tier_setting
+                WHERE minimum_point <= COALESCE(po.points, 0)
+                ORDER BY minimum_point DESC
+                LIMIT 1
+              ) ts ON true
             WHERE part.type = 2
             and part.id = `+partnerID+`;`,
           {
