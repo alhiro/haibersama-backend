@@ -11,11 +11,11 @@ module.exports = {
     ],
    deploy : {
       production : {
-        user : 'dev',
-        host : '34.50.73.153',
+        user : 'haibersa',
+        host : '103.147.154.206',
         ref  : 'origin/master',
         repo : 'https://gitlab.com/haiteam/hai-backend',
-        path : '/home/dev',
+        path : '/home/haibersa/api.haibersama.com/v1/',
         'post-deploy' : 'npm install && pm2 reload ecosystem.config.js --env production',
         ssh_options: 'StrictHostKeyChecking=no',
       }

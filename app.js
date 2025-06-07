@@ -6,10 +6,12 @@ const dotenv = require('dotenv');
 // Firebase Admin SDK
 const admin = require('./firebase');
 
+require('dotenv').config();
+
 // Set the NODE_ENV variable
-const env = process.env.NODE_ENV || 'development';
+const env = process.env.NODE_ENV;
 console.log('Run server env ' + env);
-const envFile = env === 'production' ? '.prod.env' : '.env';
+const envFile = env === 'production' ? '.env-production' : '.env';
 console.log('Run env file ' + envFile);
 
 // Load environment variables
@@ -17,9 +19,14 @@ const envPath = path.resolve(__dirname, envFile);
 
 if (fs.existsSync(envPath)) {
   dotenv.config({ path: envPath });
+  console.log('✅ Loaded env from', envPath);
 } else {
-  console.error(`Environment file ${envFile} not found.`);
-  process.exit(1);
+  if (nodeEnv !== 'production') {
+    console.error(`❌ Env file not found: ${envPath}`)
+    process.exit(1)
+  } else {
+    console.warn(`⚠️ Env file not found in production, assuming env vars are set by system.`)
+  }
 }
 
 const express = require("express");
