@@ -9,7 +9,7 @@ const admin = require('./firebase');
 // Set the NODE_ENV variable
 const env = process.env.NODE_ENV || 'development';
 console.log('Run server env ' + env);
-const envFile = env === 'production' ? '.env-production' : '.env';
+const envFile = env === 'production' ? '.prod.env' : '.env';
 console.log('Run env file ' + envFile);
 
 // Load environment variables
@@ -134,7 +134,7 @@ app.use(function onError(err, req, res, next) {
   }
 })
 
-app.set('port', process.env.PORT || 3000);
+app.set('port', process.env.PORT || 3001);
 var server = app.listen(app.get('port'), function() {
   initDB;
   console.log('Express server listening on port ' + server.address().port);
