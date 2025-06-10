@@ -12,6 +12,27 @@ exports.getAllEvent = async function (req, res, next) {
   }
 };
 
+exports.getEventSelayang = async (req, res, next) => {
+  try {
+    const params = { page: req.query.page, limit: req.query.limit, search: req.query.search, startDate: req.query.startDate, endDate: req.query.endDate, };
+
+    var all = await eventService.getListSelayang(params);
+    return res.status(200).json(
+      {
+        success: all.success,
+        data: all.data,
+        message: all.message,
+        page: all.page,
+        pageCount: all.count,
+        length: all.length
+      });
+  } catch (err) {
+    return res
+      .status(500)
+      .send({ code: 500, success: false, message: err.message, data: { err } });
+  }
+};
+
 exports.getEvent = async function (req, res, next) {
   try {
     const params = { id: req.query.id };
@@ -24,13 +45,22 @@ exports.getEvent = async function (req, res, next) {
   }
 };
 
-exports.getEventPartner = async function (req, res, next) {
-  const partner_id = req;
+exports.getEventPartner = async (req, res, next) => {
+  const partner_id = res.locals.auth.id;
   console.log("controller search event partner_id " + partner_id);
   try {
-    var params = { partner_id: partner_id };
-    var findEvent = await eventService.findAll(params);
-    return res.status(200).json({ status: 200, data: findEvent, message: "Event Partner Berhasil Diambil" });
+    const params = { page: req.query.page, limit: req.query.limit, search: req.query.search, startDate: req.query.startDate, endDate: req.query.endDate, };
+
+    var all = await eventService.findListSelayangPartner(partner_id, params);
+    return res.status(200).json(
+      {
+        success: all.success,
+        data: all.data,
+        message: all.message,
+        page: all.page,
+        count: all.count,
+        length: all.length
+      });
   } catch (err) {
     return res
       .status(500)
@@ -38,11 +68,17 @@ exports.getEventPartner = async function (req, res, next) {
   }
 };
 
-exports.searchEvent = async function (req, res, next) {
+exports.searchEvent = async function(req, res, next) {
   console.log("controller search event " + JSON.stringify(req.query));
   try {
-        var events = await eventService.search(req.query);
-        return res.status(200).json({ status: 200, data: events, message: "Pencarian Event Berhasil Diambil" });
+    var events = await eventService.search(req.query);
+    return res
+      .status(200)
+      .json({
+        status: 200,
+        data: events,
+        message: "Pencarian Event Berhasil Diambil",
+      });
   } catch (err) {
     return res
       .status(500)
@@ -54,6 +90,16 @@ exports.addEvent = async function (req, res, next) {
   try {
     console.log("controller add event")
     const params = { title: req.title };
+    console.log("req.title : " + JSON.stringify(req.title));
+    console.log("req.description : " + JSON.stringify(req.description));
+
+    // if (!req.title || req.title.trim() === "" || !req.description || req.description.trim() === "") {
+    //   return res.status(400).send({
+    //     success: false,
+    //     message: "Title dan deskripsi tidak boleh kosong.",
+    //     data: {}
+    //   });
+    // }
 
     let insertEvent = await eventService.findOrCreate(params, req);
     return res.status(200).send(insertEvent);

@@ -24,7 +24,7 @@ const Event = dbSeq.define('event', {
   },
   image_url: {
     type: Sequelize.STRING(500),
-    allowNull: false
+    allowNull: true
   },
   link_url: {
     type: Sequelize.STRING(500),
@@ -40,7 +40,7 @@ const Event = dbSeq.define('event', {
   },
   approval: {
     type: Sequelize.BOOLEAN,
-    allowNull: false
+    allowNull: true
   },
   order_no: {
     type: Sequelize.INTEGER,

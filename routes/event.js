@@ -38,17 +38,24 @@ const upload = multer({
   }
 });
 
-eventRouter.get("/getall", (req, res, next) => {
+eventRouter.get("/getall", headerAuth.isPartnerAuthenticated, (req, res, next) => {
   controller.getAllEvent(req, res);
+});
+
+eventRouter.get("/getallpublic", headerAuth.isUserAuthenticated, (req, res, next) => {
+  controller.getAllEvent(req, res);
+});
+
+eventRouter.get("/listselayang", headerAuth.isUserAuthenticated, (req, res, next) => {
+  controller.getEventSelayang(req, res);
+});
+
+eventRouter.get("/partner", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+  controller.getEventPartner(req, res);
 });
 
 eventRouter.get("/get", (req, res, next) => {
   controller.getEvent(req, res);
-});
-
-eventRouter.get("/partner", headerAuth.isUserAuthenticated, (req, res, next) => {
-  const partner_id = res.locals.auth.id;
-  controller.getEventPartner(partner_id, res);
 });
 
 eventRouter.post("/search", (req, res, next) => {
@@ -56,36 +63,58 @@ eventRouter.post("/search", (req, res, next) => {
 });
 
 eventRouter.post("/add", headerAuth.isPartnerAuthenticated, upload.single('events'), (req, res, next) => {
+  const username = res.locals.auth;
+  console.log('username is ', username);
   const partner_id = res.locals.auth.id;
   const partner_email = res.locals.auth.email;
 
   const eventImage = req.file;
   console.log(eventImage);
-  console.log('storage location is ', req.hostname + '/' + req.file.path);
-  // make sure file is available
-  if (!eventImage) {
-    res.status(400).send({
-      status: false,
-      data: 'No file is selected.'
-    });
-  } else {
-    console.log(req.body);
-    const data = {
-      partner_id: partner_id,
-      title: req.body.title,
-      description: req.body.description,
-      image_url: ENV.API_URL + '/ftp/' + FILE_PATH + '/' + eventImage.filename,
-      link_url: req.body.link_url,
-      event_date: req.body.event_date,
-      order_no: parseInt(req.body.order_no),
-      active: req.body.active,
-      ticket: req.body.ticket,
-      approval: req.body.approval,
-      created_by: partner_email
-    };
+  // console.log('storage location is ', req.hostname + '/' + req.file.path);
 
-    controller.addEvent(data, res);
+  const data = {
+    partner_id: partner_id,
+    title: req.body.title,
+    description: req.body.description,
+    link_url: req.body.link_url,
+    event_date: req.body.event_date,
+    order_no: parseInt(req.body.order_no),
+    active: req.body.active,
+    ticket: req.body.ticket,
+    approval: req.body.approval,
+    created_by: partner_email
+  };
+
+  if (eventImage && eventImage.filename) {
+    data.image_url = ENV.API_URL + '/ftp/' + FILE_PATH + '/' + eventImage.filename;
   }
+
+  controller.addEvent(data, res);
+
+  // make sure file is available
+  // if (!eventImage) {
+  //   res.status(400).send({
+  //     status: false,
+  //     data: 'No file is selected.'
+  //   });
+  // } else {
+  //   console.log(req.body);
+  //   const data = {
+  //     partner_id: partner_id,
+  //     title: req.body.title,
+  //     description: req.body.description,
+  //     image_url: ENV.API_URL + '/ftp/' + FILE_PATH + '/' + eventImage.filename,
+  //     link_url: req.body.link_url,
+  //     event_date: req.body.event_date,
+  //     order_no: parseInt(req.body.order_no),
+  //     active: req.body.active,
+  //     ticket: req.body.ticket,
+  //     approval: req.body.approval,
+  //     created_by: partner_email
+  //   };
+
+  //   controller.addEvent(data, res);
+  // }
 });
 
 eventRouter.post("/update", headerAuth.isPartnerAuthenticated, upload.single('events'), (req, res, next) => {
