@@ -8,14 +8,29 @@ const multer = require('multer');
 // upload file path
 const FILE_PATH = 'payment';
 const ENV = process.env;
-const now = Date.now();
+
+const formatDate = () => {
+  const now = new Date();
+  const pad = n => n.toString().padStart(2, '0');
+
+  const day = pad(now.getDate());
+  const month = pad(now.getMonth() + 1);
+  const year = now.getFullYear();
+
+  const hours = pad(now.getHours());
+  const minutes = pad(now.getMinutes());
+  const seconds = pad(now.getSeconds());
+
+  return `${day}${month}${year}_${hours}-${minutes}-${seconds}`;
+};
 
 var storage = multer.diskStorage({
   destination: (req, file, cb) => {
       cb(null, './public/' + FILE_PATH)
   },
   filename: (req, file, cb) => {
-      cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname))
+      const formattedDate = formatDate();
+      cb(null, file.fieldname + '-' + formattedDate + path.extname(file.originalname))
   }
 });
 

@@ -474,6 +474,7 @@ module.exports =
             rv.duration, 
             rv.reservation_type,
             rt.description AS reservation_type_desc,
+            rv.confirmation_payment,
 
             -- Partner Package Details (nested JSON array)
             COALESCE(
