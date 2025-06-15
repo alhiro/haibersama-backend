@@ -6,7 +6,7 @@ var headerAuth  =  require('../authMiddleware');
 const path = require('path');
 const multer = require('multer');
 // upload file path
-const FILE_PATH = 'imagehai';
+const FILE_PATH = 'payment';
 const ENV = process.env;
 const now = Date.now();
 
@@ -481,7 +481,7 @@ reservationRouter.post("/sendemailtocustomermanual", headerAuth.isPartnerAuthent
   reservationController.sendEmailToCustomerManual(data, res);
 });
 
-reservationRouter.put("/updateTotalInvoice", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+reservationRouter.put("/updateTotalInvoice", headerAuth.isUserAuthenticated, (req, res, next) => {
   const id = res.locals.auth.id;
   const email = res.locals.auth.email;
   const type = res.locals.auth.type;

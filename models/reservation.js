@@ -152,8 +152,8 @@ ReservationService.belongsTo(Reservation);
 ReservationStatusHistory.belongsTo(Reservation);
 partnerWalletHistory.belongsTo(Reservation);
 
-Reservation.hasMany(PartnerPackageDetail, {foreignKey: 'reservation_no'})
-PartnerPackageDetail.belongsTo(Reservation, {foreignKey: 'reservation_no'});
+Reservation.hasMany(PartnerPackageDetail, {foreignKey: 'reservation_no', sourceKey: 'reservation_no'})
+PartnerPackageDetail.belongsTo(Reservation, {foreignKey: 'reservation_no', sourceKey: 'reservation_no'});
 
 module.exports = Reservation
 

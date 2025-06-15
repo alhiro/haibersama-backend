@@ -263,13 +263,49 @@ module.exports =
             as: 'reservation_services'
           },
           {
+            model: PackageDetail,
+            as: 'partner_package_details'
+          },
+          {
             model: ReservationStatusHistory,
             as: 'reservation_status_histories'
           }
         ]
       })
-        .then((reservations) => {
-          return (!reservations) ? { success: false, message: "Reservasi Tidak Ditemukan!", data: {} } : { success: true, message: "Reservation Found", data: reservations }
+        .then((reservation) => {
+          if (!reservation) {
+            return {
+              success: false,
+              message: "Reservasi Tidak Ditemukan!",
+              data: {}
+            };
+          }
+    
+          // Hitung total dari reservation_services
+          const totalServicePrice = parseFloat(reservation.total_price);
+    
+          // Hitung total dari partner_package_details
+          const totalPackagePrice = reservation.partner_package_details?.reduce((sum, item) => {
+            const price = parseFloat(item.price) || 0;
+            return sum + price;
+          }, 0) || 0;
+    
+          // Ambil ppn dan diskon dari reservation
+          const totalPpn = parseFloat(reservation.total_ppn) || 0;
+          const totalDiscount = parseFloat(reservation.total_discount) || 0;
+    
+          // Hitung total harga akhir
+          const total_price_payment = (totalServicePrice + totalPackagePrice + totalPpn) - totalDiscount;
+    
+          // Tambahkan ke objek reservation
+          const reservationJSON = reservation.toJSON();
+          reservationJSON.total_price_payment = total_price_payment;
+    
+          return {
+            success: true,
+            message: "Reservation Found",
+            data: reservationJSON
+          };
         })
         .catch((err) => { return { success: false, message: "Reservasi Tidak Ditemukan, Ada Kesalahan Server!", data: {}, error: err } });
     },
@@ -405,57 +441,99 @@ module.exports =
       var reservations = await sequelize.query(
         `SELECT 
             rv.id, 
-            reservation_no, 
-            reservation_date, 
-            user_id, 
-            usr.name user_name,
-            usr.picture user_picture,
-            partner_id, 
-            prt.name partner_name,
-            prt.picture partner_picture,
-            prt.type partner_type,
+            rv.reservation_no, 
+            rv.reservation_date, 
+            rv.user_id, 
+            usr.name AS user_name,
+            usr.picture AS user_picture,
+            rv.partner_id, 
+            prt.name AS partner_name,
+            prt.picture AS partner_picture,
+            prt.type AS partner_type,
             rv.category_id,
-            cat.description category,
-            service_id, 
-            srv.description service,
+            cat.description AS category,
+            rv.service_id, 
+            srv.description AS service,
             rv.name,
             rc.email,
             rc.address,
             rc.other_description,
-            rv.id,
             rv.package_id,
             rv.package_name,
-            rv.description,
-            event_date, 
-            event_time, 
-            event_address, 
-            total_price, 
-            total_discount, 
-            total_payment, 
-            total_down_payment,
-            status_code, 
-            ci.description status,
-            duration, 
-            reservation_type,
-            rt.description reservation_type_desc
+            rv.description AS reservation_description,
+            rv.event_date, 
+            rv.event_time, 
+            rv.event_address, 
+            rv.total_price, 
+            rv.total_discount, 
+            rv.total_payment, 
+            rv.total_ppn,
+            rv.total_down_payment,
+            rv.status_code, 
+            ci.description AS status,
+            rv.duration, 
+            rv.reservation_type,
+            rt.description AS reservation_type_desc,
+
+            -- Partner Package Details (nested JSON array)
+            COALESCE(
+              json_agg(
+                DISTINCT jsonb_build_object(
+                  'id', ppd.id,
+                  'reservation_no', ppd.reservation_no,
+                  'package_header_id', ppd.package_header_id,
+                  'sub_service_title', ppd.sub_service_title,
+                  'description', ppd.description,
+                  'duration', ppd.duration,
+                  'price', ppd.price,
+                  'additional_services', ppd.additional_services,
+                  'terms', ppd.terms
+                )
+              ) FILTER (WHERE ppd.id IS NOT NULL), '[]'
+            ) AS partner_package_details,
+
+           -- Kalkulasi total_price_payment
+         CAST((
+            COALESCE(rv.total_price, 0) +
+            (
+              SELECT COALESCE(SUM(price), 0)
+              FROM partner_package_detail ppd2
+              WHERE ppd2.reservation_no = rv.reservation_no
+            ) +
+            COALESCE(rv.total_ppn, 0)
+          ) - COALESCE(rv.total_discount, 0) AS INTEGER) AS total_price_payment
+
           FROM public.reservation rv
-          inner join hai_user prt on prt.id = rv.partner_id
-          left join hai_user usr on usr.id = rv.user_id
-          inner join category cat on cat.id = rv.category_id
-          inner join service srv on srv.id = rv.service_id
-          left join info_code ci on ci.code = rv.status_code
-          left join info_code rt on rt.code = rv.reservation_type
-          left join reservation_contact rc on rc.reservation_id = rv.id
-          `+where+`
-          order by event_date desc;`,
+          INNER JOIN hai_user prt ON prt.id = rv.partner_id
+          LEFT JOIN hai_user usr ON usr.id = rv.user_id
+          INNER JOIN category cat ON cat.id = rv.category_id
+          INNER JOIN service srv ON srv.id = rv.service_id
+          LEFT JOIN info_code ci ON ci.code = rv.status_code
+          LEFT JOIN info_code rt ON rt.code = rv.reservation_type
+          LEFT JOIN reservation_contact rc ON rc.reservation_id = rv.id
+          LEFT JOIN partner_package_detail ppd ON ppd.reservation_no = rv.reservation_no
+          LEFT JOIN reservation_service rs ON rs.reservation_id = rv.id
+          ${where}
+          GROUP BY 
+            rv.id, rv.reservation_no, rv.reservation_date, rv.user_id,
+            rv.partner_id, rv.category_id, rv.service_id, rv.name,
+            rv.package_id, rv.package_name, rv.description,
+            rv.event_date, rv.event_time, rv.event_address,
+            rv.total_price, rv.total_discount, rv.total_payment, rv.total_down_payment,
+            rv.status_code, rv.duration, rv.reservation_type,
+            
+            usr.id, usr.name, usr.picture,
+            prt.id, prt.name, prt.picture, prt.type,
+            cat.id, cat.description,
+            srv.id, srv.description,
+            ci.code, ci.description,
+            rt.code, rt.description,
+            rc.id, rc.email, rc.address, rc.other_description
+
+          ORDER BY rv.event_date DESC;`,
         {
             raw: true,
-            type: sequelize.QueryTypes.SELECT,
-            include: [
-              {
-                model: PackageDetail,
-              },
-            ],
+            type: sequelize.QueryTypes.SELECT
         }
       );
 
@@ -465,6 +543,9 @@ module.exports =
       if (pages > pageCount) {
         pages = pageCount
       }
+
+      console.log("reservations cart");
+      console.log(reservations);
 
       if(reservations.length > 0){
         return (!reservations) ? { 

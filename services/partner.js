@@ -16,23 +16,26 @@ module.exports =
   {  
     getSearchPartner: async (param) => {
       try {
-          const { start, pageSize, orderBy, categoryID, latitude, longitude, address, serviceID, availableDate, rating, minPrice, maxPrice} = param;
+          const { start, pageSize, orderBy, categoryID, serviceID, latitude, longitude, address, rating, minPrice, maxPrice, availableDate, city_id, cityname, name} = param;
 
           // var query = "CALL someprocedure(:userId,:status)";
-          var query = "select * from sp_partner_search_get_list_paging(:p_start,:p_page_size,:p_order_by,:p_category_id,:p_latitude,:p_longitude,:p_address,:p_service_id,:p_available_date,:p_rating,:p_min_price,:p_max_price)";
+          var query = "select * from sp_partner_search_get_list_paging(:p_start,:p_page_size,:p_order_by,:p_category_id,:p_service_id,:p_latitude,:p_longitude,:p_address,:p_rating,:p_min_price,:p_max_price,:p_available_date,:p_city_id,:p_cityname,:p_name)";
           return sequelize.query(query,{ replacements : { 
               p_start: start,
               p_page_size: pageSize,
               p_order_by: orderBy,
               p_category_id: categoryID,
+              p_service_id: serviceID,
               p_latitude: latitude,
               p_longitude: longitude,
               p_address: address,
-              p_service_id: serviceID,
-              p_available_date: availableDate,
               p_rating: rating,
               p_min_price: minPrice,
-              p_max_price: maxPrice
+              p_max_price: maxPrice,
+              p_available_date: availableDate,
+              p_city_id: city_id,
+              p_cityname: cityname,
+              p_name: name,
             }, type : sequelize.QueryTypes.SELECT}).then(results => {
               return results;
           });
