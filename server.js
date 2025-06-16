@@ -2,7 +2,7 @@
 const app = require('./app');
 const http = require('http');
 const { Server } = require('socket.io');
-const socketHandler = require('./socketHandler').default; // ← import handler
+const socketHandler = require('./socketHandler'); // ← import handler
 
 const server = http.createServer(app);
 
