@@ -2,7 +2,7 @@ module.exports = {
     apps: [
        {
            name: 'io_backend',
-           script: './app.js',
+           script: './server.js',
            env: {
               NODE_ENV: 'production',
               PORT: 3001
