@@ -705,12 +705,14 @@ module.exports =
           objReservation.total_ppn = totalPpn;
         }
 
-        console.log(JSON.stringify(objReservation), "objReservation")
+        console.log("objReservation");
+        console.log(objReservation);
 
         return Reservation.update(objReservation, {where: {reservation_no: reservationNo}} )
         .then(async (updated) => { 
             const upReserv = await Reservation.findOne({ where: { reservation_no: reservationNo } })
-            console.log(JSON.stringify(upReserv), "upReserv")
+            console.log("upReserv");
+            console.log(upReserv.dataValues);
 
             const history = {status_code: statusCode, reservation_id: upReserv.id, updatedcreated_at: moment().utcOffset(0), created_by: userId };
             const upHistory = await ReservationStatusHistory.create(history);
@@ -1133,7 +1135,7 @@ module.exports =
         return Reservation.update(objReservation, { where: { reservation_no: reservationNo } })
           .then(async (updated) => {
             if (reservationType == "MANUAL_ORDER") {
-              return { success: true, message: "Berhasil Ubah Total Invoice", data: upReserv }
+              return { success: true, message: "Berhasil Ubah Invoice", data: upReserv }
             };
           })
           .catch((err) => { return { success: false, message: "Total Invoice Gagal Diubah", data: err } });

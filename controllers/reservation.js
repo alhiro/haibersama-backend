@@ -444,9 +444,36 @@ exports.updateStatusManual = async function(req, res, next) {
     }    
 };
 
-exports.updateStatusBookingManual = async function(req, res, next) {
+exports.updateStatusBookingManual = async function(params, req, res, next) {
   try {            
-      let data = await resv.updateStatusReservationManual(req);
+      let data = await resv.updateStatusReservationManual(params);
+
+      if (data.success) {
+        console.log("data update status booking manual");
+        var reservation = data.data;
+        console.log(reservation);
+      
+        // 🔴 SOCKET.IO
+        const io = req.app.get('io');
+        console.log("run io in list booking");
+        if (io) {
+          // emit ke user
+          io.to(reservation.user_id.toString()).emit("statusUpdated", {
+            reservationNo: reservation.reservation_no,
+            statusCode: reservation.status_code,
+            updatedAt: reservation.updated_at
+          });
+      
+          // emit ke partner
+          io.to(reservation.partner_id.toString()).emit("statusUpdated", {
+            reservationNo: reservation.reservation_no,
+            statusCode: reservation.status_code,
+            updatedAt: reservation.updated_at
+          });
+      
+          console.log('Socket emit sent to user and partner');
+        }
+      }
       
       if (data.success) {
         return res.status(200).send(data);

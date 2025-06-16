@@ -111,7 +111,7 @@ app.use(process.env.APP_API_PREFIX + '/follower', followerRouter);
 app.use(process.env.APP_API_PREFIX + '/setting', settingRouter);
 
 app.get("/", (req, res) => {
-  res.json({ message: "Welcome to Io application." });
+  res.json({ message: "Welcome to HaiO system." });
 });
 
 // catch 404 and forward to error handler
@@ -141,11 +141,11 @@ app.use(function onError(err, req, res, next) {
   }
 })
 
-app.set('port', process.env.PORT || 3001);
-var server = app.listen(app.get('port'), function() {
-  initDB;
-  console.log('Express server listening on port ' + server.address().port);
-});
+// app.set('port', process.env.PORT || 3001);
+// var server = app.listen(app.get('port'), function() {
+//   initDB;
+//   console.log('Express server listening on port ' + server.address().port);
+// });
 // set html view with ejs render file
 app.engine('html', require('ejs').renderFile);
 app.set('view engine', 'html');

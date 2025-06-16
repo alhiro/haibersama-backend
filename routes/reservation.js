@@ -258,7 +258,7 @@ reservationRouter.post("/updatestatusbookingmanual", headerAuth.isPartnerAuthent
     email: email
   };
   
-  reservationController.updateStatusBookingManual(data, res);
+  reservationController.updateStatusBookingManual(data, req, res);
 });
 
 reservationRouter.put("/updatestatusbooking", headerAuth.isUserAuthenticated ,(req, res, next) => {

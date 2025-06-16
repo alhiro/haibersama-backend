@@ -128,7 +128,7 @@ module.exports =
   
         // check name already registered or not
         if (!result[1]) {
-          throw ({ success: false, message: "Partner Rating Sudah Ada", data: {} })
+          return ({ success: false, message: "You have review this user. Order again for new review", data: {} })
         }
         
         return { success: true, message: "Partner Rating Berhasil Dibuat", data: result[0].dataValues }

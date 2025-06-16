@@ -64,7 +64,7 @@ module.exports = {
       plain: true })
       .then(updated => {
         const user = updated[1].dataValues;
-        console.log("updated : ", user)
+        // console.log("updated : ", user)
 
         return {
           success: true,
@@ -73,6 +73,7 @@ module.exports = {
             type: user.type == 1 ? "user" : "partner",
             active: user.active,
             phone: user.phone_number,
+            idx: user.id,
             token,
             expiresIn: new Date(decoded.exp * 1000),
             refresh_token
