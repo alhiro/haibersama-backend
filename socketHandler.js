@@ -1,5 +1,5 @@
 // socketHandler.js
-export default (io) => {
+module.exports = (io) => {
   io.on("connection", (socket) => {
     console.log("🔌 Client connected, socket id:", socket.id);
 
