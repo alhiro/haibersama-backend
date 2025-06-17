@@ -176,7 +176,7 @@ module.exports = {
       else 
       {
         console.log('users.type');
-        console.log(users);
+        console.log(users.dataValues);
         if(users.type == "2")
         {
           var partnerResult = await PartnerService.getDetail(users.id);
@@ -665,6 +665,7 @@ module.exports = {
   registerPartner: async (params, transaction, res) => {
     try {
       console.log("service register partner");
+      console.log(params)
 
       const {
         email,
@@ -673,6 +674,7 @@ module.exports = {
         address,
         phone,
         whatsapp,
+        code_referral,
         firebaseUid
         // categoryid
       } = params;
@@ -691,6 +693,7 @@ module.exports = {
         address: address,
         name: name,
         token: token,
+        code_referral: code_referral,
         whatsapp_number: whatsapp,
         uid_firebase: firebaseUid,
         active: 0,

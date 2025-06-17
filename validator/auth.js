@@ -72,6 +72,9 @@ module.exports = {
         firebaseUid: joi
           .string()
           .required(),     
+        code_referral: joi
+          .string()
+          .allow(""),     
         // dob: joi.string().regex(patternDob),
         // nation: joi.string(),
       })

@@ -127,6 +127,15 @@ const HaiUser = dbSeq.define('hai_user', {
     type: Sequelize.INTEGER,
     allowNull: true
   },
+  referral_own: {
+    type: Sequelize.STRING(10),
+    allowNull: true,
+    unique: true
+  },
+  code_referral: {
+    type: Sequelize.STRING(10),
+    allowNull: true
+  },
   created_at: {
     type: Sequelize.DATE,
     allowNull: true

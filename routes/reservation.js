@@ -176,7 +176,7 @@ reservationRouter.post("/create", headerAuth.isUserAuthenticated , (req, res, ne
     otherDescription: req.body.otherDescription
   };
 
-  reservationController.createReservation(data, res);
+  reservationController.createReservation(data, req, res);
 });
 
 

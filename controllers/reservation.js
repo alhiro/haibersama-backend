@@ -17,43 +17,106 @@ const hb = require('handlebars');
 const readFile = utils.promisify(fs.readFile);
 var pdf = require('html-pdf');
 
-exports.createReservation = async function(req, res, next) {
-    try {  
-      if(req.reservationType === "MANUAL_ORDER")
-      {
-        if(req.reservationDate === null)
-        {
-          return res.status(400).send({ code: 400, success: false, message: "Silahkan Masukkan Tanggal Reservasi", data: {} });
-        }
-      }  
+exports.createReservation = async function(params, req, res, next) {
+    try {
+      console.log("response params");
+      console.log(params);
 
-        if(!req.packageId || req.packageId == 0)
-        {
-          return res.status(400).send({ code: 400, success: false, message: "Silahkan Pilih Paket Jasa/Produk", data: {} });
-        }else if(!req.eventDate)
-        {
-          return res.status(400).send({ code: 400, success: false, message: "Tanggal Acara Tidak Ada", data: {} });
-        }else if(!req.eventTime)
-        {
-          return res.status(400).send({ code: 400, success: false, message: "Waktu Acara Tidak Ada", data: {} });
-        }else if(!req.eventAddress)
-        {
-          return res.status(400).send({ code: 400, success: false, message: "Alamat Lokasi Acara Tidak Ada / Kosong", data: {} });
-        }else if(!req.name)
-        {
-          return res.status(400).send({ code: 400, success: false, message: "Nama Tidak Ada / Kosong", data: {} });
-        }else if(!req.phoneNo || !req.waNo)
-        {
-          return res.status(400).send({ code: 400, success: false, message: "Nomor Telphon / Nomor Whatsapp Tidak Ada / Kosong", data: {} });
-        }else if(!req.email)
-        {
-          return res.status(400).send({ code: 400, success: false, message: "Email Tidak Ada / Kosong", data: {} });
+      if (params.reservationType === "MANUAL_ORDER") {
+        if (params.reservationDate === null) {
+          return res.status(400).send({
+            code: 400,
+            success: false,
+            message: "Silahkan Masukkan Tanggal Reservasi",
+            data: {},
+          });
         }
+      }
 
-        let response = await resv.findOrCreateReservation(req);
-        response.code = response.success ? 200 : 500;
+      if (!params.packageId || params.packageId == 0) {
+        return res.status(400).send({
+          code: 400,
+          success: false,
+          message: "Silahkan Pilih Paket Jasa/Produk",
+          data: {},
+        });
+      } else if (!params.eventDate) {
+        return res.status(400).send({
+          code: 400,
+          success: false,
+          message: "Tanggal Acara Tidak Ada",
+          data: {},
+        });
+      } else if (!params.eventTime) {
+        return res.status(400).send({
+          code: 400,
+          success: false,
+          message: "Waktu Acara Tidak Ada",
+          data: {},
+        });
+      } else if (!params.eventAddress) {
+        return res.status(400).send({
+          code: 400,
+          success: false,
+          message: "Alamat Lokasi Acara Tidak Ada / Kosong",
+          data: {},
+        });
+      } else if (!params.name) {
+        return res.status(400).send({
+          code: 400,
+          success: false,
+          message: "Nama Tidak Ada / Kosong",
+          data: {},
+        });
+      } else if (!params.phoneNo || !params.waNo) {
+        return res.status(400).send({
+          code: 400,
+          success: false,
+          message: "Nomor Telphon / Nomor Whatsapp Tidak Ada / Kosong",
+          data: {},
+        });
+      } else if (!params.email) {
+        return res.status(400).send({
+          code: 400,
+          success: false,
+          message: "Email Tidak Ada / Kosong",
+          data: {},
+        });
+      }
+
+      let response = await resv.findOrCreateReservation(params);
+      console.log("response reservasi");
+      console.log(response);
+      var reservation = response.data;
+
+      response.code = response.success ? 200 : 500;
+
+      if (response.code == 200) {
+        // 🔴 SOCKET.IO
+        const io = req.app.get("io");
+        console.log("run io in create booking");
+        if (io) {
+          // emit ke user
+          io.to(reservation.user_id.toString()).emit("createReservation", {
+            packageId: reservation.packageId,
+            name: reservation.name,
+            eventAddress: reservation.eventAddress,
+          });
+
+          // emit ke partner
+          io.to(reservation.partner_id.toString()).emit("createReservation", {
+            packageId: reservation.packageId,
+            name: reservation.name,
+            eventAddress: reservation.eventAddress,
+          });
+
+          console.log("Socket emit sent to user and partner createReservation");
+        }
+      }
+
       return res.status(200).send(response);
     } catch (err) {
+      console.log(err);
       return res
         .status(500)
         .send({ code: 500, success: false, message: err.message, data: {} });
@@ -451,7 +514,7 @@ exports.updateStatusBookingManual = async function(params, req, res, next) {
       if (data.success) {
         console.log("data update status booking manual");
         var reservation = data.data;
-        console.log(reservation);
+        console.log(reservation.dataValues);
       
         // 🔴 SOCKET.IO
         const io = req.app.get('io');

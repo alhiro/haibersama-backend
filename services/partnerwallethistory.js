@@ -174,7 +174,7 @@ module.exports =
         } else {
           const balance = await walletbalance.findOne({ where: paramBalance });
           console.log('balance value user order');
-          console.log(balance);
+          console.log(balance.dataValues);
           if (balance) {
             console.log("ini update balance");
             let newAmount = balance.current_balance_user;
@@ -187,7 +187,7 @@ module.exports =
             var paramUpdate = {
               current_balance_user: newAmount,
               updated_at: moment().utcOffset(0),
-              updated_by: partner_id
+              updated_by: 'system'
             };
 
             console.log('paramUpdate balance');
@@ -523,46 +523,49 @@ module.exports =
     getHistoriesGroupByEventDate: async (req) => {
       try {
       
-        const { userId, date_from, date_to } = req;
+        const { userId, date_from, date_to, type } = req;
+        console.log(req);
         var histories = {};
 
         var query = `
-        select 
-          json_agg(
-            json_build_object(
-              to_char(a.event_date, 'YYYY-MM-DD'), items
-            )
-          ) d
-        FROM (select 
-                distinct date(event_date) event_date, 
-                partner_id	  
-              from partner_wallet_history rr
-              where rr.partner_id = ` + userId + `
-              and date(rr.event_date) >= '` + date_from + `'
-              and date(rr.event_date) <= '` + date_to + `'
-          )  a
-        LEFT JOIN LATERAL (
-          SELECT json_agg(x) AS items
-          FROM  (select 
-              event_date,
-              transaction_date,
-              transaction_type,
-              reservation_no,
-              transaction_no,
-              status,
-              total_amount,
-              event_date_reservation,
-              client_name
-              from partner_wallet_history r
-              left join lateral (
-                SELECT event_date event_date_reservation,
-                name client_name
-                from reservation oyc
-                where oyc.reservation_no = r.reservation_no
-              ) sum4 on true
-              where date(r.event_date) = a.event_date and r.partner_id = ` + userId + `
-            ) x 
-          ) c ON true`;
+            select 
+              json_agg(
+                json_build_object(
+                  to_char(a.event_date, 'YYYY-MM-DD'), items
+                )
+              ) d
+            FROM (select 
+                    distinct date(event_date) event_date, 
+                    partner_id	  
+                  from partner_wallet_history rr
+                  where rr.partner_id = ` + userId + `
+                  and rr.reservation_type = '` + type + `'
+                  and date(rr.event_date) >= '` + date_from + `'
+                  and date(rr.event_date) <= '` + date_to + `'
+              )  a
+            LEFT JOIN LATERAL (
+              SELECT json_agg(x) AS items
+              FROM  (select 
+                  event_date,
+                  transaction_date,
+                  transaction_type,
+                  reservation_no,
+                  reservation_type,
+                  transaction_no,
+                  status,
+                  total_amount,
+                  event_date_reservation,
+                  client_name
+                  from partner_wallet_history r
+                  left join lateral (
+                    SELECT event_date event_date_reservation,
+                    name client_name
+                    from reservation oyc
+                    where oyc.reservation_no = r.reservation_no
+                  ) sum4 on true
+                  where date(r.event_date) = a.event_date and r.partner_id = ` + userId + `
+                ) x 
+              ) c ON true`;
           return sequelize.query(query,{ type : sequelize.QueryTypes.SELECT}).then(results => {
               if(results === null){
                 return histories;

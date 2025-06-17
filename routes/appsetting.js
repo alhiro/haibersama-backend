@@ -3,7 +3,7 @@ var settingRouter = express.Router();
 var settingController = require("../controllers/appsetting");
 var headerAuth  =  require('../authMiddleware')
 
-settingRouter.get("/get", headerAuth.isPartnerAuthenticated,(req, res, next) => {
+settingRouter.get("/get", headerAuth.isUserAuthenticated,(req, res, next) => {
   settingController.getAllSetting(req, res);
 });
 

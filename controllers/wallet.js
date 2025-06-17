@@ -52,7 +52,7 @@ exports.getHistoriesGroupByDate = async function(req, res, next) {
 exports.getHistoriesGroupByEventDate = async function(req, res, next) {
   console.log("controller service");  
 
-  const { userId, date_from, date_to } = req;
+  const { userId, date_from, date_to, type } = req;
   try {
     if(!date_from){
       return res.status(400).send({ code: 400, success: false, message: "Silahkan Masukan Tanggal Dari.", data: {} });
@@ -67,6 +67,7 @@ exports.getHistoriesGroupByEventDate = async function(req, res, next) {
       .status(200)
       .json({ status: 200, data: services, message: "Riwayat Transaksi Berdasarkan Group Event Date Berhasil Diambil" });
   } catch (err) {
+    console.log(err);
     return res
       .status(500)
       .send({ code: 500, success: false, message: err.message, data: { err } });

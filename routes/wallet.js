@@ -31,12 +31,13 @@ walletRouter.post("/historiesgroupbydate", headerAuth.isPartnerAuthenticated, (r
 
 walletRouter.post("/historiesgroupbyeventdate", headerAuth.isPartnerAuthenticated, (req, res, next) => {
   const id = res.locals.auth.id;
-  const type = res.locals.auth.type;
+  // const type = res.locals.auth.type;
 
   const data = { 
     userId: id,
     date_from: req.body.date_from,
-    date_to: req.body.date_to
+    date_to: req.body.date_to,
+    type: req.body.type
   };
   
   walletController.getHistoriesGroupByEventDate(data, res);
