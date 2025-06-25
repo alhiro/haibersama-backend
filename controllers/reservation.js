@@ -587,9 +587,7 @@ exports.deleteReservation = async function(req, res, next) {
 
 exports.getReservation = async function(req, res, next) {
     try {
-        const { body } = req;
-        const { reservationNo } = body;
-    
+        const { reservationNo } = req.body;
         let data = await resv.findReservation(reservationNo);
         return res.status(200).send(data);
       } catch (err) {

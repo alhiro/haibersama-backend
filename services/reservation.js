@@ -275,6 +275,8 @@ module.exports =
     },
     
     findReservation: async (reservationNo) => {
+      console.log("reservationNo");
+      console.log(reservationNo);
       return await Reservation.findOne({ 
         where: { reservation_no: reservationNo },
         include: [
@@ -297,6 +299,7 @@ module.exports =
         ]
       })
         .then(async (reservation) => {
+          console.log(reservation);
           if (!reservation) {
             return {
               success: false,

@@ -116,13 +116,17 @@ module.exports =
 
     getDetail: async (partnerID) => {
       try{
-        var totalPoint = await sequelize.query(`SELECT coalesce(sum(point), 0) AS point FROM point_history AS point_history WHERE point_history.user_id = ` + partnerID,
-        {
+        var totalPointResult = await sequelize.query(
+          `SELECT COALESCE(SUM(point), 0) AS point FROM point_history AS point_history WHERE point_history.user_id = :partnerID`,
+          {
             raw: true,
-            type: sequelize.QueryTypes.SELECT
-        });
-
-        console.log("totalPoint ", + totalPoint);
+            type: sequelize.QueryTypes.SELECT,
+            replacements: { partnerID },
+          }
+        );
+        
+        var totalPoint = totalPointResult[0].point;
+        console.log("totalPoint", totalPoint);
 
         var partners = await sequelize.query(
           `SELECT
@@ -241,12 +245,17 @@ module.exports =
           console.log("data get detail");
           console.log(objData);
 
-          var totalPoint = await sequelize.query(`SELECT coalesce(sum(point), 0) AS point FROM point_history AS point_history WHERE point_history.user_id = ` + objData.partner_id,
-          {
+          var totalPointResult = await sequelize.query(
+            `SELECT COALESCE(SUM(point), 0) AS point FROM point_history AS point_history WHERE point_history.user_id = :partner_id`,
+            {
               raw: true,
-              type: sequelize.QueryTypes.SELECT
-          });
-          console.log("totalPoint ", + totalPoint);
+              type: sequelize.QueryTypes.SELECT,
+              replacements: { partner_id },
+            }
+          );
+          
+          var totalPoint = totalPointResult[0].point;
+          console.log("totalPoint", totalPoint);
 
           // const query = `SELECT * FROM partner_follower WHERE user_id IN (${JSON.stringify('user_id')})`;
 
