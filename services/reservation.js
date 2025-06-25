@@ -334,6 +334,8 @@ module.exports =
           const reservationJSON = reservation.toJSON();
           reservationJSON.total_price_payment = total_price_payment;
 
+          let referralCode = null;
+          
           // find user has code_referral
           const userData = await HaiUser.findOne({ where: { id: reservation.partner_id } });
           
