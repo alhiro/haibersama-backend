@@ -304,7 +304,7 @@ module.exports =
             return {
               success: false,
               message: "Reservasi Tidak Ditemukan!",
-              data: {}
+              data: null
             };
           }
     
@@ -377,7 +377,15 @@ module.exports =
             data: reservationJSON
           };
         })
-        .catch((err) => { return { success: false, message: "Reservasi Tidak Ditemukan, Ada Kesalahan Server!", data: {}, error: err } });
+        .catch((err) => {
+          console.error("🔥 Server error:", err);
+          return {
+            success: false,
+            message: "Terjadi kesalahan pada server.",
+            data: null,
+            error: err.message || err
+          };
+        });
     },
     
     findReservations: async (where) => {
