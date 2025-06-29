@@ -176,7 +176,7 @@ module.exports = {
       else 
       {
         console.log('users.type');
-        console.log(users.dataValues);
+        console.log(users.type);
         if(users.type == "2")
         {
           var partnerResult = await PartnerService.getDetail(users.id);

@@ -1,5 +1,6 @@
 var jwt = require("./lib/jwt");
 var admin = require('firebase-admin');
+const HaiUser = require('./models/haiuser');
 
 module.exports = {
   isUserAuthenticated: async (req, res, next) => {
@@ -215,7 +216,48 @@ module.exports = {
     } catch (err) {
       return res.status(401).json({ message: 'Token tidak valid', error: err.message });
     }
+  },
+
+  updateFcmToken: async (req, res, next) => {
+    try {
+      const token = req.headers["fcm_token"];
+      const userId = res.locals?.auth?.id;
+
+      console.log("req fcm token");
+      console.log(token);
+      console.log(userId);
+  
+      if (!token || !userId) {
+        return next(); // Lewatkan jika tidak ada value
+      }
+
+      // Hapus token dari user lain (hindari konflik FCM token ganda)
+      await HaiUser.update(
+        { fcm_token: null },
+        {
+          where: {
+            fcm_token: token,
+            id: { [require("sequelize").Op.ne]: userId }, // selain user yang sedang login
+          },
+        }
+      );
+  
+      // Cari user
+      const user = await HaiUser.findOne({ where: { id: userId } });
+      if (user && (!user.fcm_token || user.fcm_token !== token)) {
+        await user.update({ fcm_token: token });
+        console.log(`✅ FCM token updated for user ID ${user.id}`);
+      } else {
+        console.log(`✅ FCM token exist user id ${user.id}`);
+      }
+    } catch (error) {
+      console.warn("⚠️ Failed to update FCM token:", error.message);
+      // Tidak menghalangi request meski update token gagal
+    }
+  
+    return next();
   }
+  
 };
 
 

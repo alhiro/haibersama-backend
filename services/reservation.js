@@ -518,45 +518,56 @@ module.exports =
     },
 
     findSuccessReservations: async (where, limitItem, page) => {
-      var reservations = await sequelize.query(
+      // Pastikan page valid
+      let currentPage = parseInt(page) || 1;
+      let limit = parseInt(limitItem) || 10;
+      let offset = (currentPage - 1) * limit;
+    
+      // Hitung total data dulu (tanpa limit)
+      const totalResult = await sequelize.query(
+        `SELECT COUNT(DISTINCT rv.id) AS total
+         FROM public.reservation rv
+         INNER JOIN hai_user prt ON prt.id = rv.partner_id
+         LEFT JOIN hai_user usr ON usr.id = rv.user_id
+         INNER JOIN category cat ON cat.id = rv.category_id
+         INNER JOIN service srv ON srv.id = rv.service_id
+         LEFT JOIN info_code ci ON ci.code = rv.status_code
+         LEFT JOIN info_code rt ON rt.code = rv.reservation_type
+         LEFT JOIN reservation_contact rc ON rc.reservation_id = rv.id
+         LEFT JOIN partner_package_detail ppd ON ppd.reservation_no = rv.reservation_no
+         LEFT JOIN reservation_service rs ON rs.reservation_id = rv.id
+         ${where}`,
+        { type: sequelize.QueryTypes.SELECT }
+      );
+    
+      const totalData = parseInt(totalResult[0]?.total || 0);
+      const pageCount = Math.ceil(totalData / limit);
+    
+      // Jika page lebih dari max pageCount, return kosong
+      if (currentPage > pageCount && pageCount !== 0) {
+        return {
+          success: false,
+          message: "Reservasi Tidak Ditemukan.",
+          data: [],
+          page: currentPage,
+          pageCount: pageCount,
+        };
+      }
+    
+      // Ambil data yang dibatasi
+      const reservations = await sequelize.query(
         `SELECT 
-            rv.id, 
-            rv.reservation_no, 
-            rv.reservation_date, 
-            rv.user_id, 
-            usr.name AS user_name,
-            usr.picture AS user_picture,
-            rv.partner_id, 
-            prt.name AS partner_name,
-            prt.picture AS partner_picture,
-            prt.type AS partner_type,
-            rv.category_id,
-            cat.description AS category,
-            rv.service_id, 
-            srv.description AS service,
-            rv.name,
-            rc.email,
-            rc.address,
-            rc.other_description,
-            rv.package_id,
-            rv.package_name,
-            rv.description AS reservation_description,
-            rv.event_date, 
-            rv.event_time, 
-            rv.event_address, 
-            rv.total_price, 
-            rv.total_discount, 
-            rv.total_payment, 
-            rv.total_ppn,
-            rv.total_down_payment,
-            rv.status_code, 
-            ci.description AS status,
-            rv.duration, 
-            rv.reservation_type,
-            rt.description AS reservation_type_desc,
+            rv.id, rv.reservation_no, rv.reservation_date, rv.user_id, 
+            usr.name AS user_name, usr.picture AS user_picture,
+            rv.partner_id, prt.name AS partner_name, prt.picture AS partner_picture,
+            prt.type AS partner_type, rv.category_id, cat.description AS category,
+            rv.service_id, srv.description AS service, rv.name, rc.email, rc.address,
+            rc.other_description, rv.package_id, rv.package_name,
+            rv.description AS reservation_description, rv.event_date, rv.event_time,
+            rv.event_address, rv.total_price, rv.total_discount, rv.total_payment, 
+            rv.total_ppn, rv.total_down_payment, rv.status_code, ci.description AS status,
+            rv.duration, rv.reservation_type, rt.description AS reservation_type_desc,
             rv.confirmation_payment,
-
-            -- Partner Package Details (nested JSON array)
             COALESCE(
               json_agg(
                 DISTINCT jsonb_build_object(
@@ -572,37 +583,32 @@ module.exports =
                 )
               ) FILTER (WHERE ppd.id IS NOT NULL), '[]'
             ) AS partner_package_details,
-
-           -- Kalkulasi total_price_payment
-          CAST((
-            COALESCE(rv.total_price, 0) +
-            (
-              SELECT COALESCE(SUM(price), 0)
-              FROM partner_package_detail ppd2
-              WHERE ppd2.reservation_no = rv.reservation_no
-            ) +
-            COALESCE(rv.total_ppn, 0)
-          ) - COALESCE(rv.total_discount, 0) AS INTEGER) AS total_price_payment
-
-          FROM public.reservation rv
-          INNER JOIN hai_user prt ON prt.id = rv.partner_id
-          LEFT JOIN hai_user usr ON usr.id = rv.user_id
-          INNER JOIN category cat ON cat.id = rv.category_id
-          INNER JOIN service srv ON srv.id = rv.service_id
-          LEFT JOIN info_code ci ON ci.code = rv.status_code
-          LEFT JOIN info_code rt ON rt.code = rv.reservation_type
-          LEFT JOIN reservation_contact rc ON rc.reservation_id = rv.id
-          LEFT JOIN partner_package_detail ppd ON ppd.reservation_no = rv.reservation_no
-          LEFT JOIN reservation_service rs ON rs.reservation_id = rv.id
-          ${where}
-          GROUP BY 
+            CAST((
+              COALESCE(rv.total_price, 0) +
+              (SELECT COALESCE(SUM(price), 0)
+               FROM partner_package_detail ppd2
+               WHERE ppd2.reservation_no = rv.reservation_no) +
+              COALESCE(rv.total_ppn, 0)
+            ) - COALESCE(rv.total_discount, 0) AS INTEGER) AS total_price_payment
+    
+         FROM public.reservation rv
+         INNER JOIN hai_user prt ON prt.id = rv.partner_id
+         LEFT JOIN hai_user usr ON usr.id = rv.user_id
+         INNER JOIN category cat ON cat.id = rv.category_id
+         INNER JOIN service srv ON srv.id = rv.service_id
+         LEFT JOIN info_code ci ON ci.code = rv.status_code
+         LEFT JOIN info_code rt ON rt.code = rv.reservation_type
+         LEFT JOIN reservation_contact rc ON rc.reservation_id = rv.id
+         LEFT JOIN partner_package_detail ppd ON ppd.reservation_no = rv.reservation_no
+         LEFT JOIN reservation_service rs ON rs.reservation_id = rv.id
+         ${where}
+         GROUP BY 
             rv.id, rv.reservation_no, rv.reservation_date, rv.user_id,
             rv.partner_id, rv.category_id, rv.service_id, rv.name,
             rv.package_id, rv.package_name, rv.description,
             rv.event_date, rv.event_time, rv.event_address,
             rv.total_price, rv.total_discount, rv.total_payment, rv.total_down_payment,
             rv.status_code, rv.duration, rv.reservation_type,
-            
             usr.id, usr.name, usr.picture,
             prt.id, prt.name, prt.picture, prt.type,
             cat.id, cat.description,
@@ -610,39 +616,21 @@ module.exports =
             ci.code, ci.description,
             rt.code, rt.description,
             rc.id, rc.email, rc.address, rc.other_description
-
-          ORDER BY rv.event_date DESC;`,
+         ORDER BY rv.event_date DESC
+         OFFSET ${offset} LIMIT ${limit};`,
         {
-            raw: true,
-            type: sequelize.QueryTypes.SELECT
+          raw: true,
+          type: sequelize.QueryTypes.SELECT,
         }
       );
-
-      const pageCount = Math.ceil(reservations.length / limitItem);
-      let pages = parseInt(page);
-      if (!pages) { pages }
-      if (pages > pageCount) {
-        pages = pageCount
-      }
-
-      console.log("reservations cart");
-      console.log(reservations);
-
-      if(reservations.length > 0){
-        return (!reservations) ? { 
-          success: false, 
-          message: "Reservasi Tidak Ditemukan", 
-          data: {},  
-          page: pages,
-          pageCount: pageCount } : { 
-            success: true, 
-            message: "Reservasi Ditemukan", 
-            data: reservations.slice(pages * limitItem - limitItem, pages * limitItem), 
-            page: pages,
-            pageCount: pageCount }
-      } else {      
-        return { success: false, message: "Reservasi Tidak Ada", data: {}, page: pages, pageCount: pageCount } 
-      }
+    
+      return {
+        success: true,
+        message: "Reservasi ditemukan",
+        data: reservations,
+        page: currentPage,
+        pageCount: pageCount,
+      };
     },
     
     updateStatusReservation: async (req) => {
@@ -1906,73 +1894,78 @@ module.exports =
     },
 
     findReminderMore: async (where) => {
-      var reservations = await sequelize.query(
-        `SELECT 
-              rv.id, 
-              reservation_no, 
-              reservation_date, 
-              user_id, 
-              usr.name user_name,
-              usr.picture user_picture,
-              partner_id, 
-              prt.name partner_name,
-              prt.picture partner_picture,
-              rv.category_id, 
-              cat.description category,
-              service_id, 
-              srv.description service,
-              rv.name,
-              rc.email,
-              rc.address,
-              rv.package_name,
-              rv.description,
-              event_date, 
-              event_time, 
-              event_address, 
-              total_price, 
-              total_discount, 
-              total_payment, 
-              total_down_payment,
-              status_code, 
-              ci.description status,
-              duration, 
-              reservation_type,
-              rt.description reservation_type_desc
-            FROM public.reservation rv
-            inner join hai_user prt on prt.id = rv.partner_id
-            left join hai_user usr on usr.id = rv.user_id
-            inner join category cat on cat.id = rv.category_id
-            inner join service srv on srv.id = rv.service_id
-            left join info_code ci on ci.code = rv.status_code
-            left join info_code rt on rt.code = rv.reservation_type
-            left join reservation_contact rc on rc.reservation_id = rv.id
-            `+ where + `
-            order by event_date asc, event_time asc;`,
-        {
-          raw: true,
-          type: sequelize.QueryTypes.SELECT
-        }
-      );
+      console.log(where);
+      try {
+        var reservations = await sequelize.query(
+          `SELECT 
+                rv.id, 
+                reservation_no, 
+                reservation_date, 
+                user_id, 
+                usr.name user_name,
+                usr.picture user_picture,
+                partner_id, 
+                prt.name partner_name,
+                prt.picture partner_picture,
+                rv.category_id, 
+                cat.description category,
+                service_id, 
+                srv.description service,
+                rv.name,
+                rc.email,
+                rc.address,
+                rv.package_name,
+                rv.description,
+                event_date, 
+                event_time, 
+                event_address, 
+                total_price, 
+                total_discount, 
+                total_payment, 
+                total_down_payment,
+                status_code, 
+                ci.description status,
+                duration, 
+                reservation_type,
+                rt.description reservation_type_desc
+              FROM public.reservation rv
+              inner join hai_user prt on prt.id = rv.partner_id
+              left join hai_user usr on usr.id = rv.user_id
+              inner join category cat on cat.id = rv.category_id
+              inner join service srv on srv.id = rv.service_id
+              left join info_code ci on ci.code = rv.status_code
+              left join info_code rt on rt.code = rv.reservation_type
+              left join reservation_contact rc on rc.reservation_id = rv.id
+              `+ where + `
+              order by event_date asc, event_time asc;`,
+          {
+            raw: true,
+            type: sequelize.QueryTypes.SELECT
+          }
+        );
 
-      if (reservations.length > 0) {
-        return (!reservations) ? { success: false, message: "Reminder Tidak Ditemukan!", data: {} } : { success: true, message: "Reminder Berhasil Ditemukan", data: reservations }
-      } else {
-        return { success: false, message: "Reminder Tidak Ditemukan!", data: {} }
+        if (reservations.length > 0) {
+          return (!reservations) ? { success: true, message: "Reminder Tidak Ditemukan!", data: {} } : { success: true, message: "Reminder Berhasil Ditemukan", data: reservations }
+        } else {
+          return { success: true, message: "Reminder Tidak Ditemukan!", data: {} }
+        }
+        // const {limit, offset} = paging;      
+        // return await Reservation.findAll({ 
+        //   where: params,
+        //   // limit: limit, 
+        //   // offset: offset,
+        //   order: [["reservation_no", "DESC"]]
+        //  })
+        //   .then((reservations) => {
+        //     return (!reservations) ? { success: false, message: "Reservation Not Found", data: {} } : { success: true, message: "Reservation Found", data: reservations }
+        //   })
+        //   .catch((err) => { 
+        //     console.log(err);
+        //     return { success: false, message: "Reservation Not Found", data: err } 
+        //   });
+      } catch (error) {
+        throw (error)
       }
-      // const {limit, offset} = paging;      
-      // return await Reservation.findAll({ 
-      //   where: params,
-      //   // limit: limit, 
-      //   // offset: offset,
-      //   order: [["reservation_no", "DESC"]]
-      //  })
-      //   .then((reservations) => {
-      //     return (!reservations) ? { success: false, message: "Reservation Not Found", data: {} } : { success: true, message: "Reservation Found", data: reservations }
-      //   })
-      //   .catch((err) => { 
-      //     console.log(err);
-      //     return { success: false, message: "Reservation Not Found", data: err } 
-      //   });
     },
 
     updateConfirmationPaymentImage: async (req) => {

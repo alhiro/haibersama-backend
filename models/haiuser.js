@@ -14,6 +14,10 @@ const HaiUser = dbSeq.define('hai_user', {
     type: Sequelize.STRING(50),
     allowNull: true
   },
+  fcm_token: {
+    type: Sequelize.STRING,
+    allowNull: true,
+  },
   email: {
     type: Sequelize.STRING(50),
     allowNull: true

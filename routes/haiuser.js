@@ -211,7 +211,7 @@ authRouter.get(
   }
 );
 
-authRouter.get("/me", headerAuth.isUserAuthenticated , (req, res, next) => {
+authRouter.get("/me", headerAuth.isUserAuthenticated, headerAuth.updateFcmToken, (req, res, next) => {
   console.log("endpoint : get Profile")
   const partner_id = res.locals.auth.id;
   const email = res.locals.auth.email

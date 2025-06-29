@@ -3,9 +3,17 @@ const bank = require("../services/partnerbankaccount");
 const term = require("../services/partnerpackage");
 const partnerResv = require("../services/partner");
 const emailcounter = require("../services/emailcounter");
+const getFcmTokens = require("../lib/utils");
+const admin = require("firebase-admin");
+
+const HaiUser = require('../models/haiuser');
+
+const utilility = require("../lib/utils");
+
 const sequelizeTransaction = require("../config/sequelizeTransaction");
 const { VERIFY_URL, EMAIL_PASSWORD, EMAIL_USERNAME } = process.env;
 const moment = require("moment");
+moment.locale('id'); 
 const nodemailer = require("nodemailer");
 const Hogan = require("hogan.js");
 const fs = require("fs");
@@ -85,9 +93,11 @@ exports.createReservation = async function(params, req, res, next) {
       }
 
       let response = await resv.findOrCreateReservation(params);
-      console.log("response reservasi");
-      console.log(response);
       var reservation = response.data;
+      console.log("response reservasi create");
+      console.log(reservation);
+      console.log(reservation.id);
+      console.log(reservation.package_id);
 
       response.code = response.success ? 200 : 500;
 
@@ -98,19 +108,87 @@ exports.createReservation = async function(params, req, res, next) {
         if (io) {
           // emit ke user
           io.to(reservation.user_id.toString()).emit("createReservation", {
-            packageId: reservation.packageId,
+            packageId: reservation.package_id,
             name: reservation.name,
-            eventAddress: reservation.eventAddress,
+            eventAddress: reservation.event_address,
           });
 
           // emit ke partner
           io.to(reservation.partner_id.toString()).emit("createReservation", {
-            packageId: reservation.packageId,
+            packageId: reservation.package_id,
             name: reservation.name,
-            eventAddress: reservation.eventAddress,
+            eventAddress: reservation.event_address,
           });
 
           console.log("Socket emit sent to user and partner createReservation");
+        }
+
+        // 🔔 Kirim Notifikasi FCM ke user dan partner
+        // Ambil token user dan partner
+        const userToken = await utilility.getFcmTokens(reservation.user_id, HaiUser);
+        const partnerToken = await utilility.getFcmTokens(reservation.partner_id, HaiUser);
+
+        const formattedDate = moment(reservation.event_date).format('dddd, DD/MM/YYYY');
+        const capitalizedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
+
+        // Notifikasi untuk Partner
+        if (partnerToken) {
+          const partnerPayload = {
+            notification: {
+              title: "Reservasi Baru",
+              body: `${reservation.name} telah membuat reservasi baru ${reservation.package_name} untuk tanggal ${capitalizedDate} ${reservation.event_time}, di ${reservation.event_address}. Periksa dan proses segera`,
+            },
+            android: {
+              notification: {
+                icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
+                color: '#1B84FF', // opsional
+              },
+            },
+            data: {
+              type: "createReservation",
+              reservationId: reservation.id.toString(),
+              packageId: reservation.package_id.toString(),
+            },
+            token: partnerToken,
+          };
+
+          admin
+            .messaging()
+            .send(partnerPayload)
+            .then((res) => console.log("✅ Notifikasi ke partner sent:", res))
+            .catch((err) => console.error("❌ Error FCM partner:", err));
+        } else {
+          console.log("No token for send messaging");
+        }
+
+        // Notifikasi untuk User
+        if (userToken) {
+          const userPayload = {
+            notification: {
+              title: "Reservasi Diterima",
+              body: `Partner sedang memproses reservasi Anda. Mohon tunggu konfirmasi.`,
+            },
+            android: {
+              notification: {
+                icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
+                color: '#1B84FF', // opsional
+              },
+            },
+            data: {
+              type: "reservationProcessing",
+              reservationId: reservation.id.toString(),
+              packageId: reservation.package_id.toString(),
+            },
+            token: userToken,
+          };
+
+          admin
+            .messaging()
+            .send(userPayload)
+            .then((res) => console.log("✅ Notifikasi ke user sent:", res))
+            .catch((err) => console.error("❌ Error FCM user:", err));
+        } else {
+          console.log("No token for send messaging");
         }
       }
 
@@ -517,7 +595,7 @@ exports.updateStatusBookingManual = async function(params, req, res, next) {
         console.log(reservation.dataValues);
       
         // 🔴 SOCKET.IO
-        const io = req.app.get('io');
+        const io = req.app.get("io");
         console.log("run io in list booking");
         if (io) {
           // emit ke user
@@ -535,6 +613,113 @@ exports.updateStatusBookingManual = async function(params, req, res, next) {
           });
       
           console.log('Socket emit sent to user and partner');
+        }
+
+        // 🔔 Kirim Notifikasi FCM ke user dan partner
+        // Ambil token user dan partner
+        const userToken = await utilility.getFcmTokens(reservation.user_id, HaiUser);
+        const partnerToken = await utilility.getFcmTokens(reservation.partner_id, HaiUser);
+
+        const formattedDate = moment(reservation.event_date).format('dddd, DD/MM/YYYY');
+        const capitalizedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
+
+        let bodyMessage = "";
+        let transactionStatusCode = "";
+
+        if (reservation.status_code == "ORDER_COMPLETED") {
+          transactionStatusCode = "Reservasi Selesai";
+        } else if (reservation.status_code == "ORDER_CANCEL_BY_PARTNER") {
+          transactionStatusCode = "Reservasi Dibatalkan Partner";
+        } else if (reservation.status_code == "ORDER_CANCEL_BY_USER") {
+          transactionStatusCode = "Reservasi Dibatalkan Kustomer";
+        } else if (reservation.status_code == "ORDER_DP_REQUEST") {
+          transactionStatusCode = "Permintaan DP";
+        } else if (reservation.status_code == "ORDER_DP_COMPLETED") {
+          transactionStatusCode = "Sudah DP";
+        } else if (reservation.status_code == "ORDER_PARTNER_CONFIRM") {
+          transactionStatusCode = "Sudah Dikonfirmasi Partner";
+        } else if (reservation.status_code == "ORDER_REPAYMENT_REQUEST") {
+          transactionStatusCode = "Permintaan Ulang Pembayaran";
+        } else if (reservation.status_code == "ORDER_PAYMENT_COMPLETED") {
+          transactionStatusCode = "Pembayaran Lunas";
+        }
+
+        if (reservation.status_code === "ORDER_COMPLETED") {
+          bodyMessage = `Reservasi atas nama ${reservation.name} sudah selesai untuk transaksi ${reservation.package_name}, tanggal ${capitalizedDate} ${reservation.event_time}, di ${reservation.event_address}.`;
+        } else if (reservation.status_code === "ORDER_CANCEL_BY_PARTNER") {
+          bodyMessage = `Partner udah membatalkan reservasi ${reservation.name} untuk transaksi ${reservation.package_name}, tanggal ${capitalizedDate} ${reservation.event_time},  di ${reservation.event_address}.`;
+        } else if (reservation.status_code === "ORDER_CANCEL_BY_USER") {
+          bodyMessage = `${reservation.name} telah membatalkan reservasi untuk transaksi ${reservation.package_name}, tanggal ${capitalizedDate} ${reservation.event_time}, di ${reservation.event_address}.`;
+        } else if (reservation.status_code === "ORDER_DP_REQUEST") {
+          bodyMessage = `Permintaan pembayaran DP untuk reservasi ${reservation.name} – ${reservation.package_name}, tanggal ${capitalizedDate} ${reservation.event_time} di ${reservation.event_address}.`;
+        } else if (reservation.status_code === "ORDER_DP_COMPLETED") {
+          bodyMessage = `${reservation.name} telah membayar DP reservasi untuk transaksi ${reservation.package_name}, tanggal ${capitalizedDate} ${reservation.event_time} di ${reservation.event_address}.`;
+        } else if (reservation.status_code === "ORDER_PARTNER_CONFIRM") {
+          bodyMessage = `Reservasi ${reservation.name} untuk transaksi ${reservation.package_name}, tanggal ${capitalizedDate} ${reservation.event_time} telah dikonfirmasi oleh partner.`;
+        } else if (reservation.status_code === "ORDER_REPAYMENT_REQUEST") {
+          bodyMessage = `Permintaan pelunasan pembayaran reservasi untuk transaksi ${reservation.name} – ${reservation.package_name}, tanggal ${capitalizedDate} di ${reservation.event_address}.`;
+        } else if (reservation.status_code === "ORDER_PAYMENT_COMPLETED") {
+          bodyMessage = `Reservasi ${reservation.name} telah dilunasi untuk transaksi ${reservation.package_name}, tanggal ${capitalizedDate} ${reservation.event_time}, di ${reservation.event_address}.`;
+        }
+
+        // Notifikasi untuk Partner
+        if (partnerToken) {
+          const partnerPayload = {
+            notification: {
+              title: `${transactionStatusCode}`,
+              body: `${bodyMessage}`,
+            },
+            android: {
+              notification: {
+                icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
+                color: '#1B84FF', // opsional
+              },
+            },
+            data: {
+              type: "updateReservation",
+              reservationId: reservation.id.toString(),
+              packageId: reservation.package_id.toString(),
+            },
+            token: partnerToken,
+          };
+
+          admin
+            .messaging()
+            .send(partnerPayload)
+            .then((res) => console.log("✅ Notifikasi ke partner sent:", res))
+            .catch((err) => console.error("❌ Error FCM partner:", err));
+        } else {
+          console.log("No token for send messaging");
+        }
+
+        // Notifikasi untuk User
+        if (userToken) {
+          const userPayload = {
+            notification: {
+              title: `${transactionStatusCode}`,
+              body: `${bodyMessage}`,
+            },
+            android: {
+              notification: {
+                icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
+                color: '#1B84FF', // opsional
+              },
+            },
+            data: {
+              type: "updateReservation",
+              reservationId: reservation.id.toString(),
+              packageId: reservation.package_id.toString(),
+            },
+            token: userToken,
+          };
+
+          admin
+            .messaging()
+            .send(userPayload)
+            .then((res) => console.log("✅ Notifikasi ke user sent:", res))
+            .catch((err) => console.error("❌ Error FCM user:", err));
+        } else {
+          console.log("No token for send messaging");
         }
       }
       

@@ -5,7 +5,6 @@ const dotenv = require('dotenv');
 
 // Firebase Admin SDK
 const admin = require('./firebase');
-
 require('dotenv').config();
 
 // Set the NODE_ENV variable
@@ -139,7 +138,7 @@ app.use(function onError(err, req, res, next) {
       error: err
     }).status(500)
   }
-})
+});
 
 // app.set('port', process.env.PORT || 3001);
 // var server = app.listen(app.get('port'), function() {
