@@ -986,7 +986,7 @@ exports.getReservationsGroupByDynamic = async function(req, res, next) {
 
       if (search.trim().length >= 4) {
         const keyword = search.trim();
-        where += ` AND (reservation_no ILIKE '%${keyword}%' OR rv.name ILIKE '%${keyword}%')`;
+        where += ` AND (rv.reservation_no ILIKE '%${keyword}%' OR rv.name ILIKE '%${keyword}%')`;
       }
       
       console.log('where ' + where);
