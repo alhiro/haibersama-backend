@@ -1221,6 +1221,7 @@ exports.getSuccessReservationsList = async function(req, res, next) {
 exports.getSuccessReservationsAllList = async function(req, res, next) {
   try {
       const { statusCode, categoryId, eventFrom, eventTo, limitItem, page, userId, type } = req;
+      console.log("getSuccessReservationsAllList " + JSON.stringify(req));
       
       //const paging = { limit: pageSize, offset: (page - 1) *  pageSize};
 

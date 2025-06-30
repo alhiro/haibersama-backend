@@ -43,4 +43,12 @@ dashboardRouter.get("/getpartnerordersummary", headerAuth.isPartnerAuthenticated
   dashboardController.getPartnerOrderSummary(data, res);
 });
 
+dashboardRouter.get("/getuserordersummary", headerAuth.isUserAuthenticated, (req, res, next) => {
+  const id = res.locals.auth.id;
+  const data = { 
+    userId: id
+  };
+  dashboardController.getUserOrderSummary(data, res);
+});
+
 module.exports = dashboardRouter;

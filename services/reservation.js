@@ -312,6 +312,7 @@ module.exports =
             appSetting.findOne({ where: { setting_name: "SERVICE_FEE" } }),
           ]);
           const serviceFee = parseFloat(serviceSetting?.setting_value || 0);
+          console.log("serviceFee " + serviceFee);
 
           // Hitung total dari reservation_services
           const totalServicePrice = parseFloat(reservation.total_price);
@@ -330,6 +331,8 @@ module.exports =
 
           // Hitung total harga akhir
           const total_price_payment = (totalServicePrice + totalPackagePrice + totalPpn + serviceFee) - totalDiscount;
+          console.log("total_price_payment " + total_price_payment);
+
           // Tambahkan ke objek reservation untuk total_price_payment
           const reservationJSON = reservation.toJSON();
           reservationJSON.total_price_payment = total_price_payment;
@@ -355,7 +358,7 @@ module.exports =
             const appFeeNormal = parseFloat(appFeeSetting?.setting_value || 0);
 
              // Hitung total fee normal
-            const total_fee_normal = (totalServicePrice + totalPackagePrice) * (appFeeNormal / 100);
+            const total_fee_normal = (totalServicePrice + totalPackagePrice + serviceFee) * (appFeeNormal / 100);
             // Tambahkan ke objek reservation untuk total fee normal
             reservationJSON.total_fee_normal = total_fee_normal;
           } else {
@@ -368,7 +371,7 @@ module.exports =
             const appFeeReferral = parseFloat(appFeeReferralSetting?.setting_value || 0);
 
             // Hitung total fee referral
-            const total_fee_referral = (totalServicePrice + totalPackagePrice) * (appFeeReferral / 100);
+            const total_fee_referral = (totalServicePrice + totalPackagePrice + serviceFee) * (appFeeReferral / 100);
             // Tambahkan ke objek reservation untuk total fee normal
             reservationJSON.total_fee_referral = total_fee_referral;
           }
@@ -631,6 +634,134 @@ module.exports =
         page: currentPage,
         pageCount: pageCount,
       };
+    },
+
+    findSuccessUserReservations: async (where, limitItem, page) => {
+      var reservations = await sequelize.query(
+        `SELECT 
+            rv.id, 
+            rv.reservation_no, 
+            rv.reservation_date, 
+            rv.user_id, 
+            usr.name AS user_name,
+            usr.picture AS user_picture,
+            rv.partner_id, 
+            prt.name AS partner_name,
+            prt.picture AS partner_picture,
+            prt.type AS partner_type,
+            rv.category_id,
+            cat.description AS category,
+            rv.service_id, 
+            srv.description AS service,
+            rv.name,
+            rc.email,
+            rc.address,
+            rc.other_description,
+            rv.package_id,
+            rv.package_name,
+            rv.description AS reservation_description,
+            rv.event_date, 
+            rv.event_time, 
+            rv.event_address, 
+            rv.total_price, 
+            rv.total_discount, 
+            rv.total_payment, 
+            rv.total_ppn,
+            rv.total_down_payment,
+            rv.status_code, 
+            ci.description AS status,
+            rv.duration, 
+            rv.reservation_type,
+            rt.description AS reservation_type_desc,
+            rv.confirmation_payment,
+
+            -- Partner Package Details (nested JSON array)
+            COALESCE(
+              json_agg(
+                DISTINCT jsonb_build_object(
+                  'id', ppd.id,
+                  'reservation_no', ppd.reservation_no,
+                  'package_header_id', ppd.package_header_id,
+                  'sub_service_title', ppd.sub_service_title,
+                  'description', ppd.description,
+                  'duration', ppd.duration,
+                  'price', ppd.price,
+                  'additional_services', ppd.additional_services,
+                  'terms', ppd.terms
+                )
+              ) FILTER (WHERE ppd.id IS NOT NULL), '[]'
+            ) AS partner_package_details,
+
+           -- Kalkulasi total_price_payment
+          CAST((
+            COALESCE(rv.total_price, 0) +
+            (
+              SELECT COALESCE(SUM(price), 0)
+              FROM partner_package_detail ppd2
+              WHERE ppd2.reservation_no = rv.reservation_no
+            ) +
+            COALESCE(rv.total_ppn, 0)
+          ) - COALESCE(rv.total_discount, 0) AS INTEGER) AS total_price_payment
+
+          FROM public.reservation rv
+          INNER JOIN hai_user prt ON prt.id = rv.partner_id
+          LEFT JOIN hai_user usr ON usr.id = rv.user_id
+          INNER JOIN category cat ON cat.id = rv.category_id
+          INNER JOIN service srv ON srv.id = rv.service_id
+          LEFT JOIN info_code ci ON ci.code = rv.status_code
+          LEFT JOIN info_code rt ON rt.code = rv.reservation_type
+          LEFT JOIN reservation_contact rc ON rc.reservation_id = rv.id
+          LEFT JOIN partner_package_detail ppd ON ppd.reservation_no = rv.reservation_no
+          LEFT JOIN reservation_service rs ON rs.reservation_id = rv.id
+          ${where}
+          GROUP BY 
+            rv.id, rv.reservation_no, rv.reservation_date, rv.user_id,
+            rv.partner_id, rv.category_id, rv.service_id, rv.name,
+            rv.package_id, rv.package_name, rv.description,
+            rv.event_date, rv.event_time, rv.event_address,
+            rv.total_price, rv.total_discount, rv.total_payment, rv.total_down_payment,
+            rv.status_code, rv.duration, rv.reservation_type,
+            
+            usr.id, usr.name, usr.picture,
+            prt.id, prt.name, prt.picture, prt.type,
+            cat.id, cat.description,
+            srv.id, srv.description,
+            ci.code, ci.description,
+            rt.code, rt.description,
+            rc.id, rc.email, rc.address, rc.other_description
+
+          ORDER BY rv.event_date DESC;`,
+        {
+            raw: true,
+            type: sequelize.QueryTypes.SELECT
+        }
+      );
+
+      const pageCount = Math.ceil(reservations.length / limitItem);
+      let pages = parseInt(page);
+      if (!pages) { pages }
+      if (pages > pageCount) {
+        pages = pageCount
+      }
+
+      console.log("reservations cart");
+      console.log(reservations.length);
+
+      if(reservations.length > 0){
+        return (!reservations) ? { 
+          success: false, 
+          message: "Reservasi Tidak Ditemukan", 
+          data: {},  
+          page: pages,
+          pageCount: pageCount } : { 
+            success: true, 
+            message: "Reservasi Ditemukan", 
+            data: reservations.slice(pages * limitItem - limitItem, pages * limitItem), 
+            page: pages,
+            pageCount: pageCount }
+      } else {      
+        return { success: false, message: "Reservasi Tidak Ada", data: {}, page: pages, pageCount: pageCount } 
+      }
     },
     
     updateStatusReservation: async (req) => {
@@ -1814,6 +1945,70 @@ module.exports =
               raw: true,
               type: sequelize.QueryTypes.SELECT
           }
+      );
+          // console.log(reservations);
+      if(reservations.length > 0){
+        return (!reservations) ? { success: false, message: "Statistik Reservasi Tidak Ditemukan!", data: {} } : { success: true, message: "Statistik Reservasi Berhasil Ditemukan", data: reservations[0] }
+      } else {      
+        return { success: false, message: "Statistik Reservasi Tidak Ditemukan, Ada Kesalahan Server!", data: err } 
+      }
+    },
+
+    findReservationUserSummary: async (userId) => {
+      var reservations = await sequelize.query(
+        `SELECT
+              coalesce(all_order, 0) "ALL_ORDER",
+              coalesce(order_new, 0) "ORDER_NEW",
+              coalesce(order_partner_confirm, 0) "ORDER_PARTNER_CONFIRM",
+              coalesce(order_new, 0) + coalesce(order_partner_confirm, 0) "ORDER_NEED_PAYMENT",
+              coalesce(order_dp_completed, 0) "ORDER_DP_COMPLETED",
+              coalesce(order_payment_completed, 0) "ORDER_PAYMENT_COMPLETED",
+              coalesce(order_dp_completed, 0) + coalesce(order_payment_completed, 0) "ORDER_PROCESS",
+              coalesce(order_completed, 0) "ORDER_COMPLETED"
+              FROM hai_user part
+              left join lateral (
+                SELECT 
+                  count(reservation_no) all_order
+                from reservation oal
+                where oal.user_id = part.id
+              ) sum0 on true
+              left join lateral (
+                SELECT 
+                  count(reservation_no) order_new
+                from reservation orn
+                where orn.user_id = part.id
+                and orn.status_code = 'ORDER_NEW'
+              ) sum1 on true
+              left join lateral (
+                SELECT count(reservation_no) order_partner_confirm
+                from reservation opc
+                where opc.user_id = part.id
+                and opc.status_code = 'ORDER_PARTNER_CONFIRM'
+              ) sum2 on true
+              left join lateral (
+                SELECT count(reservation_no) order_dp_completed
+                from reservation odc
+                where odc.user_id = part.id
+                and odc.status_code = 'ORDER_DP_COMPLETED'
+              ) sum3 on true
+              left join lateral (
+                SELECT count(reservation_no) order_payment_completed
+                from reservation oyc
+                where oyc.user_id = part.id
+                and oyc.status_code = 'ORDER_PAYMENT_COMPLETED'
+              ) sum4 on true
+              left join lateral (
+                SELECT count(reservation_no) order_completed
+                from reservation oc
+                where oc.user_id = part.id
+                and oc.status_code = 'ORDER_COMPLETED'
+              ) sum5 on true
+            WHERE part.type = 1
+            and part.id = `+userId+`;`,
+        {
+            raw: true,
+            type: sequelize.QueryTypes.SELECT
+        }
       );
           // console.log(reservations);
       if(reservations.length > 0){

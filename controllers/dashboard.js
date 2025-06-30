@@ -99,3 +99,17 @@ exports.getPartnerOrderSummary = async function (req, res, next) {
     return res.status(500).send({ data: err });
   }  
 };
+
+exports.getUserOrderSummary = async function (req, res, next) {
+  try {
+    const { userId } = req;
+
+    let data = await resv.findReservationUserSummary(userId);
+    data.code = data.success ? 200 : 500;
+    return res.status(200).send(data);
+
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send({ data: err });
+  }  
+};
