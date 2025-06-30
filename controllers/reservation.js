@@ -106,12 +106,15 @@ exports.createReservation = async function(params, req, res, next) {
         const io = req.app.get("io");
         console.log("run io in create booking");
         if (io) {
-          // emit ke user
-          io.to(reservation.user_id.toString()).emit("createReservation", {
-            packageId: reservation.package_id,
-            name: reservation.name,
-            eventAddress: reservation.event_address,
-          });
+          if (reservation.reservation_type === "USER_ORDER") {
+            console.log("emit to user and partner createReservation User");
+             // emit ke user
+            io.to(reservation.user_id.toString()).emit("createReservation", {
+              packageId: reservation.package_id,
+              name: reservation.name,
+              eventAddress: reservation.event_address,
+            });
+          }
 
           // emit ke partner
           io.to(reservation.partner_id.toString()).emit("createReservation", {
@@ -195,9 +198,7 @@ exports.createReservation = async function(params, req, res, next) {
       return res.status(200).send(response);
     } catch (err) {
       console.log(err);
-      return res
-        .status(500)
-        .send({ code: 500, success: false, message: err.message, data: {} });
+      return res.status(500).send({ code: 500, success: false, message: err.message, data: {} });
     }  
 };
 
