@@ -203,7 +203,7 @@ reservationRouter.post("/manual", headerAuth.isPartnerAuthenticated , (req, res,
     otherDescription: req.body.otherDescription
   };
 
-  reservationController.createReservation(data, res);
+  reservationController.createReservation(data, req, res);
 });
 
 reservationRouter.post("/updatestatus", headerAuth.isUserAuthenticated ,(req, res, next) => {
@@ -427,6 +427,7 @@ reservationRouter.post("/getinvoicelists", headerAuth.isUserAuthenticated, (req,
     userId: id,
     type: type
   };
+  console.log(data);
   
   reservationController.getSuccessReservations(data, res);
 });
