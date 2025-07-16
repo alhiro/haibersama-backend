@@ -12,11 +12,11 @@ if (!exceptions.includes(process.env.NODE_ENV)) {
   dotenv.config()
 }
 
-console.log("HOST MASTER: " + process.env.AUTH_DB_HOST_MASTER);
-console.log("HOST SLAVE: " + process.env.AUTH_DB_HOST_SLAVE);
-console.log("USER: " + process.env.AUTH_DB_USER);
-console.log("PASS: " + process.env.AUTH_DB_PASSWORD);
-console.log("DBNAME: " + process.env.AUTH_DB_NAME);
+// console.log("HOST MASTER: " + process.env.AUTH_DB_HOST_MASTER);
+// console.log("HOST SLAVE: " + process.env.AUTH_DB_HOST_SLAVE);
+// console.log("USER: " + process.env.AUTH_DB_USER);
+// console.log("PASS: " + process.env.AUTH_DB_PASSWORD);
+// console.log("DBNAME: " + process.env.AUTH_DB_NAME);
 console.log("APP_API_PREFIX: " + process.env.APP_API_PREFIX);
 console.log("PORT: " + process.env.AUTH_DB_PORT);
 console.log("DIALECT: " + process.env.AUTH_DB_DIALECT);

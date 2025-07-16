@@ -37,7 +37,7 @@ const config = require('./config/config');
 const passport = require('passport');
 const cookieSession = require('cookie-session');
 const serveIndex = require('serve-index');
-const initDB = require('./models/index');
+// const initDB = require('./models/index');
 
 // Router
 const authRouter = require('./routes/haiuser');
@@ -61,6 +61,8 @@ const partnerBankAccountRouter = require('./routes/partnerbankaccount');
 const partnerRatingRouter = require('./routes/partnerrating');
 const walletRouter = require('./routes/wallet');
 const settingRouter = require('./routes/appsetting');
+const aiRouter = require('./routes/ai');
+const eventCommentRouter = require('./routes/eventcomment');
 
 // Seed model into table
 // const haiuser = require("./models/reservation");
@@ -108,6 +110,8 @@ app.use(process.env.APP_API_PREFIX + '/wallet', walletRouter);
 app.use(process.env.APP_API_PREFIX + '/event', eventRouter);
 app.use(process.env.APP_API_PREFIX + '/follower', followerRouter);
 app.use(process.env.APP_API_PREFIX + '/setting', settingRouter);
+app.use(process.env.APP_API_PREFIX + '/ai', aiRouter);
+app.use(process.env.APP_API_PREFIX + '/eventcomment', eventCommentRouter);
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to HaiO system." });

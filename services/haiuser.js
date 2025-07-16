@@ -73,6 +73,7 @@ module.exports = {
             type: user.type == 1 ? "user" : "partner",
             active: user.active,
             phone: user.phone_number,
+            name: user.name,
             idx: user.id,
             token,
             expiresIn: new Date(decoded.exp * 1000),

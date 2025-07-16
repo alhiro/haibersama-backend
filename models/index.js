@@ -5,6 +5,12 @@
 //         console.log(`Table Event updated!`)
 //     })
 
+// const EventComment = require('./eventComment');
+// EventComment.sequelize.sync({ alter: true })
+//     .then(() => {
+//         console.log(`Table EventComment updated!`)
+//     })
+
 // const Banner = require('./banner');
 // Banner.sequelize.sync({ alter: true })
 //     .then(() => {

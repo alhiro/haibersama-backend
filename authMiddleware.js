@@ -25,9 +25,10 @@ module.exports = {
                 // HI I'M THE UPDATED CODE BLOCK, LOOK AT ME
                 // ------------------------------------
                 console.log("decodedStore : " + JSON.stringify(decodedStore));
-                const { email, id, type } = decodedStore;
+                const { email, name, id, type } = decodedStore;
 
                 res.locals.auth = {
+                  name,
                   email,
                   id,
                   type
@@ -86,9 +87,10 @@ module.exports = {
                 // HI I'M THE UPDATED CODE BLOCK, LOOK AT ME
                 // ------------------------------------
                 console.log("decodedStore : " + JSON.stringify(decodedStore));
-                const { email, id, type } = decodedStore;
+                const { email, name, id, type } = decodedStore;
 
                 res.locals.auth = {
+                  name,
                   email,
                   id,
                   type
@@ -155,9 +157,10 @@ module.exports = {
                 // HI I'M THE UPDATED CODE BLOCK, LOOK AT ME
                 // ------------------------------------
                 console.log("decodedStore : " + JSON.stringify(decodedStore));
-                const { email, id, type } = decodedStore;
+                const { email, name, id, type } = decodedStore;
 
                 res.locals.auth = {
+                  name,
                   email,
                   id,
                   type
@@ -256,7 +259,40 @@ module.exports = {
     }
   
     return next();
-  }
+  },
+
+  limiterRedis: async (req, res, next) => {
+    try {
+      // Setup Redis client
+      const redisClient = new Redis({
+        host: process.env.REDIS_HOST || '127.0.0.1',
+        port: process.env.REDIS_PORT || 6379,
+        password: process.env.REDIS_PASSWORD || undefined,
+        enableOfflineQueue: false,
+      });
+      
+      // Buat limiter middleware
+      const limiterRedis = rateLimit({
+        store: new RedisStore({
+          sendCommand: (...args) => redisClient.call(...args),
+          prefix: 'rl:',
+        }),
+        windowMs: 60 * 1000, // 1 menit
+        max: 10, // 10 permintaan per menit per IP
+        message: {
+          success: false,
+          message: 'Terlalu banyak permintaan dari IP ini. Coba lagi nanti.',
+        },
+        standardHeaders: true,
+        legacyHeaders: false,
+      });
+    } catch (error) {
+      console.warn("⚠️ Failed to update FCM token:", error.message);
+      // Tidak menghalangi request meski update token gagal
+    }
+  
+    return next();
+  },
   
 };
 

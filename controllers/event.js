@@ -16,7 +16,7 @@ exports.getEventSelayang = async (req, res, next) => {
   try {
     const params = { page: req.query.page, limit: req.query.limit, search: req.query.search, startDate: req.query.startDate, endDate: req.query.endDate, };
 
-    var all = await eventService.getListSelayang(params);
+    var all = await eventService.getListSelayang(params, res);
     return res.status(200).json(
       {
         success: all.success,
@@ -36,7 +36,7 @@ exports.getEventSelayang = async (req, res, next) => {
 exports.getEvent = async function (req, res, next) {
   try {
     const params = { id: req.query.id };
-    var findEvent = await eventService.find(params);
+    var findEvent = await eventService.find(params, res);
     return res.status(200).json({ status: 200, data: findEvent.data, message: findEvent.message });
   } catch (err) {
     return res
@@ -109,20 +109,20 @@ exports.addEvent = async function (req, res, next) {
   }
 };
 
-exports.updateEvent = async function (req, res, next) {
+exports.updateEvent = async function (data, req, res, next) {
   try {
     //const transaction = await sequelizeTransaction.transaction();
-    const params = { id: req.id };
-    console.log(req);
+    const params = { id: data.id };
+    console.log("params event id");
+    console.log(params);
 
-    const findEvent = await eventService.find(params);
-    console.log("find Event :", findEvent)
+    const findEvent = await eventService.find(params, res);
     if (findEvent.success === true) {
-      let updateEvent = await eventService.update(params, req);
+      let updateEvent = await eventService.update(data, req, params, findEvent.data.dataValues);
       return res.status(200).send(updateEvent);
-    } else
-      return res.status(400).send(findEvent);
-
+    } else {
+      return res.status(404).send(findEvent);
+    }
   } catch (err) {
     return res.status(500).send({ data: err });
   }

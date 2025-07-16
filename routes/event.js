@@ -54,11 +54,11 @@ eventRouter.get("/partner", headerAuth.isPartnerAuthenticated, (req, res, next) 
   controller.getEventPartner(req, res);
 });
 
-eventRouter.get("/get", (req, res, next) => {
+eventRouter.get("/get", headerAuth.isUserAuthenticated, (req, res, next) => {
   controller.getEvent(req, res);
 });
 
-eventRouter.post("/search", (req, res, next) => {
+eventRouter.post("/search", headerAuth.isUserAuthenticated, (req, res, next) => {
   controller.searchEvent(req, res);
 });
 
@@ -120,6 +120,7 @@ eventRouter.post("/add", headerAuth.isPartnerAuthenticated, upload.single('event
 eventRouter.post("/update", headerAuth.isPartnerAuthenticated, upload.single('events'), (req, res, next) => {
   const partner_id = res.locals.auth.id;
   const partner_email = res.locals.auth.email;
+  const partner_name = res.locals.auth.name;
 
   const eventImage = req.file;
   // make sure file is available
@@ -136,10 +137,10 @@ eventRouter.post("/update", headerAuth.isPartnerAuthenticated, upload.single('ev
       active: req.body.active,
       ticket: req.body.ticket,
       approval: req.body.approval,
-      updated_by: partner_email
+      updated_by: partner_name
     };
 
-    controller.updateEvent(data, res);
+    controller.updateEvent(data, req, res);
   } else {
     const data = {
       partner_id: partner_id,
@@ -156,7 +157,7 @@ eventRouter.post("/update", headerAuth.isPartnerAuthenticated, upload.single('ev
       updated_by: partner_email
     };
 
-    controller.updateEvent(data, res);
+    controller.updateEvent(data, req, res);
   }
 });
 
