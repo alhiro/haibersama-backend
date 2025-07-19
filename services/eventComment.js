@@ -121,11 +121,12 @@ module.exports = {
       console.log("created comment");
       console.log(created.dataValues.id);
       console.log(created.dataValues.comment);
+      console.log(created.dataValues.user_id);
 
       // 🔔 Kirim Notifikasi FCM ke user dan partner
       // Ambil token user
       try {
-        const partnerToken = await utilility.getFcmTokens(res.locals.auth.id, HaiUser);
+        const partnerToken = await utilility.getFcmTokens(created.dataValues.user_id, HaiUser);
         if (partnerToken) {
           await admin.messaging().send({
             notification: { title: "Balasan Komentar", body: `${res.locals.auth.name} telah membalas komentar kamu` },
