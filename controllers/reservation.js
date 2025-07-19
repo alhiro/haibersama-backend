@@ -135,63 +135,63 @@ exports.createReservation = async function(params, req, res, next) {
         const capitalizedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
 
         // Notifikasi untuk Partner
-        if (partnerToken) {
-          const partnerPayload = {
-            notification: {
-              title: "Reservasi Baru",
-              body: `${reservation.name} telah membuat reservasi baru ${reservation.package_name} untuk tanggal ${capitalizedDate} ${reservation.event_time}, di ${reservation.event_address}. Periksa dan proses segera`,
-            },
-            android: {
+        try {
+          if (partnerToken) {
+            const partnerPayload = {
               notification: {
-                icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
-                color: '#1B84FF', // opsional
+                title: "Reservasi Baru",
+                body: `${reservation.name} telah membuat reservasi baru ${reservation.package_name} untuk tanggal ${capitalizedDate} ${reservation.event_time}, di ${reservation.event_address}. Periksa dan proses segera`,
               },
-            },
-            data: {
-              type: "createReservation",
-              reservationId: reservation.id.toString(),
-              packageId: reservation.package_id.toString(),
-            },
-            token: partnerToken,
-          };
-
-          admin
-            .messaging()
-            .send(partnerPayload)
-            .then((res) => console.log("✅ Notifikasi ke partner sent:", res))
-            .catch((err) => console.error("❌ Error FCM partner:", err));
-        } else {
-          console.log("No token for send messaging");
+              android: {
+                notification: {
+                  icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
+                  color: '#1B84FF', // opsional
+                },
+              },
+              data: {
+                type: "createReservation",
+                reservationId: reservation.id.toString(),
+                packageId: reservation.package_id.toString(),
+              },
+              token: partnerToken,
+            };
+            const partnerRes = await admin.messaging().send(partnerPayload);
+            console.log("✅ Notifikasi ke partner sent:", partnerRes);
+          } else {
+            console.log("⚠️ No token for partner messaging");
+          }
+        } catch (err) {
+          console.error("❌ Error FCM partner:", err);
         }
 
         // Notifikasi untuk User
-        if (userToken) {
-          const userPayload = {
-            notification: {
-              title: "Reservasi Diterima",
-              body: `Partner sedang memproses reservasi Anda. Mohon tunggu konfirmasi.`,
-            },
-            android: {
+        try {
+          if (userToken) {
+            const userPayload = {
               notification: {
-                icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
-                color: '#1B84FF', // opsional
+                title: "Reservasi Diterima",
+                body: `Partner sedang memproses reservasi Anda. Mohon tunggu konfirmasi.`,
               },
-            },
-            data: {
-              type: "reservationProcessing",
-              reservationId: reservation.id.toString(),
-              packageId: reservation.package_id.toString(),
-            },
-            token: userToken,
-          };
-
-          admin
-            .messaging()
-            .send(userPayload)
-            .then((res) => console.log("✅ Notifikasi ke user sent:", res))
-            .catch((err) => console.error("❌ Error FCM user:", err));
-        } else {
-          console.log("No token for send messaging");
+              android: {
+                notification: {
+                  icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
+                  color: '#1B84FF', // opsional
+                },
+              },
+              data: {
+                type: "reservationProcessing",
+                reservationId: reservation.id.toString(),
+                packageId: reservation.package_id.toString(),
+              },
+              token: userToken,
+            };
+            const userRes = await admin.messaging().send(userPayload);
+            console.log("✅ Notifikasi ke user sent:", userRes);
+          } else {
+            console.log("⚠️ No token for user messaging");
+          }
+        } catch (err) {
+          console.error("❌ Error FCM user:", err);
         }
       }
 
