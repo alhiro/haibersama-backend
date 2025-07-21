@@ -128,10 +128,12 @@ module.exports = {
       });
   },
 
-  findUserProfile: async (params, req) => {    
+  findUserProfile: async (params, req, res) => {    
     try {
       console.log('req me' )
       console.log(req)
+
+      let partner_id = req.partner_id ? req.partner_id : res.locals.auth.id;
 
       var users = await User.findOne({ 
         where: params,
@@ -141,7 +143,7 @@ module.exports = {
             sequelize.literal(`(
             SELECT COUNT(reservation_no)
                 FROM reservation rv
-                WHERE rv.user_id = `+req.partner_id+`
+                WHERE rv.user_id = `+partner_id+`
                 AND (rv.status_code = 'ORDER_NEW' OR rv.status_code = 'ORDER_PARTNER_CONFIRM')
                 ORDER BY COUNT(reservation_no) DESC
             )`),
@@ -240,7 +242,7 @@ module.exports = {
       }
     } 
     catch (error) {
-      console.log(error);
+      console.log("error profile " + error);
       throw error;
     }
   },

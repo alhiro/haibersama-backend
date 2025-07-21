@@ -22,7 +22,7 @@ exports.addPackage = async function(req, res, next) {
     try {
       console.log("controller addPackage")
 
-      let insertCategory = await package.findOrCreatePackage(req);
+      let insertCategory = await package.findOrCreatePackage(req, res);
       return res.status(200).send(insertCategory);
     } catch (err) {
       return res.status(500).send({ data: err });
@@ -33,7 +33,7 @@ exports.addPackage = async function(req, res, next) {
     try {
       console.log("controller editPackage")
 
-      let update = await package.updatePackage(req);
+      let update = await package.updatePackage(req, res);
       return res.status(200).send(update);
     } catch (err) {
       return res.status(500).send({ data: err });

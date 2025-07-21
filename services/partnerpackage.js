@@ -30,12 +30,15 @@ module.exports = {
     }
   },
 
-  findOrCreatePackage: async req => {
+  findOrCreatePackage: async (req, res) => {
+    const partner_id = res.locals.auth.id;
+    console.log("get id partner " + partner_id);
+
     try {
       console.log(req.body, "request create package");
       const name = req.body.Name;
       console.log("name :", name);
-      const partnerId = req.body.PartnerId;
+      const partnerId = req.body.PartnerId ? req.body.PartnerId : partner_id;
       const CategoryId = req.body.CategoryId;
       const ServiceId = req.body.ServiceId;
       const TotalPrice = req.body.Price;
@@ -138,11 +141,13 @@ module.exports = {
     }
   },
   
-  updatePackage: async req => {
+  updatePackage: async (req, res) => {
+    const partner_id = res.locals.auth.id;
+    console.log("get id partner " + partner_id);
     try {
       const Id = req.body.Id;
       const name = req.body.Name;
-      const partnerId = req.body.PartnerId;
+      const partnerId = req.body.PartnerId ? req.body.PartnerId : partner_id;
       const CategoryId = req.body.CategoryId;
       const ServiceId = req.body.ServiceId;
       const TotalPrice = req.body.Price;

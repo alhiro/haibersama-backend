@@ -225,7 +225,7 @@ module.exports =
 
     find: async (params, res) => {
       const partner_id = res.locals.auth.id;
-      console.log("get id");
+      console.log("get id partner " + partner_id);
 
       try {
         return await Event.findOne({ 

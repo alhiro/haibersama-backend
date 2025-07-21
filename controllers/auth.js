@@ -712,15 +712,18 @@ exports.googleLoginCallBack = async function(req, res, next) {
 
 exports.getProfile =  async function(req, res, next) {
   try {
+    console.log("get profile");
+
     const params = { 
       // partner_id: req.partner_id,
       email: req.email 
     }
-    let response = await auth.findUserProfile(params, req);
+    let response = await auth.findUserProfile(params, req, res);
 
     response.code = response.success ? 200 : 500;
     return res.status(response.code).send(response);
   } catch (err) {
+    console.log("err profile" + err);
     return res
       .status(500)
       .send({ code: 500, success: false, message: "Error", data: { err } });
