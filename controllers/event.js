@@ -49,7 +49,7 @@ exports.getEventPartner = async (req, res, next) => {
   const partner_id = res.locals.auth.id;
   console.log("controller search event partner_id " + partner_id);
   try {
-    const params = { page: req.query.page, limit: req.query.limit, search: req.query.search, startDate: req.query.startDate, endDate: req.query.endDate, };
+    const params = { partnerId: req.query.partner_id, page: req.query.page, limit: req.query.limit, search: req.query.search, startDate: req.query.startDate, endDate: req.query.endDate};
 
     var all = await eventService.findListSelayangPartner(partner_id, params);
     return res.status(200).json(

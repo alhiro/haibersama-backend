@@ -1,4 +1,5 @@
 const Event = require('../models/event');
+const HaiUser = require("../models/haiuser");
 const EventComment = require('../models/eventComment');
 const sequelize = require("../config/sequelize");
 const Sequelize = require('sequelize');
@@ -48,6 +49,13 @@ module.exports =
       try {
         return await Event.findAndCountAll({
           where: paramsFilter,
+          include: [
+            {
+              model: HaiUser,
+              attributes: ["id", "name", "picture", "title"],
+              required: false,
+            }
+          ],
           attributes: {
             include: [
               [
@@ -101,7 +109,8 @@ module.exports =
     findListSelayangPartner: async (partner_id, params) => {
       const Op = Sequelizes.Op;
 
-      const { page, limit, search, startDate, endDate} = params;
+      const { partnerId, page, limit, search, startDate, endDate} = params;
+      console.log(partner_id);
       console.log(params);
   
       let paramsFilter = {};
@@ -127,9 +136,13 @@ module.exports =
         paramsFilter.created_at = {
           [Op.lte]: new Date(endDate),
         };
+      } else if (!partnerId || partnerId === 'null') {
+        paramsFilter.partner_id = partner_id;
+      } else {
+        paramsFilter.partner_id = partnerId;
       }
 
-      paramsFilter.partner_id = partner_id;
+     
       console.log("paramsFilter own")
       console.log(paramsFilter)
   
@@ -150,7 +163,7 @@ module.exports =
               [
                 Sequelize.literal(`(
                   CASE 
-                    WHEN event.partner_id = ${partner_id} THEN true
+                    WHEN event.partner_id = ${paramsFilter.partner_id} THEN true
                     ELSE false
                   END
                 )`),
@@ -167,7 +180,7 @@ module.exports =
         }).then((resp) => {
           console.log("resp");
           console.log(Math.ceil(resp.count / limit));
-          // console.log(resp);
+          // console.log(resp.rows);
   
           return {
             success: true,
