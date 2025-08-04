@@ -524,6 +524,14 @@ module.exports = {
         };
       }
 
+      // 2.a Validasi filters table yang di izinkan
+      if (!['hai_user', 'packages'].includes(table)) {
+        return {
+          success: false,
+          message: "Permintaan ke tabel tidak dikenali atau tidak diizinkan."
+        };
+      }
+
       // 3. Susun WHERE clause dan replacements
       const replacements = {};
       const conditions = [];
