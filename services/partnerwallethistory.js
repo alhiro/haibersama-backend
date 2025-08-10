@@ -342,6 +342,7 @@ module.exports =
             transaction_date: transaction_date,
             transaction_type: "D",
             reservation_no: "",
+            reservation_type: "USER_ORDER",
             total_amount: -Math.abs(totalAmount),
             status: "WITHDRAW",
             created_at: moment().utcOffset(0),
@@ -389,6 +390,7 @@ module.exports =
             transaction_date: transaction_date,
             transaction_type: "D",
             reservation_no: "",
+            reservation_type: "USER_ORDER",
             total_amount: -Math.abs(adminFee),
             status: "ADMIN_FEE",
             created_at: moment().utcOffset(0),
@@ -531,22 +533,21 @@ module.exports =
             select 
               json_agg(
                 json_build_object(
-                  to_char(a.event_date, 'YYYY-MM-DD'), items
+                  to_char(a.transaction_date, 'YYYY-MM-DD'), items
                 )
               ) d
             FROM (select 
-                    distinct date(event_date) event_date, 
+                    distinct date(transaction_date) transaction_date, 
                     partner_id	  
                   from partner_wallet_history rr
                   where rr.partner_id = ` + userId + `
                   and rr.reservation_type = '` + type + `'
-                  and date(rr.event_date) >= '` + date_from + `'
-                  and date(rr.event_date) <= '` + date_to + `'
+                  and date(rr.transaction_date) >= '` + date_from + `'
+                  and date(rr.transaction_date) <= '` + date_to + `'
               )  a
             LEFT JOIN LATERAL (
               SELECT json_agg(x) AS items
               FROM  (select 
-                  event_date,
                   transaction_date,
                   transaction_type,
                   reservation_no,
@@ -558,12 +559,12 @@ module.exports =
                   client_name
                   from partner_wallet_history r
                   left join lateral (
-                    SELECT event_date event_date_reservation,
+                    SELECT transaction_date event_date_reservation,
                     name client_name
                     from reservation oyc
                     where oyc.reservation_no = r.reservation_no
                   ) sum4 on true
-                  where date(r.event_date) = a.event_date and r.partner_id = ` + userId + `
+                  where date(r.transaction_date) = a.transaction_date and r.partner_id = ` + userId + `
                 ) x 
               ) c ON true`;
           return sequelize.query(query,{ type : sequelize.QueryTypes.SELECT}).then(results => {
