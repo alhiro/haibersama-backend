@@ -119,14 +119,15 @@ exports.registerUser = async function(req, res, next) {
         console.log("register test" + register.data);
 
         var smtpTransport = nodemailer.createTransport({
-          host: "mail.haibersama.com",
-          port: 465,
-          secure: true,
+          // host: "mail.haibersama.com",
+          // port: 465,
+          // secure: true,
+          service: 'gmail',
           auth: {
             user: EMAIL_USERNAME,
             pass: EMAIL_PASSWORD
           }
-        });
+        }); 
 
         var templateInvoice = fs.readFileSync('./views/activation.html', 'utf-8');
         var compileInvoice = Hogan.compile(templateInvoice);
@@ -207,14 +208,15 @@ exports.registerPartner = async function(req, res, next) {
       console.log("register partner" + register.data);
 
       var smtpTransport = nodemailer.createTransport({
-        host: "mail.haibersama.com",
-        port: 465,
-        secure: true,
+        // host: "mail.haibersama.com",
+        // port: 465,
+        // secure: true,
+        service: 'gmail',
         auth: {
           user: EMAIL_USERNAME,
           pass: EMAIL_PASSWORD
         }
-      });
+      }); 
 
       var templateInvoice = fs.readFileSync('./views/activation.html', 'utf-8');
       var compileInvoice = Hogan.compile(templateInvoice);
@@ -302,14 +304,15 @@ exports.registerGoogle = async function(req, res, next) {
       console.log("register test" + register.data);
 
       var smtpTransport = nodemailer.createTransport({
-        host: "mail.haibersama.com",
-        port: 465,
-        secure: true,
+        // host: "mail.haibersama.com",
+        // port: 465,
+        // secure: true,
+        service: 'gmail',
         auth: {
           user: EMAIL_USERNAME,
           pass: EMAIL_PASSWORD
         }
-      });
+      }); 
 
       let mailoptions = {
         from: '"<notify>" notify@haibersama.com',
@@ -418,9 +421,10 @@ exports.forgetPassword = async function(req, res, next) {
       console.log("forget password response " + JSON.stringify(resetPassword.data));
       
       var smtpTransport = nodemailer.createTransport({
-        host: "mail.haibersama.com",
-        port: 465,
-        secure: true,
+        // host: "mail.haibersama.com",
+        // port: 465,
+        // secure: true,
+        service: 'gmail',
         auth: {
           user: EMAIL_USERNAME,
           pass: EMAIL_PASSWORD
@@ -630,14 +634,15 @@ exports.googleLoginCallBack = async function(req, res, next) {
 
       /* 
       var smtpTransport = nodemailer.createTransport({
-        host: "mail.haibersama.com",
-        port: 465,
-        secure: true,
+        // host: "mail.haibersama.com",
+        // port: 465,
+        // secure: true,
+        service: 'gmail',
         auth: {
-          user: "notify@haibersama.com",
-          pass: "shasmeen11!"
+          user: EMAIL_USERNAME,
+          pass: EMAIL_PASSWORD
         }
-      });
+      }); 
 
       let mailoptions = {
         from: '"<notify>" notify@haibersama.com',

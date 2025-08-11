@@ -216,14 +216,15 @@ exports.updateStatus = async function(req, res, next) {
             //console.log(dataUser);     
   
             var smtpTransport = nodemailer.createTransport({
-              host: "mail.haibersama.com",
-              port: 465,
-              secure: true,
+              // host: "mail.haibersama.com",
+              // port: 465,
+              // secure: true,
+              service: "gmail",
               auth: {
                 user: EMAIL_USERNAME,
-                pass: EMAIL_PASSWORD
-              }
-            });
+                pass: EMAIL_PASSWORD,
+              },
+            }); 
 
             var statusPayment = "";
             if (reservation.status_code == "ORDER_NEW") {
@@ -345,14 +346,15 @@ exports.updateStatusManual = async function(req, res, next) {
           //console.log(dataUser);
 
           var smtpTransport = nodemailer.createTransport({
-            host: "mail.haibersama.com",
-            port: 465,
-            secure: true,
+            // host: "mail.haibersama.com",
+            // port: 465,
+            // secure: true,
+            service: "gmail",
             auth: {
               user: EMAIL_USERNAME,
-              pass: EMAIL_PASSWORD
-            }
-          });
+              pass: EMAIL_PASSWORD,
+            },
+          }); 
 
           var statusPayment = "";
           if (reservation.status_code == "ORDER_NEW" || reservation.status_code == "ORDER_PARTNER_CONFIRM") {
@@ -1297,14 +1299,15 @@ exports.getSuccessReservationsEmail = async function(req, res, next) {
       //hash email
 
       var smtpTransport = nodemailer.createTransport({
-        host: "mail.haibersama.com",
-        port: 465,
-        secure: true,
+        // host: "mail.haibersama.com",
+        // port: 465,
+        // secure: true,
+        service: "gmail",
         auth: {
           user: EMAIL_USERNAME,
-          pass: EMAIL_PASSWORD
-        }
-      });
+          pass: EMAIL_PASSWORD,
+        },
+      }); 
 
       var emailBody = 
       "<h4><b>Invoice</b></h4>" +
@@ -1385,14 +1388,15 @@ exports.getSuccessReservationEmail = async function(req, res, next) {
        //hash email
  
        var smtpTransport = nodemailer.createTransport({
-         host: "mail.haibersama.com",
-         port: 465,
-         secure: true,
-         auth: {
-           user: EMAIL_USERNAME,
-           pass: EMAIL_PASSWORD
-         }
-       });
+        // host: "mail.haibersama.com",
+        // port: 465,
+        // secure: true,
+        service: "gmail",
+        auth: {
+          user: EMAIL_USERNAME,
+          pass: EMAIL_PASSWORD,
+        },
+      }); 
 
        //console.log('reservation[0] ' + JSON.stringify(getData.data.reservation_no));
  
@@ -1554,14 +1558,15 @@ exports.sendEmailToCustomer = async function (req, res, next) {
           //hash email
     
           var smtpTransport = nodemailer.createTransport({
-            host: "mail.haibersama.com",
-            port: 465,
-            secure: true,
+            // host: "mail.haibersama.com",
+            // port: 465,
+            // secure: true,
+            service: "gmail",
             auth: {
               user: EMAIL_USERNAME,
-              pass: EMAIL_PASSWORD
-            }
-          });
+              pass: EMAIL_PASSWORD,
+            },
+          }); 
 
           //console.log('reservation[0] ' + JSON.stringify(getData.data.reservation_no));
     
@@ -1850,17 +1855,15 @@ exports.sendEmailToCustomerManual = async function (req, res, next) {
           //hash email
     
           var smtpTransport = nodemailer.createTransport({
-            host: "mail.haibersama.com",
-            port: 465,
-            secure: true,
+            // host: "mail.haibersama.com",
+            // port: 465,
+            // secure: true,
+            service: "gmail",
             auth: {
               user: EMAIL_USERNAME,
-              pass: EMAIL_PASSWORD
+              pass: EMAIL_PASSWORD,
             },
-            debug: true,
-            logger: true
-          });
-
+          }); 
           //console.log('reservation[0] ' + JSON.stringify(getData.data.reservation_no));
     
           var statusPayment = "";
