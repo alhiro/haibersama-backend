@@ -422,7 +422,7 @@ exports.forgetPassword = async function(req, res, next) {
         }),
       };
       console.log("mailoptions running...");
-      console.log(transporter.transporterSmtp.options);
+      // console.log(transporter.transporterSmtp.options);
 
       async function sendEmail() {
         try {
