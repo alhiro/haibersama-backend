@@ -5,6 +5,7 @@ const partnerResv = require("../services/partner");
 const emailcounter = require("../services/emailcounter");
 const getFcmTokens = require("../lib/utils");
 const admin = require("firebase-admin");
+const transporter = require("../config/email");
 
 const HaiUser = require('../models/haiuser');
 
@@ -215,17 +216,6 @@ exports.updateStatus = async function(req, res, next) {
             let dataUser = await partnerResv.getDetail(reservation.partner_id);  
             //console.log(dataUser);     
   
-            var smtpTransport = nodemailer.createTransport({
-              // host: "mail.haibersama.com",
-              // port: 465,
-              // secure: true,
-              service: "gmail",
-              auth: {
-                user: EMAIL_USERNAME,
-                pass: EMAIL_PASSWORD,
-              },
-            }); 
-
             var statusPayment = "";
             if (reservation.status_code == "ORDER_NEW") {
               statusPayment = "Belum Dibayar";
@@ -304,7 +294,7 @@ exports.updateStatus = async function(req, res, next) {
             };
             // console.log("mailoptions :" + JSON.stringify(mailoptions));
 
-            smtpTransport.sendMail(mailoptions, function(error, res) {
+            transporter.transporterSmtp.sendMail(mailoptions, function(error, res) {
               if (error) {
                 console.log(error);
               } else {
@@ -344,17 +334,6 @@ exports.updateStatusManual = async function(req, res, next) {
           let getData = await resv.findReservation(reservation.reservation_no);
           let dataUser = await partnerResv.getDetail(reservation.partner_id);  
           //console.log(dataUser);
-
-          var smtpTransport = nodemailer.createTransport({
-            // host: "mail.haibersama.com",
-            // port: 465,
-            // secure: true,
-            service: "gmail",
-            auth: {
-              user: EMAIL_USERNAME,
-              pass: EMAIL_PASSWORD,
-            },
-          }); 
 
           var statusPayment = "";
           if (reservation.status_code == "ORDER_NEW" || reservation.status_code == "ORDER_PARTNER_CONFIRM") {
@@ -567,7 +546,7 @@ exports.updateStatusManual = async function(req, res, next) {
               };
               console.log("mailoptions :" + JSON.stringify(mailoptions));
 
-              smtpTransport.sendMail(mailoptions, function (error, res) {
+              transporter.transporterSmtp.sendMail(mailoptions, function (error, res) {
                 if (error) {
                   console.log(error);
                 } else {
@@ -1298,17 +1277,6 @@ exports.getSuccessReservationsEmail = async function(req, res, next) {
       //create user by email n password
       //hash email
 
-      var smtpTransport = nodemailer.createTransport({
-        // host: "mail.haibersama.com",
-        // port: 465,
-        // secure: true,
-        service: "gmail",
-        auth: {
-          user: EMAIL_USERNAME,
-          pass: EMAIL_PASSWORD,
-        },
-      }); 
-
       var emailBody = 
       "<h4><b>Invoice</b></h4>" +
       "<p>This is your invoice list:</p>";
@@ -1333,7 +1301,7 @@ exports.getSuccessReservationsEmail = async function(req, res, next) {
       };
       console.log("mailoptions :" + JSON.stringify(mailoptions));
 
-      smtpTransport.sendMail(mailoptions, function(error, res) {
+      transporter.transporterSmtp.sendMail(mailoptions, function(error, res) {
         if (error) {
           console.log(error);
         } else {
@@ -1386,17 +1354,6 @@ exports.getSuccessReservationEmail = async function(req, res, next) {
        console.log(reservation);
        //create user by email n password
        //hash email
- 
-       var smtpTransport = nodemailer.createTransport({
-        // host: "mail.haibersama.com",
-        // port: 465,
-        // secure: true,
-        service: "gmail",
-        auth: {
-          user: EMAIL_USERNAME,
-          pass: EMAIL_PASSWORD,
-        },
-      }); 
 
        //console.log('reservation[0] ' + JSON.stringify(getData.data.reservation_no));
  
@@ -1468,7 +1425,7 @@ exports.getSuccessReservationEmail = async function(req, res, next) {
        };
        console.log("mailoptions :" + JSON.stringify(mailoptions));
  
-       smtpTransport.sendMail(mailoptions, function(error, res) {
+       transporter.transporterSmtp.sendMail(mailoptions, function(error, res) {
          if (error) {
            console.log(error);
          } else {
@@ -1556,17 +1513,6 @@ exports.sendEmailToCustomer = async function (req, res, next) {
           console.log(reservation);
           //create user by email n password
           //hash email
-    
-          var smtpTransport = nodemailer.createTransport({
-            // host: "mail.haibersama.com",
-            // port: 465,
-            // secure: true,
-            service: "gmail",
-            auth: {
-              user: EMAIL_USERNAME,
-              pass: EMAIL_PASSWORD,
-            },
-          }); 
 
           //console.log('reservation[0] ' + JSON.stringify(getData.data.reservation_no));
     
@@ -1774,7 +1720,7 @@ exports.sendEmailToCustomer = async function (req, res, next) {
               };
               console.log("mailoptions :" + JSON.stringify(mailoptions));
 
-              smtpTransport.sendMail(mailoptions, function (error, res) {
+              transporter.transporterSmtp.sendMail(mailoptions, function (error, res) {
                 if (error) {
                   console.log(error);
                 } else {
@@ -1853,17 +1799,7 @@ exports.sendEmailToCustomerManual = async function (req, res, next) {
           console.log(reservation);
           //create user by email n password
           //hash email
-    
-          var smtpTransport = nodemailer.createTransport({
-            // host: "mail.haibersama.com",
-            // port: 465,
-            // secure: true,
-            service: "gmail",
-            auth: {
-              user: EMAIL_USERNAME,
-              pass: EMAIL_PASSWORD,
-            },
-          }); 
+  
           //console.log('reservation[0] ' + JSON.stringify(getData.data.reservation_no));
     
           var statusPayment = "";
@@ -2140,7 +2076,7 @@ exports.sendEmailToCustomerManual = async function (req, res, next) {
               };
               console.log("mailoptions :" + JSON.stringify(mailoptions));
 
-              smtpTransport.sendMail(mailoptions, function (error, res) {
+              transporter.transporterSmtp.sendMail(mailoptions, function (error, res) {
                 if (error) {
                   console.log(error);
                 } else {

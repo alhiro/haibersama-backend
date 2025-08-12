@@ -3,8 +3,11 @@ const auth = require("../services/haiuser");
 const sequelizeTransaction = require("../config/sequelizeTransaction");
 const axios = require("axios");
 const utils = require("../lib/utils");
+
+const transporter = require("../config/email");
 const { VERIFY_URL, EMAIL_PASSWORD, EMAIL_USERNAME } = process.env;
 var nodemailer = require("nodemailer");
+
 var Hogan = require("hogan.js");
 var fs = require("fs");
 const path = require('path');
@@ -118,17 +121,6 @@ exports.registerUser = async function(req, res, next) {
         var register = await auth.registerUser(body, transaction);
         console.log("register test" + register.data);
 
-        var smtpTransport = nodemailer.createTransport({
-          // host: "mail.haibersama.com",
-          // port: 465,
-          // secure: true,
-          service: 'gmail',
-          auth: {
-            user: EMAIL_USERNAME,
-            pass: EMAIL_PASSWORD
-          }
-        }); 
-
         var templateInvoice = fs.readFileSync('./views/activation.html', 'utf-8');
         var compileInvoice = Hogan.compile(templateInvoice);
 
@@ -143,18 +135,24 @@ exports.registerUser = async function(req, res, next) {
             token: register.data.token
           })
         };
-        console.log("mailoptions :" + JSON.stringify(mailoptions));
+        console.log("mailoptions running...");
 
-        smtpTransport.sendMail(mailoptions, function(error, res) {
-          if (error) {
-            console.log(error);
-          } else {
-            console.log("Message sent: " + res.response);
+        async function sendEmail() {
+          try {
+            const info = await transporter.transporterSmtp.sendMail(mailoptions);
+            console.log("Email terkirim:", info.messageId);
+            transporter.transporterSmtp.close();
+  
+            return res.status(200).send(register);
+          } catch (error) {
+            console.error("Gagal mengirim email:", error);
+            transporter.transporterSmtp.close();
+  
+            return res.status(500).send({ code: 500, success: false, message: "Gagal mengirim email", data: {} });
           }
-          //smtpTransport.close();
-        });
-
-        return res.status(200).send(register);
+        }
+  
+        sendEmail();
         
       } else {
         return res.status(401).send({
@@ -207,17 +205,6 @@ exports.registerPartner = async function(req, res, next) {
       var register = await auth.registerPartner(body, transaction);
       console.log("register partner" + register.data);
 
-      var smtpTransport = nodemailer.createTransport({
-        // host: "mail.haibersama.com",
-        // port: 465,
-        // secure: true,
-        service: 'gmail',
-        auth: {
-          user: EMAIL_USERNAME,
-          pass: EMAIL_PASSWORD
-        }
-      }); 
-
       var templateInvoice = fs.readFileSync('./views/activation.html', 'utf-8');
       var compileInvoice = Hogan.compile(templateInvoice);
 
@@ -232,18 +219,24 @@ exports.registerPartner = async function(req, res, next) {
           token: register.data.token
         })
       };
-      console.log("mailoptions :" + JSON.stringify(mailoptions));
+      console.log("mailoptions running...");
 
-      smtpTransport.sendMail(mailoptions, function(error, res) {
-        if (error) {
-          console.log(error);
-        } else {
-          console.log("Message sent: " + res.response);
+      async function sendEmail() {
+        try {
+          const info = await transporter.transporterSmtp.sendMail(mailoptions);
+          console.log("Email terkirim:", info.messageId);
+          transporter.transporterSmtp.close();
+
+          return res.status(200).send(register);
+        } catch (error) {
+          console.error("Gagal mengirim email:", error);
+          transporter.transporterSmtp.close();
+
+          return res.status(500).send({ code: 500, success: false, message: "Gagal mengirim email", data: {} });
         }
-        //smtpTransport.close();
-      });
+      }
 
-      return res.status(200).send(register);
+      sendEmail();
     } else {
       return res.status(401).send({
         code: 401,
@@ -303,17 +296,6 @@ exports.registerGoogle = async function(req, res, next) {
       );
       console.log("register test" + register.data);
 
-      var smtpTransport = nodemailer.createTransport({
-        // host: "mail.haibersama.com",
-        // port: 465,
-        // secure: true,
-        service: 'gmail',
-        auth: {
-          user: EMAIL_USERNAME,
-          pass: EMAIL_PASSWORD
-        }
-      }); 
-
       let mailoptions = {
         from: '"<notify>" notify@haibersama.com',
         to: email,
@@ -345,18 +327,24 @@ exports.registerGoogle = async function(req, res, next) {
           "<br><br>" +
           "<p>--Team</p>"
       };
-      console.log("mailoptions :" + JSON.stringify(mailoptions));
+      console.log("mailoptions running...");
 
-      smtpTransport.sendMail(mailoptions, function(error, res) {
-        if (error) {
-          console.log(error);
-        } else {
-          console.log("Message sent: " + res.response);
+      async function sendEmail() {
+        try {
+          const info = await transporter.transporterSmtp.sendMail(mailoptions);
+          console.log("Email terkirim:", info.messageId);
+          transporter.transporterSmtp.close();
+
+          return res.status(200).send(register);
+        } catch (error) {
+          console.error("Gagal mengirim email:", error);
+          transporter.transporterSmtp.close();
+
+          return res.status(500).send({ code: 500, success: false, message: "Gagal mengirim email", data: {} });
         }
-        //smtpTransport.close();
-      });
+      }
 
-      return res.status(200).send(register);
+      sendEmail();
     } else {
       return res.status(401).send({
         code: 401,
@@ -419,41 +407,39 @@ exports.forgetPassword = async function(req, res, next) {
     } else {
       var resetPassword = await auth.resetPassword(users.data, req);
       console.log("forget password response " + JSON.stringify(resetPassword.data));
-      
-      var smtpTransport = nodemailer.createTransport({
-        // host: "mail.haibersama.com",
-        // port: 465,
-        // secure: true,
-        service: 'gmail',
-        auth: {
-          user: EMAIL_USERNAME,
-          pass: EMAIL_PASSWORD
-        }
-      }); 
-      
+     
       var templateInvoice = fs.readFileSync('./views/reset_password.html', 'utf-8');
       var compileInvoice = Hogan.compile(templateInvoice);
 
       let mailoptions = {
         from: '"HaiO Reset Password" notify@haibersama.com',
         to: email,
-        subject: 'Permintaan Reset Password HaiO',
+        subject: "Permintaan Reset Password HaiO",
         html: compileInvoice.render({
           email: resetPassword.data.email,
           resetToken: resetPassword.data.reset_token,
           verifyUrl: VERIFY_URL,
         }),
       };
-      smtpTransport.sendMail(mailoptions, function (error, res) {
-        if (error) {
-          console.log(error);
-        } else {
-          console.log("Message sent: " + res.response);
-        }
-        //smtpTransport.close();
-      });
+      console.log("mailoptions running...");
+      console.log(transporter.transporterSmtp.options);
 
-      return res.status(200).send(resetPassword);
+      async function sendEmail() {
+        try {
+          const info = await transporter.transporterSmtp.sendMail(mailoptions);
+          console.log("Email terkirim:", info.messageId);
+          transporter.transporterSmtp.close();
+
+          return res.status(200).send(resetPassword);
+        } catch (error) {
+          console.error("Gagal mengirim email:", error);
+          transporter.transporterSmtp.close();
+
+          return res.status(500).send({ code: 500, success: false, message: "Gagal mengirim email", data: {} });
+        }
+      }
+
+      sendEmail();
     }    
   } catch (err) {
     return res
@@ -675,7 +661,7 @@ exports.googleLoginCallBack = async function(req, res, next) {
           "<br><br>" +
           "<p>--Team</p>"
       };
-      console.log("mailoptions :" + JSON.stringify(mailoptions));
+      console.log("mailoptions running...");
 
       smtpTransport.sendMail(mailoptions, function(error, res) {
         if (error) {
