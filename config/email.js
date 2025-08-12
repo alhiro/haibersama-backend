@@ -9,7 +9,7 @@ const nodemailer = require("nodemailer");
 const transporterSmtp = nodemailer.createTransport({
   host: EMAIL_HOST,
   port: EMAIL_PORT,
-  secure: EMAIL_SECURE,
+  secure: EMAIL_SECURE === 'true',
   auth: {
     user: EMAIL_USERNAME,
     pass: EMAIL_PASSWORD,
