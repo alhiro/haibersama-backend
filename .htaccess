@@ -1,10 +1,10 @@
 # DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION BEGIN
-PassengerAppRoot "/home/haiorgan/development.haiorganizer.com"
+PassengerAppRoot "/home/haibersa/api.haibersama.com"
 PassengerBaseURI "/"
-PassengerNodejs "/home/haiorgan/nodevenv/development.haiorganizer.com/8/bin/node"
+PassengerNodejs "/home/haibersa/nodevenv/api.haibersama.com/18/bin/node"
 PassengerAppType node
 PassengerStartupFile app.js
-PassengerAppLogFile "/home/haiorgan/logs"
+PassengerAppLogFile "/home/haibersa/logs"
 # DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION END
 # DO NOT REMOVE OR MODIFY. CLOUDLINUX ENV VARS CONFIGURATION BEGIN
 <IfModule Litespeed>
@@ -14,10 +14,10 @@ SetEnv APP_LOCAL_DOMAIN haio=/
 SetEnv AUTH_DB_DIALECT postgres
 SetEnv AUTH_DB_HOST_MASTER 127.0.0.1
 SetEnv AUTH_DB_HOST_SLAVE 127.0.0.1
-SetEnv AUTH_DB_NAME haiorgan_staging
+SetEnv AUTH_DB_NAME haibersa_haiorgan_production
 SetEnv AUTH_DB_PORT 5432
-SetEnv AUTH_DB_USER haiorgan_rw_staging
-SetEnv NODE_ENV dev
+SetEnv AUTH_DB_USER haibersa_rw_production
+SetEnv NODE_ENV production
 SetEnv PASSPORT_GOOGLE_CLIENT_ID 349696578282-qg1kmrgdcgdoqf3m3fn1e3oi57o9kpl6.apps.googleusercontent.com
 SetEnv PASSPORT_GOOGLE_CLIENT_SECRET TdV15lJI1-yJOQHVCoYr1lew
 SetEnv AUTH_DB_PASSWORD P@ssw0rd
