@@ -7,30 +7,28 @@ const Redis = require('ioredis');
 const rateLimit = require('express-rate-limit');
 
 // Redis client
-const redis = new Redis(process.env.REDIS_URL, {
-  enableOfflineQueue: false, 
-  // reconnectOnError: (err) => {
-  //   console.warn("⚠️ Redis reconnectOnError:", err.message);
-  //   return true; // selalu coba reconnect
-  // },
-  // retryStrategy(times) {
-  //   const delay = Math.min(times * 200, 2000);
-  //   console.log(`🔄 Redis reconnecting in ${delay}ms...`);
-  //   return delay;
-  // },
-});
+let redis;
 
-redis.on('connect', () => {
-  console.log('✅ Redis connected');
-});
+function getRedis() {
+  if (!redis) {
+    redis = new Redis(process.env.REDIS_URL, {
+      enableOfflineQueue: false,
+    });
 
-redis.on('error', (err) => {
-  console.warn('⚠️ Redis error (ignored):', err.message);
-});
+    redis.on('connect', () => {
+      console.log('✅ Redis connected');
+    });
 
-redis.on('end', () => {
-  console.warn('⚠️ Redis connection closed');
-});
+    redis.on('error', (err) => {
+      console.warn('⚠️ Redis error (ignored):', err.message);
+    });
+
+    redis.on('end', () => {
+      console.warn('⚠️ Redis connection closed');
+    });
+  }
+  return redis;
+}
 
 module.exports = {
   search: async (body, req, res) => {
@@ -215,6 +213,8 @@ module.exports = {
     const bypassCache = req.query.cache === 'true';
     console.log("Bypass cache:", bypassCache);
 
+    const redis = getRedis();
+
     let cached;
     try {
       cached = await redis.get(cacheKey);
@@ -397,6 +397,8 @@ module.exports = {
     console.log("Pertanyaan user:", text);
     const bypassCache = req.query.cache === 'true';
     console.log("Bypass cache:", bypassCache);
+
+    const redis = getRedis();
 
     // === Cek Cache Redis ===
     try {
