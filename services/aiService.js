@@ -6,52 +6,31 @@ const utils = require("../lib/utils");
 const Redis = require('ioredis');
 const rateLimit = require('express-rate-limit');
 
-let redis = createRedis();
+// Redis client
+const redis = new Redis(process.env.REDIS_URL, {
+  enableOfflineQueue: false, // jangan simpan command saat offline
+  // reconnectOnError: (err) => {
+  //   console.warn("⚠️ Redis reconnectOnError:", err.message);
+  //   return true; // selalu coba reconnect
+  // },
+  // retryStrategy(times) {
+  //   const delay = Math.min(times * 200, 2000);
+  //   console.log(`🔄 Redis reconnecting in ${delay}ms...`);
+  //   return delay;
+  // },
+});
 
-function createRedis() {
-  let retryCount = 0;
-  const client = new Redis(process.env.REDIS_URL, {
-    enableOfflineQueue: false,
-    reconnectOnError: (err) => {
-      console.warn("⚠️ Redis reconnectOnError:", err.message);
-      return true;
-    },
-    retryStrategy(times) {
-      retryCount++;
-      if (retryCount > 10) {
-        console.error("❌ Redis gagal connect lebih dari 10 kali. Mematikan koneksi...");
-        client.disconnect();
-        redis = null;
-        return null;
-      }
-      const delay = Math.min(times * 200, 2000);
-      console.log(`🔄 Redis reconnecting in ${delay}ms... (percobaan ${retryCount})`);
-      return delay;
-    },
-  });
+redis.on('connect', () => {
+  console.log('✅ Redis connected');
+});
 
-  client.on('connect', () => {
-    console.log('✅ Redis connected');
-  });
+redis.on('error', (err) => {
+  console.warn('⚠️ Redis error (ignored):', err.message);
+});
 
-  client.on('error', (err) => {
-    console.warn('⚠️ Redis error (ignored):', err.message);
-  });
-
-  client.on('end', () => {
-    console.warn('⚠️ Redis connection closed');
-  });
-
-  return client;
-}
-
-function getRedis() {
-  if (!redis || redis.status === "end") {
-    console.log("♻️ Membuat koneksi Redis baru...");
-    redis = createRedis();
-  }
-  return redis;
-}
+redis.on('end', () => {
+  console.warn('⚠️ Redis connection closed');
+});
 
 module.exports = {
   search: async (body, req, res) => {
@@ -236,11 +215,9 @@ module.exports = {
     const bypassCache = req.query.cache === 'true';
     console.log("Bypass cache:", bypassCache);
 
-    const redisClient = getRedis(); 
-
     let cached;
     try {
-      cached = await redisClient.get(cacheKey);
+      cached = await redis.get(cacheKey);
     } catch (e) {
       console.warn("⚠️ Redis GET failed (lewati cache):", e.message);
     }
@@ -345,7 +322,7 @@ module.exports = {
 
       if (!results.length) {
         const noResult = { success: false, data: [], message: "Data tidak ditemukan." };
-        await redisClient.setex(cacheKey, 60, JSON.stringify(noResult));
+        await redis.setex(cacheKey, 60, JSON.stringify(noResult));
         return noResult;
       }
 
@@ -397,7 +374,7 @@ module.exports = {
 
       // === Simpan ke Redis (20 menit) ===
       try {
-        await redisClient.setex(cacheKey, 1200, JSON.stringify(response));
+        await redis.setex(cacheKey, 1200, JSON.stringify(response));
       } catch (e) {
         console.warn("⚠️ Redis SETEX gagal (skip simpan cache):", e.message);
       }
@@ -421,11 +398,9 @@ module.exports = {
     const bypassCache = req.query.cache === 'true';
     console.log("Bypass cache:", bypassCache);
 
-    const redisClient = getRedis(); 
-
     // === Cek Cache Redis ===
     try {
-      const cached = await redisClient.get(cacheKey);
+      const cached = await redis.get(cacheKey);
       if (bypassCache && cached) {
         console.log('📦 Cache hit');
         return JSON.parse(cached);
@@ -686,7 +661,7 @@ module.exports = {
 
       // === Simpan ke Redis (20 menit) ===
       try {
-        await redisClient.setex(cacheKey, 1200, JSON.stringify(response));
+        await redis.setex(cacheKey, 1200, JSON.stringify(response));
       } catch (e) {
         console.warn("⚠️ Redis SETEX gagal (skip simpan cache):", e.message);
       }
