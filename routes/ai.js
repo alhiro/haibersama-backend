@@ -19,7 +19,7 @@ aiRouter.post("/searchPartner", headerAuth.limiterRedis, headerAuth.isUserAuthen
   aiController.searchAiPartner(body, req, res);
 });
 
-aiRouter.post("/searchApi", headerAuth.limiterRedis, headerAuth.isUserAuthenticated,(req, res, next) => {
+aiRouter.post("/searchApi", headerAuth.limiter, headerAuth.isUserAuthenticated,(req, res, next) => {
   const body = {
     text: req.body.text
   }

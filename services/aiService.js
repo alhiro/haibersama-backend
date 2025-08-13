@@ -8,7 +8,7 @@ const rateLimit = require('express-rate-limit');
 
 // Redis client
 const redis = new Redis(process.env.REDIS_URL, {
-  enableOfflineQueue: false, // jangan simpan command saat offline
+  enableOfflineQueue: false, 
   // reconnectOnError: (err) => {
   //   console.warn("⚠️ Redis reconnectOnError:", err.message);
   //   return true; // selalu coba reconnect

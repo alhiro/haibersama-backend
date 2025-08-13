@@ -4,10 +4,6 @@ const HaiUser = require('./models/haiuser');
 
 const Redis = require("ioredis");
 const rateLimit = require("express-rate-limit");
-const { RedisStore } = require("rate-limit-redis");
-
-// Redis client
-const redisClient = new Redis(process.env.REDIS_URL);
 
 module.exports = {
   isUserAuthenticated: async (req, res, next) => {
@@ -268,12 +264,8 @@ module.exports = {
     return next();
   },
 
-  limiterRedis: rateLimit({
-    store: new RedisStore({
-      sendCommand: (...args) => redisClient.call(...args),
-      prefix: "rl:",
-    }),
-    windowMs: 60 * 1000, // 1 menit
+  limiter: rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 menit
     max: 10,
     message: {
       success: false,
