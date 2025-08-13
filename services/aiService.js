@@ -4,29 +4,28 @@ const { QueryTypes } = require("sequelize");
 const utils = require("../lib/utils");
 
 const Redis = require('ioredis');
-const rateLimit = require('express-rate-limit');
 
 // Redis client
 let redis;
 
 function getRedis() {
-  if (!redis) {
-    redis = new Redis(process.env.REDIS_URL, {
-      enableOfflineQueue: false,
-    });
+  // if (!redis) {
+  //   redis = new Redis(process.env.REDIS_URL, {
+  //     enableOfflineQueue: false,
+  //   });
 
-    redis.on('connect', () => {
-      console.log('✅ Redis connected');
-    });
+  //   redis.on('connect', () => {
+  //     console.log('✅ Redis connected');
+  //   });
 
-    redis.on('error', (err) => {
-      console.warn('⚠️ Redis error (ignored):', err.message);
-    });
+  //   redis.on('error', (err) => {
+  //     console.warn('⚠️ Redis error (ignored):', err.message);
+  //   });
 
-    redis.on('end', () => {
-      console.warn('⚠️ Redis connection closed');
-    });
-  }
+  //   redis.on('end', () => {
+  //     console.warn('⚠️ Redis connection closed');
+  //   });
+  // }
   return redis;
 }
 
