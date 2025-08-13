@@ -6,16 +6,31 @@ const utils = require("../lib/utils");
 const Redis = require('ioredis');
 const rateLimit = require('express-rate-limit');
 
-const redis = new Redis(process.env.REDIS_URL); // default to localhost:6379
-// const redis = {
-//   get: async () => null,
-//   setex: async () => null,
-// };
+// Redis client
+const redis = new Redis(process.env.REDIS_URL, {
+  enableOfflineQueue: false, // jangan simpan command saat offline
+  reconnectOnError: (err) => {
+    console.warn("⚠️ Redis reconnectOnError:", err.message);
+    return true; // selalu coba reconnect
+  },
+  retryStrategy(times) {
+    const delay = Math.min(times * 200, 2000);
+    console.log(`🔄 Redis reconnecting in ${delay}ms...`);
+    return delay;
+  },
+});
+
+redis.on('connect', () => {
+  console.log('✅ Redis connected');
+});
 
 redis.on('error', (err) => {
   console.warn('⚠️ Redis error (ignored):', err.message);
 });
 
+redis.on('end', () => {
+  console.warn('⚠️ Redis connection closed');
+});
 
 module.exports = {
   search: async (body, req, res) => {
@@ -512,7 +527,8 @@ module.exports = {
       // 1. Mapping kolom yang ingin ditampilkan untuk setiap tabel
       const defaultSelectFields = {
         hai_user: ["id", "name", "province", "city", "address", "title"],
-        packages: ["id", "name", "totalprice", "description", "duration"],
+        partner_package_detail: ["id", "reservation_no", "price", "description", "duration", "terms"],
+        partner_package_header: ["id", "name", "totalprice", "description", "duration"],
         // tambahkan tabel lain jika diperlukan
       };
 
@@ -525,7 +541,7 @@ module.exports = {
       }
 
       // 2.a Validasi filters table yang di izinkan
-      if (!['hai_user', 'packages'].includes(table)) {
+      if (!['hai_user', 'partner_package_detail', 'partner_package_header'].includes(table)) {
         return {
           success: false,
           message: "Permintaan ke tabel tidak dikenali atau tidak diizinkan."

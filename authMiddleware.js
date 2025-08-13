@@ -2,6 +2,13 @@ var jwt = require("./lib/jwt");
 var admin = require('firebase-admin');
 const HaiUser = require('./models/haiuser');
 
+const Redis = require("ioredis");
+const rateLimit = require("express-rate-limit");
+const { RedisStore } = require("rate-limit-redis");
+
+// Redis client
+const redisClient = new Redis(process.env.REDIS_URL);
+
 module.exports = {
   isUserAuthenticated: async (req, res, next) => {
     const authHeader = req.headers.authorization;
@@ -261,38 +268,20 @@ module.exports = {
     return next();
   },
 
-  limiterRedis: async (req, res, next) => {
-    try {
-      // Setup Redis client
-      const redisClient = new Redis({
-        host: process.env.REDIS_HOST || '127.0.0.1',
-        port: process.env.REDIS_PORT || 6379,
-        password: process.env.REDIS_PASSWORD || undefined,
-        enableOfflineQueue: false,
-      });
-      
-      // Buat limiter middleware
-      const limiterRedis = rateLimit({
-        store: new RedisStore({
-          sendCommand: (...args) => redisClient.call(...args),
-          prefix: 'rl:',
-        }),
-        windowMs: 60 * 1000, // 1 menit
-        max: 10, // 10 permintaan per menit per IP
-        message: {
-          success: false,
-          message: 'Terlalu banyak permintaan dari IP ini. Coba lagi nanti.',
-        },
-        standardHeaders: true,
-        legacyHeaders: false,
-      });
-    } catch (error) {
-      console.warn("⚠️ Failed to update FCM token:", error.message);
-      // Tidak menghalangi request meski update token gagal
-    }
-  
-    return next();
-  },
+  limiterRedis: rateLimit({
+    store: new RedisStore({
+      sendCommand: (...args) => redisClient.call(...args),
+      prefix: "rl:",
+    }),
+    windowMs: 60 * 1000, // 1 menit
+    max: 10,
+    message: {
+      success: false,
+      message: "Terlalu banyak permintaan dari IP ini. Coba lagi nanti.",
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+  }),
   
 };
 

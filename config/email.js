@@ -14,6 +14,9 @@ const transporterSmtp = nodemailer.createTransport({
     user: EMAIL_USERNAME,
     pass: EMAIL_PASSWORD,
   },
+//   tls: {
+//     rejectUnauthorized: true,
+//   }
 });
 
 // const transporterGmail = nodemailer.createTransport({
