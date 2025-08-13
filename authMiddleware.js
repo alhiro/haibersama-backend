@@ -267,6 +267,7 @@ module.exports = {
   limiter: rateLimit({
     windowMs: 15 * 60 * 1000, // 15 menit
     max: 10,
+    validate: { xForwardedForHeader: false },
     message: {
       success: false,
       message: "Terlalu banyak permintaan dari IP ini. Coba lagi nanti.",
