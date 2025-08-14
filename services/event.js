@@ -199,20 +199,115 @@ module.exports =
       }
     },
 
-    getAllPublic: async () => {
+    getAllPublic: async (params, res) => {
+      const Op = Sequelizes.Op;
+
+      const { page, limit, search, startDate, endDate} = params;
+      console.log(params);
+
+      const partner_id = res.locals.auth.id;
+  
+      let paramsFilter = {};
+
+      if (search && search.trim() !== '') {
+        paramsFilter = {
+          ...paramsFilter,
+          title: {
+            [Op.iLike]: `%${search}%`
+          }
+        };
+      }
+
+      if (startDate && endDate) {
+        paramsFilter.created_at = {
+          [Op.between]: [new Date(startDate), new Date(endDate)],
+        };
+      } else if (startDate) {
+        paramsFilter.created_at = {
+          [Op.gte]: new Date(startDate),
+        };
+      } else if (endDate) {
+        paramsFilter.created_at = {
+          [Op.lte]: new Date(endDate),
+        };
+      }
+
+      paramsFilter.approval = true;
+
+      console.log("paramsFilter all")
+      console.log(paramsFilter)
+      
+      try {
+        return await Event.findAndCountAll({
+          where: paramsFilter,
+          include: [
+            {
+              model: HaiUser,
+              attributes: ["id", "name", "picture", "title"],
+              required: false,
+            }
+          ],
+          attributes: {
+            include: [
+              [
+                Sequelize.literal(`(
+                  SELECT COUNT(*) 
+                  FROM event_comment AS ec 
+                  WHERE ec.event_id = event.id
+                    AND ec.parent_comment_id IS NULL
+                )`),
+                'total_comments'
+              ],
+              [
+                Sequelize.literal(`(
+                  CASE 
+                    WHEN event.partner_id = ${partner_id} THEN true
+                    ELSE false
+                  END
+                )`),
+                'owner'
+              ]
+            ]
+          },
+          order: [
+            ["created_at", "DESC"]
+          ],
+          limit: parseInt(limit),
+          offset: (parseInt(page) - 1) * parseInt(limit),
+          distinct: true,
+        }).then((resp) => {
+          console.log("resp");
+          console.log(Math.ceil(resp.count / limit));
+          // console.log(resp);
+  
+          return {
+            success: true,
+            message: resp.rows.length > 0
+              ? "Semua data selayang berhasil diambil!"
+              : "Data selayang kosong!",
+            data: resp.rows,
+            page: parseInt(page),
+            count: Math.ceil(resp.count / limit),
+            length: resp.count
+          };
+        });
+      } catch (error) {
+        console.error("Error getListSelayang:", error);
+        throw error
+      }
+    },
+
+    getAllPublicLimit: async (params, res) => {
+      const { page, limit, search, startDate, endDate} = params;
+      console.log(params);
+      
       try {
         return await Event.findAll({
-            where:{
-                approval : true
-            },
-            // attributes: ['id',
-            //             'title',
-            //             'description',
-            //             'image_url'
-            // ],
-            order:[
-                ["created_at", "DESC"]
-            ]
+          where: {
+            approval: true,
+          },
+          limit: limit,
+          order: [["created_at", "DESC"]],
         });
       } catch (error) {
         throw error

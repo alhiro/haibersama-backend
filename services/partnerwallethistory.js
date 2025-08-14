@@ -533,17 +533,17 @@ module.exports =
             select 
               json_agg(
                 json_build_object(
-                  to_char(a.transaction_date, 'YYYY-MM-DD'), items
+                  to_char(a.event_date, 'YYYY-MM-DD'), items
                 )
               ) d
             FROM (select 
-                    distinct date(transaction_date) transaction_date, 
-                    partner_id	  
+                    distinct date(event_date) event_date, 
+                    partner_id
                   from partner_wallet_history rr
                   where rr.partner_id = ` + userId + `
                   and rr.reservation_type = '` + type + `'
-                  and date(rr.transaction_date) >= '` + date_from + `'
-                  and date(rr.transaction_date) <= '` + date_to + `'
+                  and date(rr.event_date) >= '` + date_from + `'
+                  and date(rr.event_date) <= '` + date_to + `'
               )  a
             LEFT JOIN LATERAL (
               SELECT json_agg(x) AS items
@@ -556,15 +556,17 @@ module.exports =
                   status,
                   total_amount,
                   event_date_reservation,
+                  reservation_date,
                   client_name
                   from partner_wallet_history r
                   left join lateral (
-                    SELECT transaction_date event_date_reservation,
+                    SELECT event_date event_date_reservation,
+                    reservation_date,
                     name client_name
                     from reservation oyc
                     where oyc.reservation_no = r.reservation_no
                   ) sum4 on true
-                  where date(r.transaction_date) = a.transaction_date and r.partner_id = ` + userId + `
+                  where date(r.event_date) = a.event_date and r.partner_id = ` + userId + `
                 ) x 
               ) c ON true`;
           return sequelize.query(query,{ type : sequelize.QueryTypes.SELECT}).then(results => {

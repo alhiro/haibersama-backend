@@ -43,7 +43,11 @@ eventRouter.get("/getall", headerAuth.isPartnerAuthenticated, (req, res, next) =
 });
 
 eventRouter.get("/getallpublic", headerAuth.isUserAuthenticated, (req, res, next) => {
-  controller.getAllEvent(req, res);
+  controller.getAllPublic(req, res);
+});
+
+eventRouter.get("/getallpubliclimit", headerAuth.isUserAuthenticated, (req, res, next) => {
+  controller.getAllPublicLimit(req, res);
 });
 
 eventRouter.get("/listselayang", headerAuth.isUserAuthenticated, (req, res, next) => {

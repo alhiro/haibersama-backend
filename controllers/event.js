@@ -1,10 +1,54 @@
 const eventService = require("../services/event");
 const sequelizeTransaction = require('../config/sequelizeTransaction')
 
-exports.getAllEvent = async function (req, res, next) {
+exports.getAllEvent = async (req, res, next) => {
   try {
-    var allData = await eventService.getAll();
-    return res.status(200).json({ status: 200, data: allData, message: "Semua Event Berhasil Diambil" });
+    const params = { page: req.query.page, limit: req.query.limit, search: req.query.search, startDate: req.query.startDate, endDate: req.query.endDate };
+
+    var all = await eventService.getAll(params, res);
+    return res.status(200).json(
+      {
+        success: all.success,
+        data: all.data,
+        message: all.message,
+        page: all.page,
+        pageCount: all.count,
+        length: all.length
+      });
+  } catch (err) {
+    return res
+      .status(500)
+      .send({ code: 500, success: false, message: err.message, data: { err } });
+  }
+};
+
+exports.getAllPublicLimit = async function (req, res, next) {
+  try {
+    const params = { page: req.query.page, limit: req.query.limit, search: req.query.search, startDate: req.query.startDate, endDate: req.query.endDate, };
+
+    var allData = await eventService.getAllPublicLimit(params, res);
+    return res.status(200).json({ status: 200, data: allData, message: "Semua Selayang Partner Berhasil Diambil" });
+  } catch (err) {
+    return res
+      .status(500)
+      .send({ code: 500, success: false, message: err.message, data: { err } });
+  }
+};
+
+exports.getAllPublic = async (req, res, next) => {
+  try {
+    const params = { page: req.query.page, limit: req.query.limit, search: req.query.search, startDate: req.query.startDate, endDate: req.query.endDate };
+
+    var all = await eventService.getAllPublic(params, res);
+    return res.status(200).json(
+      {
+        success: all.success,
+        data: all.data,
+        message: all.message,
+        page: all.page,
+        pageCount: all.count,
+        length: all.length
+      });
   } catch (err) {
     return res
       .status(500)
@@ -77,7 +121,7 @@ exports.searchEvent = async function(req, res, next) {
       .json({
         status: 200,
         data: events,
-        message: "Pencarian Event Berhasil Diambil",
+        message: "Pencarian Selayang Berhasil Diambil",
       });
   } catch (err) {
     return res
