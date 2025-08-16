@@ -63,7 +63,7 @@ exports.searchPartner = async function (req, res, next) {
   try {
         var partners = await partner.getSearchPartner(body);
         console.log("controller search");
-        return res.status(200).json({ status: 200, data: partners, message: "Pencarian Partner Berhasil Diambil" });
+        return res.status(200).json({ status: 200, data: partners, message: "Pencarian Partner Berhasil Diambil", length: partners[0].totalrow });
   } catch (err) {
     return res
       .status(500)

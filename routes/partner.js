@@ -25,7 +25,7 @@ partnerRouter.get("/getdetail", headerAuth.isUserAuthenticated, (req, res, next)
 //   partnerController.getDetailUser(req, res);
 // });
 
-partnerRouter.post("/getpartner", (req, res, next) => {
+partnerRouter.post("/getpartner", headerAuth.isUserAuthenticated, (req, res, next) => {
   partnerController.getPartner(req, res);
 });
 
@@ -33,15 +33,15 @@ partnerRouter.post("/search", (req, res, next) => {
   partnerController.searchPartner(req, res);
 });
 
-partnerRouter.post("/searchglobal", (req, res, next) => {
+partnerRouter.post("/searchglobal", headerAuth.isUserAuthenticated, (req, res, next) => {
   partnerController.searchPartnerGlobal(req, res);
 });
 
-partnerRouter.get("/province", (req, res, next) => {
+partnerRouter.get("/province", headerAuth.isUserAuthenticated, (req, res, next) => {
   partnerController.provinces(req, res);
 });
 
-partnerRouter.get("/city", (req, res, next) => {
+partnerRouter.get("/city", headerAuth.isUserAuthenticated, (req, res, next) => {
   partnerController.city(req, res);
 });
 
