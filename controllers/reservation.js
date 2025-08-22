@@ -149,6 +149,21 @@ exports.createReservation = async function(params, req, res, next) {
                   color: '#1B84FF', // opsional
                 },
               },
+              apns: {
+                headers: {
+                  "apns-priority": "10",
+                },
+                payload: {
+                  aps: {
+                    alert: {
+                      title: "Reservasi Baru",
+                      body: `${reservation.name} telah membuat reservasi baru ${reservation.package_name} untuk tanggal ${capitalizedDate} ${reservation.event_time}, di ${reservation.event_address}. Periksa dan proses segera`,
+                    },
+                    sound: "default",
+                    badge: 1,
+                  },
+                },
+              },
               data: {
                 type: "createReservation",
                 reservationId: reservation.id.toString(),
@@ -177,6 +192,21 @@ exports.createReservation = async function(params, req, res, next) {
                 notification: {
                   icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
                   color: '#1B84FF', // opsional
+                },
+              },
+              apns: {
+                headers: {
+                  "apns-priority": "10",
+                },
+                payload: {
+                  aps: {
+                    alert: {
+                      title: "Reservasi Baru",
+                      body: `Partner sedang memproses reservasi Anda. Mohon tunggu konfirmasi.`,
+                    },
+                    sound: "default",
+                    badge: 1,
+                  },
                 },
               },
               data: {

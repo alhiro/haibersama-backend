@@ -1,5 +1,5 @@
 const express = require("express");
-const   eventCommentRouter = express.Router();
+const eventCommentRouter = express.Router();
 const controller = require("../controllers/eventCommentController");
 var headerAuth  =  require('../authMiddleware');
 

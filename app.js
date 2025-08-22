@@ -20,7 +20,7 @@ if (fs.existsSync(envPath)) {
   dotenv.config({ path: envPath });
   console.log('✅ Loaded env from', envPath);
 } else {
-  if (nodeEnv !== 'production') {
+  if (envPath !== 'production') {
     console.error(`❌ Env file not found: ${envPath}`)
     process.exit(1)
   } else {
@@ -36,6 +36,7 @@ const app = express();
 const config = require('./config/config');
 const passport = require('passport');
 const cookieSession = require('cookie-session');
+const session = require('express-session');
 const serveIndex = require('serve-index');
 // const initDB = require('./models/index');
 
@@ -82,6 +83,15 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(morgan('dev'));
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "h@iStore2025!!_S3cr3tK3y",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: process.env.NODE_ENV === "env-production" } // kalau https -> true
+  })
+);
 
 app.use(passport.initialize()); // Used to initialize passport
 app.use(passport.session()); // Used to persist login sessions
