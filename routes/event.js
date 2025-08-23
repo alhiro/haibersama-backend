@@ -127,6 +127,10 @@ eventRouter.post("/update", headerAuth.isPartnerAuthenticated, upload.single('ev
   const partner_name = res.locals.auth.name;
 
   const eventImage = req.file;
+
+  console.log("eventImage");
+  console.log(eventImage);
+
   // make sure file is available
   if (!eventImage) {
     const data = {
@@ -163,6 +167,61 @@ eventRouter.post("/update", headerAuth.isPartnerAuthenticated, upload.single('ev
 
     controller.updateEvent(data, req, res);
   }
+});
+
+eventRouter.patch(
+  "/update",
+  headerAuth.isPartnerAuthenticated,
+  upload.single("events"),
+  (req, res, next) => {
+    const partner_id = res.locals.auth.id;
+    const partner_email = res.locals.auth.email;
+    const partner_name = res.locals.auth.name;
+
+    const eventImage = req.file;
+
+    // kalau file terlalu besar => Multer otomatis lempar error "LIMIT_FILE_SIZE"
+    if (req.fileValidationError) {
+      return res.status(400).json({ message: "Invalid file type" });
+    }
+
+    // siapkan data yang akan diupdate (hanya field yang dikirim)
+    const data = {
+      partner_id,
+      id: parseInt(req.body.id),
+      updated_by: partner_name,
+    };
+
+    // mapping hanya field yang ada
+    if (req.body.title) data.title = req.body.title;
+    if (req.body.description) data.description = req.body.description;
+    if (req.body.link_url) data.link_url = req.body.link_url;
+    if (req.body.event_date) data.event_date = req.body.event_date;
+    if (req.body.order_no) data.order_no = parseInt(req.body.order_no);
+    if (req.body.active) data.active = req.body.active;
+    if (req.body.ticket) data.ticket = req.body.ticket;
+    if (req.body.approval) data.approval = req.body.approval;
+
+    console.log("req.body.image_url");
+    console.log(req.body.image_url);
+
+    if (eventImage) {
+      data.image_url =
+        ENV.API_URL + "/ftp/" + FILE_PATH + "/" + eventImage.filename;
+    } else if (req.body.image_url) {
+      data.image_url = req.body.image_url;
+    }
+
+    controller.updateEvent(data, req, res);
+  }
+);
+
+// middleware khusus untuk tangkap error file size
+eventRouter.use((err, req, res, next) => {
+  if (err.code === "LIMIT_FILE_SIZE") {
+    return res.status(400).json({ message: "Event image too large (max 2MB)" });
+  }
+  next(err);
 });
 
 eventRouter.delete("/delete", headerAuth.isPartnerAuthenticated, upload.single('events'), (req, res, next) => {

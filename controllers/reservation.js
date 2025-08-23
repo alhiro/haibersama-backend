@@ -109,22 +109,37 @@ exports.createReservation = async function(params, req, res, next) {
         if (io) {
           if (reservation.reservation_type === "USER_ORDER") {
             console.log("emit to user and partner createReservation User");
-             // emit ke user
-            io.to(reservation.user_id.toString()).emit("createReservation", {
-              packageId: reservation.package_id,
-              name: reservation.name,
-              eventAddress: reservation.event_address,
-            });
+
+            const userId = reservation?.user_id?.toString();
+            if (userId) {
+              // emit ke user
+              io.to(userId).emit("createReservation", {
+                packageId: reservation.package_id,
+                name: reservation.name,
+                eventAddress: reservation.event_address,
+              });
+            } else {
+              console.warn(
+                "⚠️ reservation.user_id null, tidak bisa kirim createReservation"
+              );
+            }
+
+            const partnerId = reservation?.partner_id?.toString();
+            if (partnerId) {
+              // emit ke partner
+              io.to(partnerId).emit("createReservation", {
+                packageId: reservation.package_id,
+                name: reservation.name,
+                eventAddress: reservation.event_address,
+              });
+            } else {
+              console.warn(
+                "⚠️ reservation.partner_id null, tidak bisa kirim createReservation"
+              );
+            }
+
+            console.log("Socket emit sent to user and partner createReservation");
           }
-
-          // emit ke partner
-          io.to(reservation.partner_id.toString()).emit("createReservation", {
-            packageId: reservation.package_id,
-            name: reservation.name,
-            eventAddress: reservation.event_address,
-          });
-
-          console.log("Socket emit sent to user and partner createReservation");
         }
 
         // 🔔 Kirim Notifikasi FCM ke user dan partner
@@ -605,26 +620,46 @@ exports.updateStatusBookingManual = async function(params, req, res, next) {
         console.log("data update status booking manual");
         var reservation = data.data;
         console.log(reservation.dataValues);
+        console.log(reservation.partner_id);
       
         // 🔴 SOCKET.IO
         const io = req.app.get("io");
         console.log("run io in list booking");
         if (io) {
-          // emit ke user
-          io.to(reservation.user_id.toString()).emit("statusUpdated", {
-            reservationNo: reservation.reservation_no,
-            statusCode: reservation.status_code,
-            updatedAt: reservation.updated_at
-          });
-      
-          // emit ke partner
-          io.to(reservation.partner_id.toString()).emit("statusUpdated", {
-            reservationNo: reservation.reservation_no,
-            statusCode: reservation.status_code,
-            updatedAt: reservation.updated_at
-          });
-      
-          console.log('Socket emit sent to user and partner');
+
+          if (reservation.reservation_type === "USER_ORDER") {
+            console.log("emit to user and partner statusUpdated User");
+
+            const userId = reservation?.user_id?.toString();
+            if (userId) {
+              // emit ke user
+              io.to(userId).emit("statusUpdated", {
+                reservationNo: reservation.reservation_no,
+                statusCode: reservation.status_code,
+                updatedAt: reservation.updated_at,
+              });
+            } else {
+              console.warn(
+                "⚠️ reservation.user_id null, tidak bisa kirim statusUpdated"
+              );
+            }
+        
+            const partnerId = reservation?.partner_id?.toString();
+            if (partnerId) {
+              // emit ke partner
+              io.to(partnerId).emit("statusUpdated", {
+                reservationNo: reservation.reservation_no,
+                statusCode: reservation.status_code,
+                updatedAt: reservation.updated_at,
+              });
+            } else {
+              console.warn(
+                "⚠️ reservation.partner_id null, tidak bisa kirim statusUpdated"
+              );
+            }
+        
+            console.log('Socket emit sent to user and partner');
+          }
         }
 
         // 🔔 Kirim Notifikasi FCM ke user dan partner
