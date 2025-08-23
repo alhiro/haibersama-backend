@@ -443,8 +443,8 @@ module.exports =
     update: async (data, req, params, findEvent) => {
         try {
           const { id, partner_id, title, description, image_url, link_url, event_date, order_no, active, ticket, approval, updated_by } = data
-          console.log(data);
-          console.log(findEvent);
+          // console.log(data);
+          // console.log(findEvent);
 
           // var idUser = partner_id;
           // var usersDetail = await auth.findUser({ id: idUser });
@@ -503,10 +503,10 @@ module.exports =
                 }
               });
             
-              console.log("upService")
-              console.log(upService)
-              return { success: true, message: "Event Berhasil Diubah", data: upService ? upService.get({ plain: true }) : {}  } })
-          .catch((err) => { return { success: false, message: "Event Gagal Diubah", data: err } });
+              // console.log("upService")
+              // console.log(upService)
+              return { success: true, message: "Selayang Berhasil Diubah", data: upService ? upService.get({ plain: true }) : {}  } })
+          .catch((err) => { return { success: false, message: "Selayang Gagal Diubah", data: err } });
         } catch (error) {
           throw (error)
         }

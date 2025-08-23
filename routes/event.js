@@ -219,9 +219,16 @@ eventRouter.patch(
 // middleware khusus untuk tangkap error file size
 eventRouter.use((err, req, res, next) => {
   if (err.code === "LIMIT_FILE_SIZE") {
-    return res.status(400).json({ message: "Event image too large (max 2MB)" });
+    return res.status(400).json({ success: false, message: "Image too large (max 2MB)", data: err });
   }
-  next(err);
+
+  // Kalau error punya properti message
+  if (err.message) {
+    return res.status(500).json({ success: false, message: err.message, data: err });
+  }
+
+  // Default fallback kalau tidak ada message
+  return res.status(500).json({ success: false, message: "Something went wrong", data: err });
 });
 
 eventRouter.delete("/delete", headerAuth.isPartnerAuthenticated, upload.single('events'), (req, res, next) => {
