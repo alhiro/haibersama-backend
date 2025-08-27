@@ -58,6 +58,10 @@ eventRouter.get("/partner", headerAuth.isPartnerAuthenticated, (req, res, next) 
   controller.getEventPartner(req, res);
 });
 
+eventRouter.get("/partnerpubliclimit", headerAuth.isUserAuthenticated, (req, res, next) => {
+  controller.getEventPartnerPublic(req, res);
+});
+
 eventRouter.get("/get", headerAuth.isUserAuthenticated, (req, res, next) => {
   controller.getEvent(req, res);
 });

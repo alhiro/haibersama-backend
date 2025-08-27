@@ -60,7 +60,7 @@ module.exports =
             include: [
               [
                 Sequelize.literal(`(
-                  SELECT COUNT(*) 
+                  SELECT CAST(COUNT(*) AS INTEGER)
                   FROM event_comment AS ec 
                   WHERE ec.event_id = event.id
                     AND ec.parent_comment_id IS NULL
@@ -142,8 +142,9 @@ module.exports =
         paramsFilter.partner_id = partnerId;
       }
 
-     
-      console.log("paramsFilter own")
+      // paramsFilter.approval = true;
+
+      console.log("paramsFilter own public")
       console.log(paramsFilter)
   
       try {
@@ -153,7 +154,101 @@ module.exports =
             include: [
               [
                 Sequelize.literal(`(
-                  SELECT COUNT(*) 
+                  SELECT CAST(COUNT(*) AS INTEGER)
+                  FROM event_comment AS ec 
+                  WHERE ec.event_id = event.id
+                    AND ec.parent_comment_id IS NULL
+                )`),
+                'total_comments'
+              ],
+              [
+                Sequelize.literal(`(
+                  CASE 
+                    WHEN event.partner_id = ${paramsFilter.partner_id} THEN true
+                    ELSE false
+                  END
+                )`),
+                'owner'
+              ]
+            ]
+          },
+          order: [
+            ["created_at", "DESC"]
+          ],
+          limit: parseInt(limit),
+          offset: (parseInt(page) - 1) * parseInt(limit),
+          distinct: true,
+        }).then((resp) => {
+          console.log("resp");
+          console.log(Math.ceil(resp.count / limit));
+          // console.log(resp.rows);
+  
+          return {
+            success: true,
+            message: resp.rows.length > 0
+              ? "Semua data selayang berhasil diambil!"
+              : "Data selayang kosong!",
+            data: resp.rows,
+            page: parseInt(page),
+            count: Math.ceil(resp.count / limit),
+            length: resp.count
+          };
+        });
+      } catch (error) {
+        console.error("Error getListSelayang:", error);
+        throw error
+      }
+    },
+
+    findListSelayangPartnerPublic: async (partner_id, params) => {
+      const Op = Sequelizes.Op;
+
+      const { partnerId, page, limit, search, startDate, endDate} = params;
+      console.log(partner_id);
+      console.log(params);
+  
+      let paramsFilter = {};
+
+      if (search && search.trim() !== '') {
+        paramsFilter = {
+          ...paramsFilter,
+          title: {
+            [Op.iLike]: `%${search}%`
+          }
+        };
+      }
+
+      if (startDate && endDate) {
+        paramsFilter.created_at = {
+          [Op.between]: [new Date(startDate), new Date(endDate)],
+        };
+      } else if (startDate) {
+        paramsFilter.created_at = {
+          [Op.gte]: new Date(startDate),
+        };
+      } else if (endDate) {
+        paramsFilter.created_at = {
+          [Op.lte]: new Date(endDate),
+        };
+      } else if (!partnerId || partnerId === 'null') {
+        paramsFilter.partner_id = partner_id;
+      } else {
+        paramsFilter.partner_id = partnerId;
+      }
+
+      paramsFilter.approval = true;
+
+      console.log("paramsFilter own public")
+      console.log(paramsFilter)
+  
+      try {
+        return await Event.findAndCountAll({
+          where: paramsFilter,
+          attributes: {
+            include: [
+              [
+                Sequelize.literal(`(
+                  SELECT CAST(COUNT(*) AS INTEGER)
                   FROM event_comment AS ec 
                   WHERE ec.event_id = event.id
                     AND ec.parent_comment_id IS NULL
@@ -251,7 +346,7 @@ module.exports =
             include: [
               [
                 Sequelize.literal(`(
-                  SELECT COUNT(*) 
+                  SELECT CAST(COUNT(*) AS INTEGER)
                   FROM event_comment AS ec 
                   WHERE ec.event_id = event.id
                     AND ec.parent_comment_id IS NULL
@@ -342,7 +437,7 @@ module.exports =
             include: [
               [
                 Sequelize.literal(`(
-                  SELECT COUNT(*) 
+                  SELECT CAST(COUNT(*) AS INTEGER)
                   FROM event_comment AS ec 
                   WHERE ec.event_id = event.id
                     AND ec.parent_comment_id IS NULL
@@ -483,7 +578,7 @@ module.exports =
                   include: [
                     [
                       Sequelize.literal(`(
-                        SELECT COUNT(*) 
+                        SELECT CAST(COUNT(*) AS INTEGER)
                         FROM event_comment AS ec 
                         WHERE ec.event_id = event.id
                           AND ec.parent_comment_id IS NULL
