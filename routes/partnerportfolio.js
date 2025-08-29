@@ -43,8 +43,11 @@ partnerPortfolioRouter.get("/getportfolio", (req, res, next) => {
 });
 
 partnerPortfolioRouter.get("/getall", headerAuth.isUserAuthenticated, (req, res, next) => {
-  const partner_id = res.locals.auth.id;
-  partnerPortfolioController.getAllPortfolio(partner_id, res);
+  partnerPortfolioController.getAllPortfolio(req, res);
+});
+
+partnerPortfolioRouter.get("/getportfoliolist", headerAuth.isUserAuthenticated, (req, res, next) => {
+  partnerPortfolioController.getListPortfolio(req, res);
 });
 
 partnerPortfolioRouter.get("/get", headerAuth.isUserAuthenticated, (req, res, next) => {

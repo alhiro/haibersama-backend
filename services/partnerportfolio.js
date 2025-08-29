@@ -23,6 +23,79 @@ module.exports =
         });
       },
 
+    getFindList: async (params) => {
+        const { partnerId, page, limit, search, startDate, endDate} = params;
+
+        let paramsFilter = {};
+
+        if (search && search.trim() !== '') {
+          paramsFilter = {
+            ...paramsFilter,
+            name: {
+              [Op.iLike]: `%${search}%`
+            }
+          };
+        }
+
+        if (startDate && endDate) {
+          paramsFilter.created_at = {
+            [Op.between]: [new Date(startDate), new Date(endDate)],
+          };
+        } else if (startDate) {
+          paramsFilter.created_at = {
+            [Op.gte]: new Date(startDate),
+          };
+        } else if (endDate) {
+          paramsFilter.created_at = {
+            [Op.lte]: new Date(endDate),
+          };
+        }
+        paramsFilter.partner_id = partnerId;
+        console.log("paramsFilter own public")
+        console.log(paramsFilter)
+    
+        try {
+          return await Portfolio.findAndCountAll({
+            where: paramsFilter,
+            attributes: [
+              "id",
+              "name",
+              "portfolio_date",
+              "category_id",
+              "description",
+              "image_url",
+            ],
+            order: [["portfolio_date", "DESC"]],
+            limit: parseInt(limit),
+            offset: (parseInt(page) - 1) * parseInt(limit),
+            distinct: true,
+          })
+            .then((resp) => {
+              return {
+                success: true,
+                message: resp.rows.length > 0
+                  ? "Semua data portfolio partner berhasil diambil!"
+                  : "Data portfolio partner kosong!",
+                data: resp.rows,
+                page: parseInt(page),
+                count: Math.ceil(resp.count / limit),
+                length: resp.count
+              };
+            })
+            .catch((err) => {
+              console.log(err);
+              return {
+                success: false,
+                message: "Partner Portfolio Belum Ada, Ada Kesalahan Server!",
+                data: err,
+              };
+            });
+        } catch (error) {
+          console.error("Error getListSelayang:", error);
+          throw error
+        }
+      },
+
     getDetail: async (id) => {
         return await Portfolio.findOne({ 
               where: {

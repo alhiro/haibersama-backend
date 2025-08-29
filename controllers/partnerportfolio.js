@@ -17,13 +17,37 @@ exports.getPortfolio = async function(req, res, next) {
 };
 
 exports.getAllPortfolio = async function(req, res, next) {
-  const partner_id = req;
+  const partner_id = res.locals.auth.id;;
   try {
     var params = { partner_id: partner_id };
     var portfolio = await partnerportfolio.getList(params);
     return res
       .status(200)
       .json({ status: 200, data: portfolio.data, message: "Semua Partner Portfolio Berhasil Diambil" });
+  } catch (err) {
+    return res
+      .status(500)
+      .send({ code: 500, success: false, message: err.message, data: { err } });
+  }
+};
+
+exports.getListPortfolio = async function(req, res, next) {
+  const partner_id = req.query.partner_id;
+  console.log("controller list portfolio partner_id " + partner_id);
+
+  try {
+    const params = { partnerId: partner_id, page: req.query.page, limit: req.query.limit, search: req.query.search, startDate: req.query.startDate, endDate: req.query.endDate};
+    var portfolio = await partnerportfolio.getFindList(params);
+
+    return res.status(200).json(
+      {
+        success: portfolio.success,
+        data: portfolio.data,
+        message: portfolio.message,
+        page: portfolio.page,
+        pageCount: portfolio.count,
+        length: portfolio.length
+      });
   } catch (err) {
     return res
       .status(500)
