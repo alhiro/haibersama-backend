@@ -261,7 +261,7 @@ reservationRouter.post("/updatestatusbookingmanual", headerAuth.isPartnerAuthent
   reservationController.updateStatusBookingManual(data, req, res);
 });
 
-reservationRouter.put("/updatestatusbooking", headerAuth.isUserAuthenticated ,(req, res, next) => {
+reservationRouter.put("/updatestatusbookingadmin", headerAuth.isAdminAuthenticated ,(req, res, next) => {
   const id = res.locals.auth.id;
   const type = res.locals.auth.type;
   const email = res.locals.auth.email;
@@ -278,8 +278,43 @@ reservationRouter.put("/updatestatusbooking", headerAuth.isUserAuthenticated ,(r
     email: email
   };
   
-  reservationController.updateStatusBooking(data, res);
+  reservationController.updateStatusBooking(data, req, res);
 });
+
+reservationRouter.put(
+  "/updatestatusbooking",
+  headerAuth.isUserAuthenticated,
+  (req, res, next) => {
+    const id = res.locals.auth.id;
+    const type = res.locals.auth.type;
+    const email = res.locals.auth.email;
+
+    const { reservationNo, statusCode, totalDp, totalDiscount, totalPpn } = req.body;
+
+    // 🚫 Jika statusCode = order_payment_completed, hentikan eksekusi
+    if (statusCode === "ORDER_PAYMENT_COMPLETED" || statusCode === "ORDER_COMPLETED") {
+      return res.status(400).json({
+        success: false,
+        message: "Status update payment completed tidak diizinkan",
+      });
+    }
+
+    const data = {
+      reservationNo,
+      reservationType: "USER_ORDER",
+      statusCode,
+      totalDp,
+      totalDiscount,
+      totalPpn,
+      userId: id,
+      type,
+      email,
+    };
+
+    reservationController.updateStatusBooking(data, req, res);
+  }
+);
+
 
 reservationRouter.put("/update", headerAuth.isPartnerAuthenticated, (req, res, next) => {
   const id = res.locals.auth.id;
@@ -393,6 +428,24 @@ reservationRouter.post("/getlistsdynamic", headerAuth.isPartnerAuthenticated, (r
   console.log("data resrvation");
   console.log(req.body);
   reservationController.getReservationsGroupByDynamic(data, res);
+});
+
+reservationRouter.post("/getlistsdynamicadmin", headerAuth.isAdminAuthenticated, (req, res, next) => {
+  const id = res.locals.auth.id;
+  const type = res.locals.auth.type;
+
+  const data = { 
+    statusCode: req.body.statusCode || [],
+    categoryId: req.body.categoryId,
+    page: req.body.page,
+    limitItem: req.body.limitItem,
+    userId: id, 
+    type: type,
+    search: req.body.search
+  };
+  console.log("data resrvation");
+  console.log(req.body);
+  reservationController.getReservationsGroupByDynamicAdmin(data, res);
 });
 
 reservationRouter.post("/getinvoicelist", headerAuth.isUserAuthenticated, (req, res, next) => {
@@ -529,6 +582,7 @@ reservationRouter.put("/confirmationPayment", headerAuth.isUserAuthenticated, up
       reservationType: "USER_ORDER",
       reservationNo: req.body.reservationNo,
       confirmationPayment: req.body.confirmationImage,
+      statusCode: req.body.statusCode
     };
 
     reservationController.updateConfirmationPayment(data, res);
@@ -539,6 +593,7 @@ reservationRouter.put("/confirmationPayment", headerAuth.isUserAuthenticated, up
       reservationType: "USER_ORDER", 
       reservationNo: req.body.reservationNo,
       confirmationPayment: ENV.API_URL + '/ftp/' + FILE_PATH + '/' + confirmationImage.filename,
+      statusCode: req.body.statusCode
     };
 
     reservationController.updateConfirmationPayment(data, res);

@@ -5,6 +5,7 @@ const ReservationContact = require('../models/reservationcontact');
 const ReservationService = require('../models/reservationservice');
 const PackageHeader = require('../models/partnerPackageHeader');
 const PackageDetail = require('../models/partnerPackageDetail');
+const Payment = require('../models/payment');
 const moment = require("moment");
 const sequelize = require('../config/sequelize');
 const Sequelize = require('sequelize');
@@ -54,7 +55,8 @@ module.exports =
           event_date: new Date(eventDate).toLocaleString(),
           event_time: eventTime,   
           // event_address: eventAddress,
-          reservation_type: reservationType
+          reservation_type: reservationType,
+          status_code: ["ORDER_NEW", "ORDER_PARTNER_CONFIRM", "ORDER_DP_COMPLETED", "ORDER_COMPLETED", "ORDER_PAYMENT_COMPLETED"]
         };
         console.log('params')
         console.log(params)
@@ -586,13 +588,34 @@ module.exports =
                 )
               ) FILTER (WHERE ppd.id IS NOT NULL), '[]'
             ) AS partner_package_details,
+
             CAST((
               COALESCE(rv.total_price, 0) +
               (SELECT COALESCE(SUM(price), 0)
                FROM partner_package_detail ppd2
                WHERE ppd2.reservation_no = rv.reservation_no) +
               COALESCE(rv.total_ppn, 0)
-            ) - COALESCE(rv.total_discount, 0) AS INTEGER) AS total_price_payment
+            ) - COALESCE(rv.total_discount, 0) AS INTEGER) AS total_price_payment,
+
+            CAST(COALESCE(rv.total_payment, 0) - COALESCE(rv.total_down_payment, 0) AS INTEGER) AS total_remaining_payment,
+            
+            -- get last data from reservation_status_history
+            (
+              SELECT pph2.status_code
+              FROM reservation_status_history pph2
+              WHERE pph2.reservation_id = rv.id
+              ORDER BY pph2.created_at DESC
+              LIMIT 1
+            ) AS reservation_status_histories,
+
+            -- get last payment status_code
+            (
+              SELECT pmt.status_code
+              FROM payment pmt
+              WHERE pmt.reservation_no = rv.reservation_no
+              ORDER BY pmt.created_at DESC
+              LIMIT 1
+            ) AS status_code_payment
     
          FROM public.reservation rv
          INNER JOIN hai_user prt ON prt.id = rv.partner_id
@@ -1954,6 +1977,35 @@ module.exports =
       }
     },
 
+    findReservationSummaryAdmin: async (partnerId) => {
+        var reservations = await sequelize.query(
+          `SELECT
+              count(*) FILTER (WHERE status_code IS NOT NULL) AS "ALL_ORDER",
+              count(*) FILTER (WHERE status_code = 'ORDER_NEW') AS "ORDER_NEW",
+              count(*) FILTER (WHERE status_code = 'ORDER_PARTNER_CONFIRM') AS "ORDER_PARTNER_CONFIRM",
+              (count(*) FILTER (WHERE status_code = 'ORDER_NEW')
+              + count(*) FILTER (WHERE status_code = 'ORDER_PARTNER_CONFIRM')) AS "ORDER_NEED_PAYMENT",
+              count(*) FILTER (WHERE status_code = 'ORDER_DP_COMPLETED') AS "ORDER_DP_COMPLETED",
+              count(*) FILTER (WHERE status_code = 'ORDER_PAYMENT_COMPLETED') AS "ORDER_PAYMENT_COMPLETED",
+              (count(*) FILTER (WHERE status_code = 'ORDER_DP_COMPLETED')
+              + count(*) FILTER (WHERE status_code = 'ORDER_PAYMENT_COMPLETED')) AS "ORDER_PROCESS",
+              count(*) FILTER (WHERE status_code = 'ORDER_COMPLETED') AS "ORDER_COMPLETED"
+          FROM reservation r
+          WHERE r.reservation_type = 'USER_ORDER';
+          `,
+          {
+            raw: true,
+            type: sequelize.QueryTypes.SELECT,
+          }
+        );
+          // console.log(reservations);
+      if(reservations.length > 0){
+        return (!reservations) ? { success: false, message: "Statistik Reservasi Tidak Ditemukan!", data: {} } : { success: true, message: "Statistik Reservasi Berhasil Ditemukan", data: reservations[0] }
+      } else {      
+        return { success: false, message: "Statistik Reservasi Tidak Ditemukan, Ada Kesalahan Server!", data: err } 
+      }
+    },
+
     findReservationUserSummary: async (userId) => {
       var reservations = await sequelize.query(
         `SELECT
@@ -2165,7 +2217,7 @@ module.exports =
 
     updateConfirmationPaymentImage: async (req) => {
       try {
-        const { reservationNo, reservationType, confirmationPayment, userId } = req;
+        const { reservationNo, reservationType, confirmationPayment, userId, statusCode } = req;
 
         // total dp blum dieksekusi
         var objReservationConfirmationPayment = {
@@ -2177,16 +2229,59 @@ module.exports =
         console.log("objReservationConfirmationPayment");
         console.log(objReservationConfirmationPayment);
 
-        return Reservation.update(objReservationConfirmationPayment, { where: { reservation_no: reservationNo } })
-          .then(async (updated) => {
-            const upReserv = await Reservation.findOne({ where: { reservation_no: reservationNo } });
+        const transaction = await sequelize.transaction();
+        try {
+          // Update reservation
+          const [updated] = await Reservation.update(
+            objReservationConfirmationPayment,
+            { where: { reservation_no: reservationNo }, transaction: transaction }
+          );
+      
+          if (updated === 0) {
+            throw new Error("Reservation not found or update failed");
+          }
+      
+          let upReserv;
+          if (reservationType === "USER_ORDER") {
+            upReserv = await Reservation.findOne({ where: { reservation_no: reservationNo }, transaction: transaction });
+      
             console.log(JSON.stringify(upReserv), "upReserv");
-            
-            if (reservationType == "USER_ORDER") {
-              return { success: true, message: "Success Update Confirmation Payment", data: upReserv }
+      
+            // data untuk Payment
+            const data = {
+              userId: upReserv.user_id,
+              reservation_no: upReserv.reservation_no,
+              total_price: upReserv.total_price,
+              total_discount: upReserv.total_discount,
+              total_payment: upReserv.total_payment,
+              status_code: statusCode === "PAYMENT_COMPLETED" ? "PAYMENT_COMPLETED" : "PAYMENT_DP_REQUEST",
+              // payment_channel_code: 0,
+              // payment_time_limit: new Date(Date.now() + 24 * 60 * 60 * 1000), // timer 24 jam
             };
-          })
-          .catch((err) => { return { success: false, message: "Confirmation Payment Failed To Update", data: err } });
+      
+            // Buat payment (hanya kalau belum ada)
+            const [payment, created] = await Payment.findOrCreate({
+              where: { reservation_no: reservationNo },
+              defaults: data,
+              transaction: transaction,
+            });
+
+            if (!created) {
+              console.log("Payment sudah ada:", payment.id);
+              await payment.update(data, { transaction: transaction });
+            } else {
+              console.log("Payment baru dibuat:", payment.id);
+            }
+          }
+      
+          // kalau semua berhasil → commit
+          await transaction.commit();
+          return { success: true, message: "Success Update Confirmation Payment", data: upReserv };
+        } catch (err) {
+          // kalau ada error → rollback
+          await transaction.rollback();
+          return { success: false, message: "Confirmation Payment Failed To Update", data: err.message };
+        }
       } catch (error) {
         throw (error)
       }

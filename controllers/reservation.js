@@ -183,6 +183,7 @@ exports.createReservation = async function(params, req, res, next) {
                 type: "createReservation",
                 reservationId: reservation.id.toString(),
                 packageId: reservation.package_id.toString(),
+                statusCode: reservation.status_code
               },
               token: partnerToken,
             };
@@ -228,6 +229,7 @@ exports.createReservation = async function(params, req, res, next) {
                 type: "reservationProcessing",
                 reservationId: reservation.id.toString(),
                 packageId: reservation.package_id.toString(),
+                statusCode: reservation.status_code
               },
               token: userToken,
             };
@@ -722,10 +724,26 @@ exports.updateStatusBookingManual = async function(params, req, res, next) {
                 color: '#1B84FF', // opsional
               },
             },
+            apns: {
+              headers: {
+                "apns-priority": "10",
+              },
+              payload: {
+                aps: {
+                  alert: {
+                    title: `${transactionStatusCode}`,
+                    body: `${bodyMessage}`,
+                  },
+                  sound: "default",
+                  badge: 1,
+                },
+              },
+            },
             data: {
               type: "updateReservation",
               reservationId: reservation.id.toString(),
               packageId: reservation.package_id.toString(),
+              statusCode: reservation.status_code
             },
             token: partnerToken,
           };
@@ -752,10 +770,26 @@ exports.updateStatusBookingManual = async function(params, req, res, next) {
                 color: '#1B84FF', // opsional
               },
             },
+            apns: {
+              headers: {
+                "apns-priority": "10",
+              },
+              payload: {
+                aps: {
+                  alert: {
+                    title: `${transactionStatusCode}`,
+                    body: `${bodyMessage}`,
+                  },
+                  sound: "default",
+                  badge: 1,
+                },
+              },
+            },
             data: {
               type: "updateReservation",
               reservationId: reservation.id.toString(),
               packageId: reservation.package_id.toString(),
+              statusCode: reservation.status_code
             },
             token: userToken,
           };
@@ -779,11 +813,198 @@ exports.updateStatusBookingManual = async function(params, req, res, next) {
     }    
 };
 
-exports.updateStatusBooking = async function(req, res, next) {
+exports.updateStatusBooking = async function(params, req, res, next) {
   try {            
-      let data = await resv.updateStatusReservationGlobal(req);
+      let data = await resv.updateStatusReservationGlobal(params);
+      console.log("data update status booking global");
+      console.log(data);
       
       if (data.success) {
+        var reservation = data.data;
+        console.log("response reservasi update global");
+        console.log(reservation);
+        console.log(reservation.id);
+        console.log(reservation.package_id);
+
+        // 🔴 SOCKET.IO
+        const io = req.app.get("io");
+        console.log("run io in list booking");
+        if (io) {
+
+          if (reservation.reservation_type === "USER_ORDER") {
+            console.log("emit to user and partner statusUpdated User");
+
+            const userId = reservation?.user_id?.toString();
+            if (userId) {
+              // emit ke user
+              io.to(userId).emit("statusUpdated", {
+                reservationNo: reservation.reservation_no,
+                statusCode: reservation.status_code,
+                updatedAt: reservation.updated_at,
+              });
+            } else {
+              console.warn(
+                "⚠️ reservation.user_id null, tidak bisa kirim statusUpdated"
+              );
+            }
+        
+            const partnerId = reservation?.partner_id?.toString();
+            if (partnerId) {
+              // emit ke partner
+              io.to(partnerId).emit("statusUpdated", {
+                reservationNo: reservation.reservation_no,
+                statusCode: reservation.status_code,
+                updatedAt: reservation.updated_at,
+              });
+            } else {
+              console.warn(
+                "⚠️ reservation.partner_id null, tidak bisa kirim statusUpdated"
+              );
+            }
+        
+            console.log('Socket emit sent to user and partner');
+          }
+        }
+
+        // 🔔 Kirim Notifikasi FCM ke user dan partner
+        // Ambil token user dan partner
+        const userToken = await utilility.getFcmTokens(reservation.user_id, HaiUser);
+        const partnerToken = await utilility.getFcmTokens(reservation.partner_id, HaiUser);
+
+        const formattedDate = moment(reservation.event_date).format('dddd, DD/MM/YYYY');
+        const capitalizedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
+
+        let bodyMessage = "";
+        let transactionStatusCode = "";
+
+        if (reservation.status_code == "ORDER_COMPLETED") {
+          transactionStatusCode = "Reservasi Selesai";
+        } else if (reservation.status_code == "ORDER_CANCEL_BY_PARTNER") {
+          transactionStatusCode = "Reservasi Dibatalkan Partner";
+        } else if (reservation.status_code == "ORDER_CANCEL_BY_USER") {
+          transactionStatusCode = "Reservasi Dibatalkan Kustomer";
+        } else if (reservation.status_code == "ORDER_DP_REQUEST") {
+          transactionStatusCode = "Permintaan DP";
+        } else if (reservation.status_code == "ORDER_DP_COMPLETED") {
+          transactionStatusCode = "Sudah DP";
+        } else if (reservation.status_code == "ORDER_PARTNER_CONFIRM") {
+          transactionStatusCode = "Sudah Dikonfirmasi Partner";
+        } else if (reservation.status_code == "ORDER_REPAYMENT_REQUEST") {
+          transactionStatusCode = "Permintaan Ulang Pembayaran";
+        } else if (reservation.status_code == "ORDER_PAYMENT_COMPLETED") {
+          transactionStatusCode = "Pembayaran Lunas";
+        }
+
+        if (reservation.status_code === "ORDER_COMPLETED") {
+          bodyMessage = `Reservasi atas nama ${reservation.name} sudah selesai untuk transaksi ${reservation.package_name}, tanggal ${capitalizedDate} ${reservation.event_time}, di ${reservation.event_address}.`;
+        } else if (reservation.status_code === "ORDER_CANCEL_BY_PARTNER") {
+          bodyMessage = `Partner udah membatalkan reservasi ${reservation.name} untuk transaksi ${reservation.package_name}, tanggal ${capitalizedDate} ${reservation.event_time},  di ${reservation.event_address}.`;
+        } else if (reservation.status_code === "ORDER_CANCEL_BY_USER") {
+          bodyMessage = `${reservation.name} telah membatalkan reservasi untuk transaksi ${reservation.package_name}, tanggal ${capitalizedDate} ${reservation.event_time}, di ${reservation.event_address}.`;
+        } else if (reservation.status_code === "ORDER_DP_REQUEST") {
+          bodyMessage = `Permintaan pembayaran DP untuk reservasi ${reservation.name} – ${reservation.package_name}, tanggal ${capitalizedDate} ${reservation.event_time} di ${reservation.event_address}.`;
+        } else if (reservation.status_code === "ORDER_DP_COMPLETED") {
+          bodyMessage = `${reservation.name} telah membayar DP reservasi untuk transaksi ${reservation.package_name}, tanggal ${capitalizedDate} ${reservation.event_time} di ${reservation.event_address}.`;
+        } else if (reservation.status_code === "ORDER_PARTNER_CONFIRM") {
+          bodyMessage = `Reservasi ${reservation.name} untuk transaksi ${reservation.package_name}, tanggal ${capitalizedDate} ${reservation.event_time} telah dikonfirmasi oleh partner.`;
+        } else if (reservation.status_code === "ORDER_REPAYMENT_REQUEST") {
+          bodyMessage = `Permintaan pelunasan pembayaran reservasi untuk transaksi ${reservation.name} – ${reservation.package_name}, tanggal ${capitalizedDate} di ${reservation.event_address}.`;
+        } else if (reservation.status_code === "ORDER_PAYMENT_COMPLETED") {
+          bodyMessage = `Reservasi ${reservation.name} telah dilunasi untuk transaksi ${reservation.package_name}, tanggal ${capitalizedDate} ${reservation.event_time}, di ${reservation.event_address}.`;
+        }
+
+        // Notifikasi untuk Partner
+        if (partnerToken) {
+          const partnerPayload = {
+            notification: {
+              title: `${transactionStatusCode}`,
+              body: `${bodyMessage}`,
+            },
+            android: {
+              notification: {
+                icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
+                color: '#1B84FF', // opsional
+              },
+            },
+            apns: {
+              headers: {
+                "apns-priority": "10",
+              },
+              payload: {
+                aps: {
+                  alert: {
+                    title: `${transactionStatusCode}`,
+                    body: `${bodyMessage}`,
+                  },
+                  sound: "default",
+                  badge: 1,
+                },
+              },
+            },
+            data: {
+              type: "updateReservation",
+              reservationId: reservation.id.toString(),
+              packageId: reservation.package_id.toString(),
+              statusCode: reservation.status_code
+            },
+            token: partnerToken,
+          };
+
+          admin
+            .messaging()
+            .send(partnerPayload)
+            .then((res) => console.log("✅ Notifikasi ke partner sent:", res))
+            .catch((err) => console.error("❌ Error FCM partner:", err));
+        } else {
+          console.log("No token for send messaging");
+        }
+
+        // Notifikasi untuk User
+        if (userToken) {
+          const userPayload = {
+            notification: {
+              title: `${transactionStatusCode}`,
+              body: `${bodyMessage}`,
+            },
+            android: {
+              notification: {
+                icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
+                color: '#1B84FF', // opsional
+              },
+            },
+            apns: {
+              headers: {
+                "apns-priority": "10",
+              },
+              payload: {
+                aps: {
+                  alert: {
+                    title: `${transactionStatusCode}`,
+                    body: `${bodyMessage}`,
+                  },
+                  sound: "default",
+                  badge: 1,
+                },
+              },
+            },
+            data: {
+              type: "updateReservation",
+              reservationId: reservation.id.toString(),
+              packageId: reservation.package_id.toString(),
+              statusCode: reservation.status_code
+            },
+            token: userToken,
+          };
+
+          admin
+            .messaging()
+            .send(userPayload)
+            .then((res) => console.log("✅ Notifikasi ke user sent:", res))
+            .catch((err) => console.error("❌ Error FCM user:", err));
+        } else {
+          console.log("No token for send messaging");
+        }
+
         return res.status(200).send(data);
       } 
     } catch (err) {
@@ -1007,6 +1228,59 @@ exports.getReservationsGroupByDynamic = async function(req, res, next) {
         params.user_id = userId;
         where += " AND rv.user_id = " + userId;
       }    
+
+      // where += " AND rv.transaction_status_code = 'SUCCESS' ";
+      
+      if(eventFrom != null){
+        where += " AND date(rv.event_date) >= date('" + eventFrom + "') ";
+      }
+      
+      if(eventTo != null){
+        where += " AND date(rv.event_date) <= date('" + eventTo + "') ";
+      }
+
+      if (Array.isArray(statusCode) && statusCode.length > 0) {
+        const statusConditions = statusCode
+          .map(code => `(rv.status_code = '${code}' OR rv.transaction_status_code = '${code}')`)
+          .join(' OR ');
+      
+        where += ` AND (${statusConditions}) `;
+      }
+      
+      if(categoryId > 0){
+        params.category_id = categoryId;
+        where += " AND rv.category_id = " + categoryId + " ";
+      }
+
+      if (search.trim().length >= 4) {
+        const keyword = search.trim();
+        where += ` AND (rv.reservation_no ILIKE '%${keyword}%' OR rv.name ILIKE '%${keyword}%')`;
+      }
+      
+      console.log('where ' + where);
+      let data = await resv.findSuccessReservations(where, limitItem, page);
+      data.code = data.success ? 200 : 500;
+      return res.status(200).send(data);
+  
+    } catch (err) {
+      console.log(err);
+      return res.status(500).send({ data: err });
+    }    
+};
+
+exports.getReservationsGroupByDynamicAdmin = async function(req, res, next) {
+  try {
+      const { statusCode, categoryId, eventFrom, eventTo, limitItem, page, userId, type, search } = req;
+      //const paging = { limit: pageSize, offset: (page - 1) *  pageSize};
+
+      const params = { };
+      var where = " WHERE 1=1 "
+
+      // params.partner_id = userId;
+      // where += " AND rv.partner_id = " + userId; 
+
+      // get user order only for check by admin
+      where += " AND rv.reservation_type = 'USER_ORDER'";
 
       // where += " AND rv.transaction_status_code = 'SUCCESS' ";
       
@@ -2188,7 +2462,7 @@ exports.updateTotalInvoice = async function (req, res, next) {
 
 exports.updateConfirmationPayment = async function (req, res, next) {
   try {
-    const { reservationNo, userId } = req;
+    const { reservationNo, userId, statusCode } = req;
 
     const params = {};
     var where = " WHERE 1=1 "
@@ -2200,6 +2474,170 @@ exports.updateConfirmationPayment = async function (req, res, next) {
     let data = await resv.updateConfirmationPaymentImage(req);
 
     if (data.success == true) {
+      var reservation = data.data;
+
+      // 🔔 Kirim Notifikasi FCM ke user dan partner dan admin
+      // Ambil token user dan partner
+      const userToken = await utilility.getFcmTokens(reservation.user_id, HaiUser);
+      const partnerToken = await utilility.getFcmTokens(reservation.partner_id, HaiUser);
+      const adminToken = await utilility.getFcmTokens(114, HaiUser);
+
+      const formattedDate = moment(reservation.event_date).format('dddd, DD/MM/YYYY');
+      const capitalizedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
+
+      let bodyMessage = "";
+      let transactionStatusCode = "";
+
+      if (statusCode == "PAYMENT_DP_REQUEST") {
+        transactionStatusCode = "User sudah DP pembayaran";
+      } else if (statusCode == "PAYMENT_COMPLETED") {
+        transactionStatusCode = "User sudah melunasi pembayaran";
+      }
+
+      if (statusCode === "PAYMENT_DP_REQUEST") {
+        bodyMessage = `${reservation.name} telah membayar DP reservasi untuk transaksi ${reservation.package_name}, tanggal ${capitalizedDate} ${reservation.event_time} di ${reservation.event_address}.`;
+      } else if (statusCode === "PAYMENT_COMPLETED") {
+        bodyMessage = `Reservasi ${reservation.name} telah dilunasi untuk transaksi ${reservation.package_name}, tanggal ${capitalizedDate} ${reservation.event_time}, di ${reservation.event_address}.`;
+      }
+
+      // Notifikasi untuk Partner
+      if (partnerToken) {
+        const partnerPayload = {
+          notification: {
+            title: `${transactionStatusCode}`,
+            body: `${bodyMessage}`,
+          },
+          android: {
+            notification: {
+              icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
+              color: '#1B84FF', // opsional
+            },
+          },
+          apns: {
+            headers: {
+              "apns-priority": "10",
+            },
+            payload: {
+              aps: {
+                alert: {
+                  title: `${transactionStatusCode}`,
+                  body: `${bodyMessage}`,
+                },
+                sound: "default",
+                badge: 1,
+              },
+            },
+          },
+          data: {
+            type: "updateReservation",
+            reservationId: reservation.id.toString(),
+            packageId: reservation.package_id.toString(),
+            statusCode: reservation.status_code
+          },
+          token: partnerToken,
+        };
+
+        admin
+          .messaging()
+          .send(partnerPayload)
+          .then((res) => console.log("✅ Notifikasi ke partner sent:", res))
+          .catch((err) => console.error("❌ Error FCM partner:", err));
+      } else {
+        console.log("No token for send messaging");
+      }
+
+      // Notifikasi untuk User
+      if (userToken) {
+        const userPayload = {
+          notification: {
+            title: `${transactionStatusCode}`,
+            body: `${bodyMessage}`,
+          },
+          android: {
+            notification: {
+              icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
+              color: '#1B84FF', // opsional
+            },
+          },
+          apns: {
+            headers: {
+              "apns-priority": "10",
+            },
+            payload: {
+              aps: {
+                alert: {
+                  title: `${transactionStatusCode}`,
+                  body: `${bodyMessage}`,
+                },
+                sound: "default",
+                badge: 1,
+              },
+            },
+          },
+          data: {
+            type: "updateReservation",
+            reservationId: reservation.id.toString(),
+            packageId: reservation.package_id.toString(),
+            statusCode: reservation.status_code
+          },
+          token: userToken,
+        };
+
+        admin
+          .messaging()
+          .send(userPayload)
+          .then((res) => console.log("✅ Notifikasi ke user sent:", res))
+          .catch((err) => console.error("❌ Error FCM user:", err));
+      } else {
+        console.log("No token for send messaging");
+      }
+
+      // Notifikasi untuk Admin
+      if (adminToken) {
+        const adminPayload = {
+          notification: {
+            title: `${transactionStatusCode}`,
+            body: `${bodyMessage}`,
+          },
+          android: {
+            notification: {
+              icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
+              color: '#1B84FF', // opsional
+            },
+          },
+          apns: {
+            headers: {
+              "apns-priority": "10",
+            },
+            payload: {
+              aps: {
+                alert: {
+                  title: `${transactionStatusCode}`,
+                  body: `${bodyMessage}`,
+                },
+                sound: "default",
+                badge: 1,
+              },
+            },
+          },
+          data: {
+            type: "updateReservation",
+            reservationId: reservation.id.toString(),
+            packageId: reservation.package_id.toString(),
+            statusCode: reservation.status_code
+          },
+          token: adminToken,
+        };
+
+        admin
+          .messaging()
+          .send(adminPayload)
+          .then((res) => console.log("✅ Notifikasi ke admin sent:", res))
+          .catch((err) => console.error("❌ Error FCM admin:", err));
+      } else {
+        console.log("No token for send messaging");
+      }
+    
       return res.status(200).send(data);
     } else {
       return res.status(500).send(data);

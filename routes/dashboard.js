@@ -43,6 +43,14 @@ dashboardRouter.get("/getpartnerordersummary", headerAuth.isPartnerAuthenticated
   dashboardController.getPartnerOrderSummary(data, res);
 });
 
+dashboardRouter.get("/getpartnerordersummaryadmin", headerAuth.isAdminAuthenticated, (req, res, next) => {
+  const id = res.locals.auth.id;
+  const data = { 
+    userId: id
+  };
+  dashboardController.getPartnerOrderSummaryAdmin(data, res);
+});
+
 dashboardRouter.get("/getuserordersummary", headerAuth.isUserAuthenticated, (req, res, next) => {
   const id = res.locals.auth.id;
   const data = { 

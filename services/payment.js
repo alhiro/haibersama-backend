@@ -145,7 +145,7 @@ module.exports =
         .then(async (updated) => { 
             const updatePayment = await Payment.findOne({ where: { reservation_no: reservationNo } })
 
-            const updateDetail = await PaymentDetail.create(detail);
+            const updateDetail = await PaymentDetail.update(objPayment, {reservation_no: reservationNo});
 
             return { success: true, message: "Status Transaksi Pembayaran Berhasil Diubah", data: updatePayment } })
         .catch((err) => { return { success: false, message: "Status Transaksi Pembayaran Gagal Diubah", data: err } });
