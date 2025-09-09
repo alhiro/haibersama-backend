@@ -26,8 +26,16 @@ exports.getAllPublicLimit = async function (req, res, next) {
   try {
     const params = { page: req.query.page, limit: req.query.limit, search: req.query.search, startDate: req.query.startDate, endDate: req.query.endDate, };
 
-    var allData = await eventService.getAllPublicLimit(params, res);
-    return res.status(200).json({ status: 200, data: allData, message: "Semua Selayang Partner Berhasil Diambil" });
+    var all = await eventService.getAllPublicLimit(params, res);
+    return res.status(200).json(
+      {
+        success: all.success,
+        data: all.data,
+        message: all.message,
+        page: all.page,
+        pageCount: all.count,
+        length: all.length
+      });
   } catch (err) {
     return res
       .status(500)

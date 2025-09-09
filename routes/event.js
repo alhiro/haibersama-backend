@@ -50,6 +50,10 @@ eventRouter.get("/getallpubliclimit", headerAuth.isUserAuthenticated, (req, res,
   controller.getAllPublicLimit(req, res);
 });
 
+eventRouter.get("/getselayangpublic", (req, res, next) => {
+  controller.getAllPublicLimit(req, res);
+});
+
 eventRouter.get("/listselayang", headerAuth.isUserAuthenticated, (req, res, next) => {
   controller.getEventSelayang(req, res);
 });

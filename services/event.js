@@ -397,12 +397,29 @@ module.exports =
       console.log(params);
       
       try {
-        return await Event.findAll({
+        return await Event.findAndCountAll({
           where: {
             approval: true,
           },
-          limit: limit,
           order: [["created_at", "DESC"]],
+          limit: parseInt(limit),
+          offset: (parseInt(page) - 1) * parseInt(limit),
+          distinct: true,
+        }).then((resp) => {
+          console.log("resp");
+          console.log(Math.ceil(resp.count / limit));
+          // console.log(resp);
+  
+          return {
+            success: true,
+            message: resp.rows.length > 0
+              ? "Semua data selayang berhasil diambil!"
+              : "Data selayang kosong!",
+            data: resp.rows,
+            page: parseInt(page),
+            count: Math.ceil(resp.count / limit),
+            length: resp.count
+          };
         });
       } catch (error) {
         throw error
