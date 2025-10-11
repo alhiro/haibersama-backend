@@ -54,7 +54,14 @@ const upload = multer({
 });
 
 reservationRouter.post("/getdetail", headerAuth.isUserAuthenticated, (req, res, next) => {
-  reservationController.getReservation(req, res);
+  const type = res.locals.auth.type;
+
+  const data = { 
+    reservationNo: req.body.reservationNo, 
+    type: type
+  };
+
+  reservationController.getReservation(data, res);
 });
 
 reservationRouter.post("/getlist", headerAuth.isUserAuthenticated, (req, res, next) => {
@@ -173,7 +180,8 @@ reservationRouter.post("/create", headerAuth.isUserAuthenticated , (req, res, ne
     waNo: req.body.waNo, 
     email: req.body.email, 
     socialMedia: req.body.socialMedia, 
-    otherDescription: req.body.otherDescription
+    otherDescription: req.body.otherDescription,
+    shareLinkId: req.body.shareLinkId
   };
 
   reservationController.createReservation(data, req, res);
@@ -278,7 +286,7 @@ reservationRouter.put("/updatestatusbookingadmin", headerAuth.isAdminAuthenticat
     email: email
   };
   
-  reservationController.updateStatusBooking(data, req, res);
+  reservationController.updateStatusBookingAdmin(data, req, res);
 });
 
 reservationRouter.put(
@@ -598,6 +606,14 @@ reservationRouter.put("/confirmationPayment", headerAuth.isUserAuthenticated, up
 
     reservationController.updateConfirmationPayment(data, res);
   }
+});
+
+reservationRouter.post("/sharelink", headerAuth.isUserAuthenticated, (req, res) => {
+  reservationController.createShareLink(req, res);
+});
+
+reservationRouter.post("/resolvelink", headerAuth.isUserAuthenticated, (req, res) => {
+  reservationController.createResolveLink(req, res);
 });
 
 module.exports = reservationRouter;

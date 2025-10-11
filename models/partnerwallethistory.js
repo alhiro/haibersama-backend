@@ -74,6 +74,6 @@ const partnerWalletHistory = dbSeq.define('partner_wallet_history', {
   underscored: true
 });
 
-module.exports = partnerWalletHistory
-
 partnerWalletHistory.belongsTo(HaiUser, { foreignKey: "partner_id" });
+
+module.exports = partnerWalletHistory

@@ -3,16 +3,16 @@ var partnerBankAccountRouter = express.Router();
 var partnerBankAccountController = require("../controllers/partnerbankaccount");
 var headerAuth  =  require('../authMiddleware')
 
-partnerBankAccountRouter.get("/getall", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+partnerBankAccountRouter.get("/getall", headerAuth.isUserAuthenticated, (req, res, next) => {
     const partner_id = res.locals.auth.id;
     partnerBankAccountController.getAll(partner_id, res);
 });
 
-partnerBankAccountRouter.get("/get", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+partnerBankAccountRouter.get("/get", headerAuth.isUserAuthenticated, (req, res, next) => {
   partnerBankAccountController.getDetail(req, res);
 });
 
-partnerBankAccountRouter.post("/add",  headerAuth.isPartnerAuthenticated, (req, res, next) => {
+partnerBankAccountRouter.post("/add",  headerAuth.isUserAuthenticated, (req, res, next) => {
     const partner_id = res.locals.auth.id;
 
     const data = { 

@@ -49,6 +49,15 @@ module.exports =
       try {
         const { partner_id, event_date, reservation_no, reservation_type, transaction_type, total_amount, status } = data;
 
+        console.log("check reservation exist");
+        const params2 = {
+          partner_id: partner_id,
+          transaction_type: transaction_type,
+          reservation_no: reservation_no,
+          status: status
+        };
+        console.log(params2);
+
         if (!reservation_no){
           if (transaction_type == "C") {
             throw ({ success: false, message: "Silahkan Masukan Nomor Reservasi", data: {} });
@@ -57,13 +66,7 @@ module.exports =
           }
         } else {
           if (transaction_type == "C") {                    
-            //check amount transaction is exist
-            const params2 = {
-              partner_id: partner_id,
-              transaction_type: transaction_type,
-              reservation_no: reservation_no
-            };
-
+            // check amount transaction is exist
             const isExists = await wallethistory.findOne({ where: params2 });
             
             if (isExists) {
@@ -95,7 +98,7 @@ module.exports =
         });
         
         let transaction_no = "";
-        //create new storeid
+        // create new storeid
         if (!lastReservation) {
           transaction_no = transaction_date_format + "00001";
         } else {
@@ -117,99 +120,99 @@ module.exports =
           reservation_type: reservation_type,
           reservation_no: reservation_no,
           total_amount: total_amount,
-          status: status
+          status: status,
+          created_by: "SYSTEM",
         };
         
-        const Wallet = await wallethistory.findOrCreate({ where: params, defaults: objData })
+        // create history wallet
+        const Wallet = await wallethistory.findOrCreate({ where: params2, defaults: objData })
   
         // check reservation_no already registered or not
         // if (Wallet[1]) {
-        //   throw ({ success: false, message: "Partner Wallet History already exists", data: {} })
+        //   return ({ success: false, message: "Partner Wallet History already exists", data: {} })
         // }
 
-        var paramBalance = {
-          partner_id: partner_id
-        };
+        // create or update balance wallet
+        if (status === "ORDER_COMPLETED" || status === "REWARD_SHARE" || status === "REWARD_REFERRAL") {
+          console.log("status not discount or appfee: " + status);
 
-        if (reservation_type == 'MANUAL_ORDER') {
-          const balance = await walletbalance.findOne({ where: paramBalance });
-          console.log('balance value manual order');
-          console.log(balance);
-          if (balance) {
-            console.log("ini update balance");
-            let newAmount = balance.current_balance;
-            if (transaction_type == "C") {    
-              newAmount = balance.current_balance + total_amount;
-            } else {
-              newAmount = balance.current_balance - total_amount;
+          const paramBalance = {
+            partner_id: partner_id
+          };
+  
+          if (reservation_type == 'MANUAL_ORDER') {
+            const balance = await walletbalance.findOne({ where: paramBalance });
+            console.log('balance value manual order:', balance.dataValues);
+  
+            if (!balance) {
+              console.log("create balance manual");    
+              var paramInsert = {
+                current_balance: total_amount,
+                partner_id: partner_id,
+                created_at: moment().utcOffset(0),
+                created_by: partner_id
+              };          
+              console.log(paramInsert);
+  
+              await walletbalance.findOrCreate({
+                where: paramBalance,
+                defaults: paramInsert
+              });
+            } else {      
+              let currentBalance = balance.current_balance ?? 0;
+  
+              let newAmount;
+              if (transaction_type === "C") {
+                newAmount = currentBalance + total_amount;
+              } else {
+                newAmount = currentBalance - total_amount;
+              }
+              console.log('paramUpdate update manual');
+              var paramUpdate = {
+                current_balance: newAmount,
+                updated_at: moment().utcOffset(0),
+                updated_by: partner_id
+              };
+              console.log(paramUpdate);
+              
+              await walletbalance.update(paramUpdate, {where: {id: balance.id}} )
             }
-            
-            var paramUpdate = {
-              current_balance: newAmount,
-              updated_at: moment().utcOffset(0),
-              updated_by: partner_id
-            };
-
-            console.log('paramUpdate balance');
-            console.log(paramUpdate);
-            
-            walletbalance.update(paramUpdate, {where: {id: balance.id}} )
-          } else {      
-            console.log("create balance");    
-            var paramInsert = {
-              current_balance: total_amount,
-              partner_id: partner_id,
-              created_at: moment().utcOffset(0),
-              created_by: partner_id
-            };          
-
-            console.log('paramUpdate create');
-            console.log(paramInsert);
-
-            const insertBalance = await walletbalance.findOrCreate({
-              where: paramBalance,
-              defaults: paramInsert
-            });
-          }
-        } else {
-          const balance = await walletbalance.findOne({ where: paramBalance });
-          console.log('balance value user order');
-          console.log(balance.dataValues);
-          if (balance) {
-            console.log("ini update balance");
-            let newAmount = balance.current_balance_user;
-            if (transaction_type == "C") {    
-              newAmount = balance.current_balance_user + total_amount;
-            } else {
-              newAmount = balance.current_balance_user - total_amount;
+          } else {
+            const balance = await walletbalance.findOne({ where: paramBalance });
+  
+            if (!balance) {
+              console.log("create balance user order");   
+              var paramInsert = {
+                current_balance_user: total_amount,
+                partner_id: partner_id,
+                created_at: moment().utcOffset(0),
+                created_by: 'system'
+              };          
+              console.log(paramInsert);
+  
+              await walletbalance.findOrCreate({
+                where: paramBalance,
+                defaults: paramInsert
+              });
+            } else {      
+              let currentBalance = balance.current_balance_user ?? 0;
+  
+              let newAmount;
+              if (transaction_type === "C") {
+                newAmount = currentBalance + total_amount;
+              } else {
+                newAmount = currentBalance - total_amount;
+              }
+              console.log('paramUpdate update user order');
+              var paramUpdate = {
+                current_balance_user: newAmount,
+                updated_at: moment().utcOffset(0),
+                updated_by: 'system'
+              };
+              console.log(paramUpdate);
+              
+              await walletbalance.update(paramUpdate, {where: {id: balance.id}} )
             }
-            
-            var paramUpdate = {
-              current_balance_user: newAmount,
-              updated_at: moment().utcOffset(0),
-              updated_by: 'system'
-            };
-
-            console.log('paramUpdate balance');
-            console.log(paramUpdate);
-            
-            walletbalance.update(paramUpdate, {where: {id: balance.id}} )
-          } else {      
-            console.log("create balance");    
-            var paramInsert = {
-              current_balance_user: total_amount,
-              partner_id: partner_id,
-              created_at: moment().utcOffset(0),
-              created_by: partner_id
-            };          
-
-            console.log('paramUpdate create');
-            console.log(paramInsert);
-
-            const insertBalance = await walletbalance.findOrCreate({
-              where: paramBalance,
-              defaults: paramInsert
-            });
           }
         }
 
@@ -526,58 +529,70 @@ module.exports =
       try {
       
         const { userId, date_from, date_to, type } = req;
-        console.log(req);
-        var histories = {};
+        
+        const query = `
+          SELECT 
+            json_agg(
+              json_build_object(
+                to_char(a.event_date, 'YYYY-MM-DD'), items
+              )
+            ) AS d
+          FROM (
+            SELECT DISTINCT 
+              date(
+                CASE 
+                  WHEN rr.status = 'ORDER_COMPLETED' THEN rr.event_date 
+                  ELSE rr.created_at 
+                END
+              ) AS event_date,
+              rr.partner_id
+            FROM partner_wallet_history rr
+            WHERE rr.partner_id = ${userId}
+              AND rr.reservation_type = '${type}'
+              AND date(
+                CASE 
+                  WHEN rr.status = 'ORDER_COMPLETED' THEN rr.event_date 
+                  ELSE rr.created_at 
+                END
+              ) BETWEEN '${date_from}' AND '${date_to}'
+          ) a
+          LEFT JOIN LATERAL (
+            SELECT json_agg(x) AS items
+            FROM (
+              SELECT 
+                r.transaction_date,
+                r.transaction_type,
+                r.reservation_no,
+                r.reservation_type,
+                r.transaction_no,
+                r.status,
+                r.total_amount,
+                r.event_date,
+                r.created_at,
+                oyc.event_date AS event_date_reservation,
+                oyc.reservation_date,
+                oyc.name AS client_name
+              FROM partner_wallet_history r
+              LEFT JOIN reservation oyc
+                ON oyc.reservation_no = r.reservation_no
+              WHERE date(
+                      CASE 
+                        WHEN r.status = 'ORDER_COMPLETED' THEN r.event_date 
+                        ELSE r.created_at 
+                      END
+                    ) = a.event_date
+                AND r.partner_id = ${userId}
+            ) x
+          ) c ON true;
+          `;
 
-        var query = `
-            select 
-              json_agg(
-                json_build_object(
-                  to_char(a.event_date, 'YYYY-MM-DD'), items
-                )
-              ) d
-            FROM (select 
-                    distinct date(event_date) event_date, 
-                    partner_id
-                  from partner_wallet_history rr
-                  where rr.partner_id = ` + userId + `
-                  and rr.reservation_type = '` + type + `'
-                  and date(rr.event_date) >= '` + date_from + `'
-                  and date(rr.event_date) <= '` + date_to + `'
-              )  a
-            LEFT JOIN LATERAL (
-              SELECT json_agg(x) AS items
-              FROM  (select 
-                  transaction_date,
-                  transaction_type,
-                  reservation_no,
-                  reservation_type,
-                  transaction_no,
-                  status,
-                  total_amount,
-                  event_date_reservation,
-                  reservation_date,
-                  client_name
-                  from partner_wallet_history r
-                  left join lateral (
-                    SELECT event_date event_date_reservation,
-                    reservation_date,
-                    name client_name
-                    from reservation oyc
-                    where oyc.reservation_no = r.reservation_no
-                  ) sum4 on true
-                  where date(r.event_date) = a.event_date and r.partner_id = ` + userId + `
-                ) x 
-              ) c ON true`;
-          return sequelize.query(query,{ type : sequelize.QueryTypes.SELECT}).then(results => {
-              if(results === null){
-                return histories;
-              }
-              else{
-                console.log('get list history by group date');
-                console.log(JSON.stringify(results[0].d));
+          const results = await sequelize.query(query, {
+            replacements: { userId, type, date_from, date_to },
+            type: sequelize.QueryTypes.SELECT,
+          });
+          console.log(results);
 
-                // var total = 0;
+          // var total = 0;
                 // results[0].d.map(val => {
                 //   // console.log('map results');
                 //   // console.log(val);
@@ -618,9 +633,11 @@ module.exports =
                 //   }
                 // });
 
-                return results[0].d;
-              }
-          });
+          if (!results || results.length === 0 || !results[0].d || results === null) {
+            return null;
+          }
+
+          return results[0].d;
 
       } catch (error) {
         console.log(error);

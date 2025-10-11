@@ -29,7 +29,7 @@ walletRouter.post("/historiesgroupbydate", headerAuth.isPartnerAuthenticated, (r
   walletController.getHistoriesGroupByDate(data, res);
 });
 
-walletRouter.post("/historiesgroupbyeventdate", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+walletRouter.post("/historiesgroupbyeventdate", headerAuth.isUserAuthenticated, (req, res, next) => {
   const id = res.locals.auth.id;
   // const type = res.locals.auth.type;
 
@@ -54,7 +54,7 @@ walletRouter.get("/getbalance", (headerAuth.isPartnerAuthenticated, headerAuth.i
   walletController.getbalance(data, res);
 });
 
-walletRouter.post("/withdraw", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+walletRouter.post("/withdraw", headerAuth.isUserAuthenticated, (req, res, next) => {
   const id = res.locals.auth.id;
   const type = res.locals.auth.type;
 
