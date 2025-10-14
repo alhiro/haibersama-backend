@@ -19,11 +19,11 @@ const partnerWalletBalance = dbSeq.define('partner_wallet_balance', {
   },
   current_balance: {
     type: Sequelize.DOUBLE,
-    allowNull: false
+    allowNull: true
   },
   current_balance_user: {
     type: Sequelize.DOUBLE,
-    allowNull: false
+    allowNull: true
   },
   created_at: {
     type: Sequelize.DATE,

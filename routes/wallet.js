@@ -3,6 +3,20 @@ var walletRouter = express.Router();
 var walletController = require("../controllers/wallet");
 var headerAuth  =  require('../authMiddleware');
 
+walletRouter.get("/getwallet", headerAuth.isUserAuthenticated, (req, res, next) => {
+  const id = res.locals.auth.id;
+  // const type = res.locals.auth.type;
+  const { reservation_no } = req.query;
+
+  const data = { 
+    userId: id,
+    reservationNo: reservation_no
+  };
+  console.log("data wallet", data);
+  
+  walletController.getDetailHistoriesWallet(data, res);
+});
+
 walletRouter.post("/histories", headerAuth.isPartnerAuthenticated, (req, res, next) => {
   const id = res.locals.auth.id;
   const type = res.locals.auth.type;

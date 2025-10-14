@@ -6,6 +6,7 @@ var ReservationService = require('./reservationservice')
 var ReservationStatusHistory = require('./reservationstatushistory')
 var partnerWalletHistory = require('./partnerwallethistory')
 var PartnerPackageDetail = require('./partnerPackageDetail')
+var ShareLink = require('./sharelink')
 
 const Reservation = dbSeq.define('reservation', {
   id: {
@@ -107,6 +108,14 @@ const Reservation = dbSeq.define('reservation', {
     type: Sequelize.STRING(500),
     allowNull: true
   },
+  share_link_id: {
+    type: Sequelize.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'share_links',
+      key: 'id'
+    }
+  },
   created_at: {
     type: Sequelize.DATE,
     allowNull: true
@@ -123,6 +132,27 @@ const Reservation = dbSeq.define('reservation', {
     type: Sequelize.STRING(50),
     allowNull: true
   },
+
+  // 👉 Virtual field
+  // total_price_payment: {
+  //   type: Sequelize.VIRTUAL,
+  //   get() {
+  //     const totalPpn = parseFloat(this.total_ppn) || 0;
+  //     const totalDiscount = parseFloat(this.total_discount) || 0;
+  //     const serviceFee = parseFloat(this.service_fee) || 0;
+  //     const totalDp = parseFloat(this.total_down_payment) || 0;
+
+  //     const partnerPackageDetails = this.partner_package_details || [];
+  //     const totalPackagePrice = partnerPackageDetails.reduce((sum, item) => {
+  //       const price = parseFloat(item.price) || 0;
+  //       return sum + price;
+  //     }, 0);
+
+  //     const totalServicePrice = parseFloat(this.total_service_price) || 0;
+
+  //     return (totalServicePrice + totalPackagePrice + totalPpn + serviceFee) - totalDiscount;
+  //   }
+  // },
 }, 
 {
   tableName: 'reservation',
@@ -142,6 +172,9 @@ const Reservation = dbSeq.define('reservation', {
 Reservation.hasOne(ReservationContact, {foreignKey: 'reservation_id', as: 'reservation_contact'});
 Reservation.hasMany(ReservationService, {foreignKey: 'reservation_id', as: 'reservation_services'});
 Reservation.hasMany(ReservationStatusHistory, {foreignKey: 'reservation_id', as: 'reservation_status_histories'});
+
+Reservation.belongsTo(ShareLink, { foreignKey: "share_link_id" });
+ShareLink.hasMany(Reservation, { foreignKey: "share_link_id" });
 
 // ReservationContact.belongsTo(Reservation, {foreignKey: 'reservation_id'});
 // ReservationService.belongsTo(Reservation, {foreignKey: 'reservation_id'});

@@ -196,6 +196,7 @@ module.exports = {
         let discountPercent = 0;
         let serviceFee = 0;
 
+        console.log("userData?.code_referral " + userData?.code_referral);
         if (userData?.code_referral) {
           const discountSetting = await appSetting.findOne({
             where: { setting_name: "CUSTOMER_DISCOUNT_REFERRAL" },
@@ -403,56 +404,62 @@ module.exports = {
         const reservationJSON = reservation.toJSON();
         reservationJSON.total_detail_payment = totalServicePrice + totalPackagePrice;
         reservationJSON.total_price_payment = total_price_payment;
-        reservationJSON.total_remaining_payment = total_price_payment - totalDp;
 
-        let referralCode = null;
-
-        // find user has code_referral
-        const userData = await HaiUser.findOne({
-          where: { id: reservation.partner_id },
-        });
-
-        // check if user have code referral from others user
-        if (userData && userData.code_referral) {
-          referralCode = userData.code_referral;
-        }
-
-        if (!referralCode) {
-          // Tanpa referral → ambil setting untuk user biasa
-          console.log("Tanpa referral");
-          const [serviceSetting, appFeeSetting] = await Promise.all([
-            appSetting.findOne({ where: { setting_name: "SERVICE_FEE" } }),
-            appSetting.findOne({ where: { setting_name: "ORDER_FEE" } }),
-          ]);
-          const serviceFee = parseFloat(serviceSetting?.setting_value || 0);
-          const appFeeNormal = parseFloat(appFeeSetting?.setting_value || 0);
-
-          // Hitung total fee normal
-          const total_fee_normal =
-            (totalServicePrice + totalPackagePrice + serviceFee) *
-            (appFeeNormal / 100);
-          // Tambahkan ke objek reservation untuk total fee normal
-          reservationJSON.total_fee_normal = total_fee_normal;
+        console.log("status code reservatioh " + reservation.status_code);
+        if (reservation.status_code === "ORDER_PAYMENT_COMPLETED" || reservation.status_code === "ORDER_COMPLETED") {
+          reservationJSON.total_remaining_payment = 0;
         } else {
-          console.log("Dengan referral");
-          const [serviceSetting, appFeeReferralSetting] = await Promise.all([
-            appSetting.findOne({ where: { setting_name: "SERVICE_FEE" } }),
-            appSetting.findOne({
-              where: { setting_name: "ORDER_FEE_REFFERAL" },
-            }),
-          ]);
-          const serviceFee = parseFloat(serviceSetting?.setting_value || 0);
-          const appFeeReferral = parseFloat(
-            appFeeReferralSetting?.setting_value || 0
-          );
-
-          // Hitung total fee referral
-          const total_fee_referral =
-            (totalServicePrice + totalPackagePrice + serviceFee) *
-            (appFeeReferral / 100);
-          // Tambahkan ke objek reservation untuk total fee normal
-          reservationJSON.total_fee_referral = total_fee_referral;
+          reservationJSON.total_remaining_payment = total_price_payment - totalDp;
         }
+
+        // let referralCode = null;
+
+        // // find user has code_referral
+        // const userData = await HaiUser.findOne({
+        //   where: { id: reservation.partner_id },
+        // });
+
+        // // check if user have code referral from others user
+        // if (userData && userData.code_referral) {
+        //   referralCode = userData.code_referral;
+        // }
+
+        // if (!referralCode) {
+        //   // Tanpa referral → ambil setting untuk user biasa
+        //   console.log("Tanpa referral");
+        //   const [serviceSetting, appFeeSetting] = await Promise.all([
+        //     appSetting.findOne({ where: { setting_name: "SERVICE_FEE" } }),
+        //     appSetting.findOne({ where: { setting_name: "ORDER_FEE" } }),
+        //   ]);
+        //   const serviceFee = parseFloat(serviceSetting?.setting_value || 0);
+        //   const appFeeNormal = parseFloat(appFeeSetting?.setting_value || 0);
+
+        //   // Hitung total fee normal
+        //   const total_fee_normal =
+        //     (totalServicePrice + totalPackagePrice + serviceFee) *
+        //     (appFeeNormal / 100);
+        //   // Tambahkan ke objek reservation untuk total fee normal
+        //   reservationJSON.total_fee_normal = total_fee_normal;
+        // } else {
+        //   console.log("Dengan referral");
+        //   const [serviceSetting, appFeeReferralSetting] = await Promise.all([
+        //     appSetting.findOne({ where: { setting_name: "SERVICE_FEE" } }),
+        //     appSetting.findOne({
+        //       where: { setting_name: "ORDER_FEE_REFFERAL" },
+        //     }),
+        //   ]);
+        //   const serviceFee = parseFloat(serviceSetting?.setting_value || 0);
+        //   const appFeeReferral = parseFloat(
+        //     appFeeReferralSetting?.setting_value || 0
+        //   );
+
+        //   // Hitung total fee referral
+        //   const total_fee_referral =
+        //     (totalServicePrice + totalPackagePrice + serviceFee) *
+        //     (appFeeReferral / 100);
+        //   // Tambahkan ke objek reservation untuk total fee normal
+        //   reservationJSON.total_fee_referral = total_fee_referral;
+        // }
 
         return {
           success: true,
@@ -674,12 +681,8 @@ module.exports = {
               (SELECT COALESCE(SUM(price), 0)
                FROM partner_package_detail ppd2
                WHERE ppd2.reservation_no = rv.reservation_no) +
-              COALESCE(rv.total_ppn, 0)
-            ) - COALESCE(rv.total_discount, 0) AS INTEGER) AS total_price_payment,
+              COALESCE(rv.total_ppn, 0)) AS INTEGER) AS total_price_payment,
 
-            CAST(COALESCE(rv.total_payment, 0) - COALESCE(rv.total_down_payment, 0) AS INTEGER) AS total_remaining_payment,
-
-            
             -- get last data from reservation_status_history
             (
               SELECT pph2.status_code
@@ -1081,6 +1084,12 @@ module.exports = {
 
         const upReserv = await Reservation.findOne({
           where: { reservation_no: reservationNo },
+          include: [
+            {
+              model: PackageDetail,
+              as: "partner_package_details",
+            },
+          ],
           transaction: t,
         });
 
@@ -1142,11 +1151,11 @@ module.exports = {
             // ---- Hitung nilai dasar ----
             const totalprice = upReserv.total_price || 0;
             const ppn = parseInt(upReserv.total_ppn || 0);
-            const countTotal = totalprice + ppn;
+            const countTotal = Number(totalprice) + Number(ppn);
 
             // ---- Ambil settingan fee ----
             const userData = await HaiUser.findOne({
-              where: { id: upReserv.partner_id },
+              where: { id: upReserv.user_id },
               transaction: t,
             });
 
@@ -1205,8 +1214,17 @@ module.exports = {
               );
             }
 
+            // ---- Hitung Package details ----
+            const packageDetails = upReserv.partner_package_details || [];
+            const totalPackagePrice = packageDetails.reduce((sum, item) => {
+              const price = parseFloat(item.price) || 0;
+              return sum + price;
+            }, 0);
+            console.log("totalPackagePrice : " + totalPackagePrice);
+            const newCountTotal = countTotal + totalPackagePrice;
+
             // ---- Reward untuk partner referral ----
-            const partnerReward = countTotal * (partnerRewardPercent / 100);
+            const partnerReward = newCountTotal * (partnerRewardPercent / 100);
             if (referralCode && partnerRewardPercent > 0) {
               console.log("Ada referral, reward ke partner");
               const referralOwner = await HaiUser.findOne({
@@ -1242,7 +1260,8 @@ module.exports = {
             }
 
             // ---- Reward untuk user yang share ----
-            const userShareReward = countTotal * (userSharePercent / 100);
+            const userShareReward = newCountTotal * (userSharePercent / 100);
+            console.log("upReserv.share_link_id : " + upReserv.share_link_id);
             if (upReserv.share_link_id) {
               console.log("Ada share link, reward ke user yang share");
               const shareUser = await ShareLink.findOne({
@@ -1278,76 +1297,75 @@ module.exports = {
             }
 
             // ---- Reward untuk user discount ----
-            // const userDiscountReward = countTotal * (userDiscountPercent / 100);
-            // console.log("userDiscountPercent: " + userDiscountPercent);
-            // if (userDiscountPercent > 0) {
-            //   console.log("Ada discount, tambahkan discount ke user");
-            //   const rewardToUserShare = {
-            //     partner_id: upReserv.user_id,
-            //     event_date: upReserv.event_date,
-            //     reservation_no: upReserv.reservation_no,
-            //     reservation_type: "USER_ORDER",
-            //     transaction_type: "C",
-            //     total_amount: userDiscountReward,
-            //     status: "REWARD_DISCOUNT",
-            //   };
-            //   console.log(rewardToUserShare);
+            const userDiscountReward = newCountTotal * (userDiscountPercent / 100);
+            console.log("userDiscountPercent: " + userDiscountPercent);
+            if (userDiscountPercent > 0) {
+              console.log("Ada discount, tambahkan discount ke user");
+              const rewardToUserShare = {
+                partner_id: upReserv.partner_id,
+                event_date: upReserv.event_date,
+                reservation_no: upReserv.reservation_no,
+                reservation_type: "USER_ORDER",
+                transaction_type: "D",
+                total_amount: userDiscountReward,
+                status: "REWARD_DISCOUNT",
+              };
+              console.log(rewardToUserShare);
 
-            //   const respWallet = await wallethistory.findOrCreateWallet(
-            //     { reservation_no: upReserv.reservation_no },
-            //     rewardToUserShare,
-            //     { transaction: t }
-            //   );
+              const respWallet = await wallethistory.findOrCreateWallet(
+                { reservation_no: upReserv.reservation_no },
+                rewardToUserShare,
+                { transaction: t }
+              );
 
-            //   console.log("respWallet user discount");
-            //   console.log(respWallet);
-            //   if (respWallet.success !== true) {
-            //     console.log("Gagal insert ke wallet user discount");
-            //     return { success: respWallet.success, message: "Data exist add discount ke user", data: respWallet.data };
-            //   }
-            // }
+              console.log("respWallet user discount");
+              console.log(respWallet);
+              if (respWallet.success !== true) {
+                console.log("Gagal insert ke wallet user discount");
+                return { success: respWallet.success, message: "Data exist add discount ke user", data: respWallet.data };
+              }
+            }
 
             // ---- Admin order fee ----
-            // const appFeeReward = countTotal * (appFeePercent / 100);
-            // console.log("appFeePercent: " + appFeePercent);
-            // if (appFeePercent > 0) {
-            //   console.log("Ada admin order fee, tambahkan discount ke user");
-            //   const otherFee = {
-            //     partner_id: upReserv.user_id,
-            //     event_date: upReserv.event_date,
-            //     reservation_no: upReserv.reservation_no,
-            //     reservation_type: "USER_ORDER",
-            //     transaction_type: "D",
-            //     total_amount: appFeeReward,
-            //     status: "OTHERS_FEE",
-            //   };
-            //   console.log(otherFee);
+            const appFeeReward = newCountTotal * (appFeePercent / 100);
+            console.log("appFeePercent: " + appFeePercent);
+            if (appFeePercent > 0) {
+              console.log("Ada admin order fee, tambahkan discount ke user");
+              const otherFee = {
+                partner_id: upReserv.partner_id,
+                event_date: upReserv.event_date,
+                reservation_no: upReserv.reservation_no,
+                reservation_type: "USER_ORDER",
+                transaction_type: "D",
+                total_amount: appFeeReward,
+                status: "OTHERS_FEE",
+              };
+              console.log(otherFee);
 
-            //   const respWallet = await wallethistory.findOrCreateWallet(
-            //     { reservation_no: upReserv.reservation_no },
-            //     otherFee,
-            //     { transaction: t }
-            //   );
+              const respWallet = await wallethistory.findOrCreateWallet(
+                { reservation_no: upReserv.reservation_no },
+                otherFee,
+                { transaction: t }
+              );
 
-            //   console.log("respWallet admin order fee");
-            //   console.log(respWallet);
-            //   if (respWallet.success !== true) {
-            //     console.log("Gagal insert ke wallet admin order fee");
-            //     return { success: respWallet.success, message: "Data exist admin order fee", data: respWallet.data };
-            //   }
-            // }
+              console.log("respWallet admin order fee");
+              console.log(respWallet);
+              if (respWallet.success !== true) {
+                console.log("Gagal insert ke wallet admin order fee");
+                return { success: respWallet.success, message: "Data exist admin order fee", data: respWallet.data };
+              }
+            }
 
             // ---- Hitung saldo akhir partner ----
             console.log("Hitung saldo akhir partner");
-            const userDiscount = countTotal * (userDiscountPercent / 100);
-            const appFee = countTotal * (appFeePercent / 100);
+            const userDiscount = newCountTotal * (userDiscountPercent / 100);
+            const appFee = newCountTotal * (appFeePercent / 100);
             console.log("userDiscount: " + userDiscount);
             console.log("partnerReward: " + partnerReward);
             console.log("userShareReward : " + userShareReward);
             console.log("appFee : " + appFee);
-            const walletAmount =
-              countTotal - (userDiscount + partnerReward + userShareReward + appFee);
 
+            const walletAmount = newCountTotal - (userDiscount + partnerReward + userShareReward + appFee);
             const objBalance = {
               partner_id: upReserv.partner_id,
               event_date: upReserv.event_date,
