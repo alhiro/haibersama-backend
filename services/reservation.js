@@ -1724,9 +1724,9 @@ module.exports = {
         .then(async ([updated]) => {
           console.log("updated reservation global: " + updated);
 
-          if (updated === 0) {
-            return { success: false, message: "Invoice gagal diubah. Kamu tidak punya izin!", data: {} };
-          }
+          // if (updated === 0) {
+          //   return { success: false, message: "Invoice gagal diubah. Kamu tidak punya izin!", data: {} };
+          // }
 
           const upReserv = await Reservation.findOne({
             where: { reservation_no: reservationNo },

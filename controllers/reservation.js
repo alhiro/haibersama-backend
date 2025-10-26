@@ -1017,7 +1017,7 @@ exports.updateStatusBooking = async function(params, req, res, next) {
 exports.updateStatusBookingAdmin = async function(params, req, res, next) {
   try {            
       let data = await resv.updateStatusReservationGlobalAdmin(params);
-      console.log("data update status booking global");
+      console.log("data update status booking global admin");
       
       if (data.success) {
         var reservation = data.data;
