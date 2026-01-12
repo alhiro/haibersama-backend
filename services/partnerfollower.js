@@ -128,6 +128,10 @@ module.exports =
         console.log("data add follower");
         console.log(objData);
 
+        if (!partner_id) {
+          throw ({ success: false, message: "Partner not exist! Add Another Partner To Follow", data: {} })
+        }
+
         const insertFollower = await follower.findOrCreate({ where: params, defaults: objData })
   
         // check name already registered or not
@@ -167,6 +171,10 @@ module.exports =
       delete: async (data) => {
         try {
           const { user_id, partner_id } = data;
+
+          if (!partner_id) {
+            throw ({ success: false, message: "Follower Partner not exist! Please try again", data: {} })
+          }
   
           return follower.destroy({
             where: {

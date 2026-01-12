@@ -721,6 +721,21 @@ exports.getProfile =  async function(req, res, next) {
   }
 }
 
+exports.getUser = async function(req, res, next) {
+  try {
+    const params = { 
+      id: req.id 
+    }
+    let response = await auth.findUserDetail(params, req, res);
+
+    response.code = response.success ? 200 : 500;
+    return res.status(response.code).send(response);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send({ data: err });
+  }
+};
+
 exports.deleteUser = async function(req, res, next) {
   try {
     var result = await auth.delete(req);

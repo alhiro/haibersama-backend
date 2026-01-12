@@ -41,7 +41,7 @@ exports.addAccount = async function(req, res, next) {
     return res.status(200).send(result);
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ data: err });
+    return res.status(500).send(err);
   }
 };
 
@@ -51,6 +51,6 @@ exports.updateAccount = async function(req, res, next) {
       return res.status(200).send(result);    
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ data: err });
+    return res.status(500).send(err);
   }
 };

@@ -18,7 +18,6 @@ module.exports =
           return (!awards) ? { success: false, message: "Partner Award Belum Ada!", data: {} } : { success: true, message: "Partner Awards Found", data: awards }
         })
         .catch((err) => { 
-          console.log(err);
           return { success: false, message: "Partner Award Belum Ada, Ada Kesalahaan Server!", data: err } 
         });
       },
@@ -40,7 +39,6 @@ module.exports =
             return (!data) ? { success: false, message: "Partner Award Detail Belum Ada", data: {} } : { success: true, message: "Award Found", data: data }
           })
           .catch((err) => { 
-            console.log(err);
             return { success: false, message: "Partner Award Detail Belum Ada, Ada Kesalahaan Server", data: err } 
           });
     },
@@ -70,8 +68,6 @@ module.exports =
         
         return { success: true, message: "Partner Award Berhasil Dibuat", data: awards[0].dataValues }
       } catch (error) {
-        
-        console.log(error);
         throw (error)
       }
     },
@@ -98,7 +94,6 @@ module.exports =
             
             return { success: true, message: "Partner Award Berhasil Diubah", data: result.dataValues } })
         .catch((err) => { 
-          console.log(error);
           return { success: false, message: "Partner Award Gagal Diubah", data: err } });
       } catch (error) {
         console.log(error);
@@ -120,7 +115,6 @@ module.exports =
             return { success: true, message: "Partner Award Berhasil Dihapus", data: [] }
           })
           .catch((err) => {
-            console.log(err);
             return { success: false, message: "Partner Award Gagal Dihapus", data: err }
           });
       } catch (error) {

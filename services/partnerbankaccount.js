@@ -57,8 +57,6 @@ module.exports =
         
         return { success: true, message: "Partner Bank Berhasil Dibuat", data: Account[0].dataValues }
       } catch (error) {
-        
-        console.log(error);
         throw (error)
       }
     },

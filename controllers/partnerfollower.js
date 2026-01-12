@@ -48,7 +48,7 @@ exports.addFollower = async function (req, res, next) {
     let insertFollower = await follower.findOrCreateFollower(params, req);
     return res.status(200).send(insertFollower);
   } catch (err) {
-    return res.status(500).send({ data: err });
+    return res.status(500).send(err);
   }
 };
 
@@ -75,6 +75,6 @@ exports.deleteFollower = async function(req, res, next) {
     return res.status(200).send(result);
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ data: err });
+    return res.status(500).send(err);
   }
 };

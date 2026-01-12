@@ -144,7 +144,7 @@ module.exports = {
             SELECT COUNT(reservation_no)
                 FROM reservation rv
                 WHERE rv.user_id = `+partner_id+`
-                AND (rv.status_code = 'ORDER_NEW' OR rv.status_code = 'ORDER_PARTNER_CONFIRM')
+                AND (rv.status_code = 'ORDER_NEW' OR rv.status_code = 'ORDER_WAITING_CONFIRM' OR rv.status_code = 'ORDER_PARTNER_CONFIRM' OR rv.status_code = 'PAYMENT_REQUEST')
                 ORDER BY COUNT(reservation_no) DESC
             )`),
             'cart_length',
@@ -239,6 +239,30 @@ module.exports = {
         {
           return { success: true, message: "User Ditemukan", data: users };
         }
+      }
+    } 
+    catch (error) {
+      console.log("error profile " + error);
+      throw error;
+    }
+  },
+
+  findUserDetail: async (params, req, res) => {
+    try {
+      console.log('req user' )
+      console.log(req)
+
+      var users = await User.findOne({ 
+        where: params,
+        attributes: [
+          "id", "email", "name",
+        ],
+      });
+        
+      if (!users) {
+        return { success: false, message: "User Tidak Ditemukan", data: {} };
+      } else {
+        return { success: true, message: "User Ditemukan", data: users };
       }
     } 
     catch (error) {
@@ -639,6 +663,22 @@ module.exports = {
 
     const { email, password } = params;
     console.log("params :", params);
+
+    if (!password) {
+      return {
+        success: false,
+        message: "Password tidak boleh kosong",
+        data: {}
+      };
+    }
+
+    if (password.length < 7) {
+      return {
+        success: false,
+        message: "Password minimal 7 karakter",
+        data: {}
+      };
+    }
 
     const generateHashPassword = await jwt.hash(password, 10);
     let data = {

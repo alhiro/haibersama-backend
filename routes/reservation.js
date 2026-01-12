@@ -380,15 +380,72 @@ reservationRouter.post("/calendardata", headerAuth.isPartnerAuthenticated, (req,
   const id = res.locals.auth.id;
   const type = res.locals.auth.type;
 
+  const { month, year } = req.body;
+
+  if (!month || !year) {
+    return res.status(400).json({
+      success: false,
+      message: "Month and year wajib diisi",
+      data: {}
+    });
+  }
+
   const data = { 
     partnerId: id,
-    month: req.body.month, 
-    year: req.body.year
+    month: month, 
+    year: year
   };
   
   reservationController.getCalendarData(data, res);
 });
 
+reservationRouter.post("/calendardatapublic", headerAuth.isUserAuthenticated, (req, res, next) => {
+  const { partner_id, month, year } = req.body;
+
+  if (!partner_id || !month || !year) {
+    return res.status(400).json({
+      success: false,
+      message: "partnerId, month and year wajib diisi",
+      data: {}
+    });
+  }
+
+  const data = { 
+    partnerId: partner_id,
+    month: month, 
+    year: year
+  };
+  
+  reservationController.getCalendarData(data, res);
+});
+
+reservationRouter.post("/calendardatapublicdetail", headerAuth.isUserAuthenticated, (req, res, next) => {
+  const { partner_id, date } = req.body;
+
+  if (!partner_id || !date) {
+    return res.status(400).json({
+      success: false,
+      message: "partnerId dan date wajib diisi",
+      data: {}
+    });
+  }
+
+  const parsedDate = new Date(date);
+
+  if (isNaN(parsedDate.getTime())) {
+    return res.status(400).json({
+      success: false,
+      message: "Format date tidak valid",
+    });
+  }
+
+  const data = {
+    partnerId: partner_id,
+    date: parsedDate.toISOString().split("T")[0]
+  };
+  
+  reservationController.getCalendarData(data, res);
+});
 
 reservationRouter.post("/getlistgroupbycategory", headerAuth.isUserAuthenticated, (req, res, next) => {
   const id = res.locals.auth.id;

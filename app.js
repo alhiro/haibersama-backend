@@ -2,6 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
+const multer = require('multer');
 
 // Firebase Admin SDK
 const admin = require('./firebase');
@@ -122,6 +123,33 @@ app.use(process.env.APP_API_PREFIX + '/follower', followerRouter);
 app.use(process.env.APP_API_PREFIX + '/setting', settingRouter);
 app.use(process.env.APP_API_PREFIX + '/ai', aiRouter);
 app.use(process.env.APP_API_PREFIX + '/eventcomment', eventCommentRouter);
+
+// ✅ ERROR HANDLER MULTER
+app.use((err, req, res, next) => {
+  // Multer error
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({
+        success: false,
+        message: 'Ukuran file terlalu besar (maksimal 2 MB)',
+        data: {}
+      });
+    }
+
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+      data: {}
+    });
+  }
+
+  // error lain
+  return res.status(500).json({
+    success: false,
+    message: 'Internal server error',
+    data: {}
+  });
+});
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to HaiO system." });

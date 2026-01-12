@@ -502,7 +502,7 @@ module.exports =
         const detail = await PaymentDetail.findOne({ where: { payment_order_id: order_id } })
         
         var transactionStatus = "NEW";
-        var orderStatus = "ORDER_NEW";
+        var orderStatus = "ORDER_WAITING_CONFIRM";
         var paymentStatus = "NEW";
         var paymentTransactionStatus = "NEW";
 

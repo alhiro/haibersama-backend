@@ -505,7 +505,7 @@ module.exports =
 
     findOrCreate: async (params, req) => {
       try {
-        const { partner_id, title, description, image_url, link_url, event_date, order_no, active, ticket, approval, created_by} = req
+        const { partner_id, title, description, image_url, link_url, event_date, order_no, active, ticket, approval, created_by} = req;
 
         if (!title || title.trim() === "" || !description || description.trim() === "") {
           return {
@@ -515,6 +515,33 @@ module.exports =
             data: {}
           };
         }
+
+        // if (!event_date || event_date === null) {
+        //   return {
+        //     code: 400,
+        //     success: false,
+        //     message: "Tanggal event tidak boleh kosong.",
+        //     data: {}
+        //   };
+        // }
+
+        // if (!link_url || link_url === null) {
+        //   return {
+        //     code: 400,
+        //     success: false,
+        //     message: "Link tidak boleh kosong.",
+        //     data: {}
+        //   };
+        // }
+
+        // if (!image_url || image_url === null) {
+        //   return {
+        //     code: 400,
+        //     success: false,
+        //     message: "Image tidak boleh kosong.",
+        //     data: {}
+        //   };
+        // }
 
         var idUser = partner_id;
         var usersDetail = await auth.findUser({ id: idUser });

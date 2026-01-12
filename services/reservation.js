@@ -14,308 +14,368 @@ const wallethistory = require('../services/partnerwallethistory');
 const appSetting = require('../models/applicationsetting');
 const pointprocess = require('../services/point');
 const { v4: uuidv4 } = require("uuid");
+const { Op } = require("sequelize");
 
 module.exports = {
   findOrCreateReservation: async (data) => {
     try {
-      const {
-        reservationType,
-        reservationDate,
-        partnerId,
-        userId,
-        packageId,
-        eventDate,
-        eventTime,
-        eventAddress,
-        name,
-        provinsi,
-        city,
-        address,
-        phoneNo,
-        waNo,
-        email,
-        socialMedia,
-        otherDescription,
-        shareLinkId
-      } = data;
-      console.log('data create reservation');
-      console.log(data);
+          const {
+            reservationType,
+            reservationDate,
+            partnerId,
+            userId,
+            packageId,
+            eventDate,
+            eventTime,
+            eventAddress,
+            name,
+            provinsi,
+            city,
+            address,
+            phoneNo,
+            waNo,
+            email,
+            socialMedia,
+            otherDescription,
+            shareLinkId,
+          } = data;
+          console.log("data create reservation");
+          console.log(data);
 
-      // get services from package partner
-      var package = await PackageHeader.findOne({
-        where: { id: packageId },
-      });
+          // get services from package partner
+          var package = await PackageHeader.findOne({
+            where: { id: packageId },
+          });
 
-      if (package === null) {
-        return {
-          success: false,
-          message: "Jasa/Produk Tidak Ditemukan",
-        };
-      }
-
-      if (reservationType == "MANUAL_ORDER") {
-        if (package.partner_id != partnerId) {
-          return {
-            success: false,
-            message: "Partner Tidak Bisa Menggunakan Jasa/Produk Yang Dipilih.",
-            data: {},
-          };
-        }
-      }
-
-      console.log("package.partner_id");
-      console.log(package.partner_id);
-
-      console.log("partnerId");
-      console.log(partnerId);
-
-      //check duplicate reservation user with event date, event time, partner id
-      const params = {
-        user_id: userId,
-        partner_id: package.partner_id,
-        event_date: new Date(eventDate).toLocaleString(),
-        event_time: eventTime,
-        // event_address: eventAddress,
-        reservation_type: reservationType,
-        status_code: [
-          "ORDER_NEW",
-          "ORDER_PARTNER_CONFIRM",
-          "ORDER_DP_COMPLETED",
-          "ORDER_COMPLETED",
-          "ORDER_PAYMENT_COMPLETED",
-        ],
-      };
-      console.log("params");
-      console.log(params);
-      const isDuplicate = await Reservation.findOne({ where: params });
-      console.log("isDuplicate");
-      console.log(isDuplicate);
-
-      if (isDuplicate != null) {
-        return {
-          success: false,
-          message:
-            "Sudah Ada Reservasi Dengan Tanggal Acara Dan Jam Acara Yang Sama",
-          data: {},
-        };
-      }
-
-      //check available partner with event date, event time, partner id
-      const params2 = {
-        partner_id: package.partner_id,
-        event_date: new Date(eventDate).toLocaleString(),
-        event_time: eventTime,
-        transaction_status_code: ["ON_PROCESS"],
-      };
-
-      const isPartnerIsBooked = await Reservation.findOne({ where: params2 });
-
-      if (isPartnerIsBooked) {
-        return {
-          success: false,
-          message: "Partner Tidak Tersedia",
-          data: {},
-        };
-      }
-
-      if (!isDuplicate) {
-        var currentDate = moment()
-          .utcOffset(0)
-          .format("YYMMDD");
-
-        const lastReservation = await Reservation.findOne({
-          where: { reservation_no: { [Sequelize.Op.like]: `${currentDate}%` } },
-          order: [["reservation_no", "DESC"]],
-        });
-
-        var reservationNo = "";
-        //create new storeid
-        if (!lastReservation) {
-          reservationNo = currentDate + "00001";
-        } else {
-          var strNewId =
-            Number(lastReservation.reservation_no.substring(6, 11)) + 1;
-          if (strNewId.toString().length < 5) {
-            reservationNo =
-              currentDate +
-              "0".repeat(5 - strNewId.toString().length) +
-              strNewId;
-          } else {
-            reservationNo = currentDate + strNewId;
+          if (package === null) {
+            return {
+              success: false,
+              message: "Jasa/Produk Tidak Ditemukan",
+            };
           }
-        }
-
-        var packageDetails = await PackageDetail.findAll({
-          where: { package_header_id: packageId },
-        });
-
-        if (packageDetails === null) {
-          return {
-            success: false,
-            message: "Detail Jasa/Produk Tidak Ditemukan",
-          };
-        }
-
-        var services = [];
-        var histories = [];
-
-        packageDetails.forEach((detail) => {
-          var service = {
-            service_id: package.service_id,
-            // sub_service_id: detail.subservice_id,
-            sub_service_title: detail.sub_service_title,
-            description: detail.description,
-            price: detail.price,
-            duration: detail.duration,
-            additional_services: detail.additional_services,
-            terms: detail.terms,
-            created_at: moment().utcOffset(0),
-            created_by: "system",
-          };
-          services.push(service);
-        });
-
-        histories.push({
-          status_code: "ORDER_NEW",
-          created_at: moment().utcOffset(0),
-          created_by: "system",
-        });
-
-        var statusCode = "ORDER_NEW";
-        var transactionStatusCode = "NEW";
-        var resvDate = moment().utcOffset(0);
-
-        if (reservationType == "MANUAL_ORDER") {
-          statusCode = "ORDER_PARTNER_CONFIRM";
-          transactionStatusCode = "ON_PROCESS";
-          resvDate = reservationDate;
-        }
-
-        // count discount base on referral or not
-        const userData = await HaiUser.findOne({ where: { id: userId } });
-        let discountPercent = 0;
-        let serviceFee = 0;
-
-        console.log("userData?.code_referral " + userData?.code_referral);
-        if (userData?.code_referral) {
-          const discountSetting = await appSetting.findOne({
-            where: { setting_name: "CUSTOMER_DISCOUNT_REFERRAL" },
-          });
-          discountPercent = parseFloat(discountSetting?.setting_value || 0);
-        } else {
-          const discountSetting = await appSetting.findOne({
-            where: { setting_name: "CUSTOMER_DISCOUNT" },
-          });
-          discountPercent = parseFloat(discountSetting?.setting_value || 0);
 
           if (reservationType == "MANUAL_ORDER") {
-            const serviceSetting = await appSetting.findOne({
-              where: { setting_name: "SERVICE_FEE_PARTNER" },
-            });
-            serviceFee = parseFloat(serviceSetting?.setting_value || 0);
-          } else {
-            const serviceSetting = await appSetting.findOne({
-              where: { setting_name: "SERVICE_FEE" },
-            });
-            serviceFee = parseFloat(serviceSetting?.setting_value || 0);
+            if (package.partner_id != partnerId) {
+              return {
+                success: false,
+                message:
+                  "Partner Tidak Bisa Menggunakan Jasa/Produk Yang Dipilih.",
+                data: {},
+              };
+            }
           }
-        }
-        const totalDiscount = Math.round(
-          package.totalprice * (discountPercent / 100)
-        );
 
-        var reservationData = {
-          reservation_no: reservationNo,
-          reservation_date: resvDate,
-          reservation_type: reservationType,
-          user_id: userId,
-          partner_id: package.partner_id,
-          category_id: package.category_id,
-          package_id: packageId,
-          service_id: package.service_id,
-          name: name,
-          package_name: package.name,
-          description: package.description,
-          event_date: eventDate,
-          event_time: eventTime,
-          duration: package.duration,
-          event_address: eventAddress,
-          total_price: package.totalprice,
-          total_discount: totalDiscount,
-          total_down_payment: 0,
-          total_payment: package.totalprice - totalDiscount + serviceFee,
-          status_code: statusCode,
-          transaction_status_code: transactionStatusCode,
-          share_link_id: shareLinkId,
-          created_at: moment().utcOffset(0),
-          created_by: "system",
-          reservation_contact: {
-            reservation_no: reservationNo,
-            name: name,
-            provinsi: provinsi,
-            city: city,
-            address: address,
-            phone_no: phoneNo,
-            wa_no: waNo,
-            email: email,
-            social_media: socialMedia,
-            other_description: otherDescription,
-          },
-          reservation_services: services,
-          reservation_status_histories: histories,
-        };
+          console.log("package.partner_id");
+          console.log(package.partner_id);
 
-        const insertparams = {
-          reservation_no: reservationNo,
-          user_id: userId,
-          partner_id: package.partner_id,
-          event_date: eventDate,
-          event_time: eventTime,
-          event_address: eventAddress,
-        };
-        console.log("resv data");
-        console.log(reservationData);
+          console.log("partnerId");
+          console.log(partnerId);
 
-        const insertReservation = await Reservation.findOrCreate({
-          where: insertparams,
-          include: [
-            {
-              model: ReservationContact,
-              as: "reservation_contact",
-            },
-            {
-              model: ReservationService,
-              as: "reservation_services",
-            },
-            {
-              model: ReservationStatusHistory,
-              as: "reservation_status_histories",
-            },
-          ],
-          defaults: reservationData,
-        });
-
-        if (!insertReservation[1]) {
-          throw {
-            success: false,
-            message: "Reservasi Gagal Dibuat",
-            data: {},
+          //check duplicate reservation user with event date, event time, partner id
+          const params = {
+            user_id: userId,
+            partner_id: package.partner_id,
+            event_date: eventDate,
+            status_code: [
+              "ORDER_NEW",
+              "ORDER_WAITING_CONFIRM",
+              "ORDER_PARTNER_CONFIRM",
+              "ORDER_DP_COMPLETED",
+              "ORDER_COMPLETED",
+              "ORDER_PAYMENT_COMPLETED",
+            ],
           };
-        } else {
-          return {
-            success: true,
-            message: "Reservasi Berhasil Dibuat",
-            data: insertReservation[0].dataValues,
+          console.log("params");
+          console.log(params);
+
+          // Format tanggal dari JS (YYYY-MM-DD)
+          const eventDateString = new Date(eventDate)
+            .toISOString()
+            .split("T")[0];
+
+          // Status yang di-check
+          const statusCodes = [
+            "ORDER_NEW",
+            "ORDER_WAITING_CONFIRM",
+            "ORDER_PARTNER_CONFIRM",
+            "ORDER_DP_COMPLETED",
+            "ORDER_COMPLETED",
+            "ORDER_PAYMENT_COMPLETED",
+          ];
+
+          // Query findOne menggunakan DATE() agar benar-benar dibandingkan tanggal
+          const existingEvents = await Reservation.findAll({
+            where: {
+              partner_id: package.partner_id,
+              status_code: { [Op.in]: statusCodes },
+              [Op.and]: Sequelize.literal(
+                `DATE("event_date") = DATE('${eventDateString}')`
+              ),
+            },
+          });
+
+          console.log("Duplicate check:", existingEvents.length);
+
+          const newStart = new Date(`${eventDate} ${eventTime}`);
+          const newEnd = new Date(
+            newStart.getTime() + package.duration * 60000
+          );
+          const duration = package.duration;
+          console.log("newStart " + newStart);
+          console.log("newEnd " + newEnd);
+          console.log("duration " + duration);
+
+          let conflict = false;
+
+          for (const event of existingEvents) {
+            // hitung eventStart & eventEnd dari DB
+            const [ehour, eminute, esecond] = event.event_time
+              .split(":")
+              .map(Number);
+            const eventStart = new Date(event.event_date);
+            eventStart.setHours(ehour, eminute, 0, 0);
+
+            const eventEnd = new Date(
+              eventStart.getTime() + event.duration * 60000
+            );
+
+            console.log("Existing event:", eventStart, "-", eventEnd);
+
+            // cek overlap
+            if (newStart < eventEnd && newEnd > eventStart) {
+              conflict = true;
+              break; // cukup 1 bentrok
+            }
+          }
+
+          if (conflict) {
+            return {
+              success: false,
+              message: "Sudah ada reservasi untuk partner dan tanggal ini. Periksa waktu karena berhubungan dengan durasi",
+              data: {},
+            };
+          }
+
+          //check available partner with event date, event time, partner id
+          const params2 = {
+            partner_id: package.partner_id,
+            event_date: new Date(eventDate).toLocaleString(),
+            event_time: eventTime,
+            transaction_status_code: ["ON_PROCESS"],
           };
-        }
-      } else {
-        return {
-          success: false,
-          message: "Reservasi Sudah Ada",
-          data: {},
-        };
-      }
-    } catch (error) {
+
+          const isPartnerIsBooked = await Reservation.findOne({
+            where: params2,
+          });
+
+          if (isPartnerIsBooked) {
+            return {
+              success: false,
+              message: "Partner Tidak Tersedia",
+              data: {},
+            };
+          }
+
+          if (!conflict) {
+            var currentDate = moment()
+              .utcOffset(0)
+              .format("YYMMDD");
+
+            const lastReservation = await Reservation.findOne({
+              where: {
+                reservation_no: { [Sequelize.Op.like]: `${currentDate}%` },
+              },
+              order: [["reservation_no", "DESC"]],
+            });
+
+            var reservationNo = "";
+            //create new storeid
+            if (!lastReservation) {
+              reservationNo = currentDate + "00001";
+            } else {
+              var strNewId =
+                Number(lastReservation.reservation_no.substring(6, 11)) + 1;
+              if (strNewId.toString().length < 5) {
+                reservationNo =
+                  currentDate +
+                  "0".repeat(5 - strNewId.toString().length) +
+                  strNewId;
+              } else {
+                reservationNo = currentDate + strNewId;
+              }
+            }
+
+            var packageDetails = await PackageDetail.findAll({
+              where: { package_header_id: packageId },
+            });
+
+            if (packageDetails === null) {
+              return {
+                success: false,
+                message: "Detail Jasa/Produk Tidak Ditemukan",
+              };
+            }
+
+            var services = [];
+            var histories = [];
+
+            packageDetails.forEach((detail) => {
+              var service = {
+                service_id: package.service_id,
+                // sub_service_id: detail.subservice_id,
+                sub_service_title: detail.sub_service_title,
+                description: detail.description,
+                price: detail.price,
+                duration: detail.duration,
+                additional_services: detail.additional_services,
+                terms: detail.terms,
+                created_at: moment().utcOffset(0),
+                created_by: "system",
+              };
+              services.push(service);
+            });
+
+            histories.push({
+              status_code: "ORDER_NEW",
+              created_at: moment().utcOffset(0),
+              created_by: "system",
+            });
+
+            var statusCode = "ORDER_NEW";
+            var transactionStatusCode = "NEW";
+            var resvDate = moment().utcOffset(0);
+
+            if (reservationType == "MANUAL_ORDER") {
+              statusCode = "ORDER_PARTNER_CONFIRM";
+              transactionStatusCode = "ON_PROCESS";
+              resvDate = reservationDate;
+            }
+
+            // count discount base on referral or not
+            const userData = await HaiUser.findOne({ where: { id: userId } });
+            let discountPercent = 0;
+            let serviceFee = 0;
+
+            console.log("userData?.code_referral " + userData?.code_referral);
+            if (userData?.code_referral) {
+              const discountSetting = await appSetting.findOne({
+                where: { setting_name: "CUSTOMER_DISCOUNT_REFERRAL" },
+              });
+              discountPercent = parseFloat(discountSetting?.setting_value || 0);
+            } else {
+              const discountSetting = await appSetting.findOne({
+                where: { setting_name: "CUSTOMER_DISCOUNT" },
+              });
+              discountPercent = parseFloat(discountSetting?.setting_value || 0);
+
+              if (reservationType == "MANUAL_ORDER") {
+                const serviceSetting = await appSetting.findOne({
+                  where: { setting_name: "SERVICE_FEE_PARTNER" },
+                });
+                serviceFee = parseFloat(serviceSetting?.setting_value || 0);
+              } else {
+                const serviceSetting = await appSetting.findOne({
+                  where: { setting_name: "SERVICE_FEE" },
+                });
+                serviceFee = parseFloat(serviceSetting?.setting_value || 0);
+              }
+            }
+            const totalDiscount = Math.round(
+              package.totalprice * (discountPercent / 100)
+            );
+
+            var reservationData = {
+              reservation_no: reservationNo,
+              reservation_date: resvDate,
+              reservation_type: reservationType,
+              user_id: userId,
+              partner_id: package.partner_id,
+              category_id: package.category_id,
+              package_id: packageId,
+              service_id: package.service_id,
+              name: name,
+              package_name: package.name,
+              description: package.description,
+              event_date: eventDate,
+              event_time: eventTime,
+              duration: package.duration,
+              event_address: eventAddress,
+              total_price: package.totalprice,
+              total_discount: totalDiscount,
+              total_down_payment: 0,
+              total_payment: package.totalprice - totalDiscount + serviceFee,
+              status_code: statusCode,
+              transaction_status_code: transactionStatusCode,
+              share_link_id: shareLinkId,
+              created_at: moment().utcOffset(0),
+              created_by: "system",
+              reservation_contact: {
+                reservation_no: reservationNo,
+                name: name,
+                provinsi: provinsi,
+                city: city,
+                address: address,
+                phone_no: phoneNo,
+                wa_no: waNo,
+                email: email,
+                social_media: socialMedia,
+                other_description: otherDescription,
+              },
+              reservation_services: services,
+              reservation_status_histories: histories,
+            };
+
+            const insertparams = {
+              reservation_no: reservationNo,
+              user_id: userId,
+              partner_id: package.partner_id,
+              event_date: eventDate,
+              event_time: eventTime,
+              event_address: eventAddress,
+            };
+            console.log("resv data");
+            console.log(reservationData);
+
+            const insertReservation = await Reservation.findOrCreate({
+              where: insertparams,
+              include: [
+                {
+                  model: ReservationContact,
+                  as: "reservation_contact",
+                },
+                {
+                  model: ReservationService,
+                  as: "reservation_services",
+                },
+                {
+                  model: ReservationStatusHistory,
+                  as: "reservation_status_histories",
+                },
+              ],
+              defaults: reservationData,
+            });
+
+            if (!insertReservation[1]) {
+              throw {
+                success: false,
+                message: "Reservasi Gagal Dibuat",
+                data: {},
+              };
+            } else {
+              return {
+                success: true,
+                message: "Reservasi Berhasil Dibuat",
+                data: insertReservation[0].dataValues,
+              };
+            }
+          } else {
+            return {
+              success: false,
+              message: "Reservasi Sudah Ada",
+              data: {},
+            };
+          }
+        } catch (error) {
       console.log(error);
       throw error;
     }
@@ -1260,10 +1320,12 @@ module.exports = {
             }
 
             // ---- Reward untuk user yang share ----
-            const userShareReward = newCountTotal * (userSharePercent / 100);
+            let userShareReward = 0;
             console.log("upReserv.share_link_id : " + upReserv.share_link_id);
             if (upReserv.share_link_id) {
               console.log("Ada share link, reward ke user yang share");
+              userShareReward = newCountTotal * (userSharePercent / 100);
+              
               const shareUser = await ShareLink.findOne({
                 where: { id: upReserv.share_link_id },
                 transaction: t,
@@ -2312,8 +2374,16 @@ module.exports = {
 
   getPartnerCalendarData: async (param) => {
     try {
-      const { partnerId, month, year } = param;
+      const { partnerId, date, month, year } = param;
+      console.log(param);
       var agenda = {};
+
+      const dateCondition = date
+          ? `AND date(rr.event_date) = date('${date}')`
+          : `
+      AND extract(MONTH from rr.event_date) = ${month}
+      AND extract(YEAR from rr.event_date) = ${year}
+      `;
 
       var query =
         `
@@ -2338,15 +2408,8 @@ module.exports = {
             distinct date(event_date) event_date, 
             partner_id	  
           from reservation rr
-          where rr.partner_id = ` +
-        partnerId +
-        `
-          and extract(MONTH from rr.event_date) = ` +
-        month +
-        `
-          and extract(YEAR from rr.event_date) = ` +
-        year +
-        `
+          where rr.partner_id = ${partnerId}
+          ${dateCondition}
           and rr.transaction_status_code in ('CANCEL', 'NEW', 'ON_PROCESS', 'SUCCESS')
          )  a
          LEFT   JOIN LATERAL (
@@ -2360,6 +2423,18 @@ module.exports = {
                r.event_date,
                r.event_address,
                r.duration,   
+
+               (
+                 r.event_time 
+                 + (r.duration || ' minutes')::interval
+               ) as event_time_end,
+
+               (date(r.event_date) + r.event_time) as event_date_start,
+               (
+                  date(r.event_date) + r.event_time
+                  + (r.duration || ' minutes')::interval
+               ) as event_date_end,
+              
                r.description,    
                r.total_price,
                r.total_payment,
@@ -2427,7 +2502,7 @@ module.exports = {
         .query(query, { type: sequelize.QueryTypes.SELECT })
         .then((results) => {
           if (results === null) {
-            return new { items: [], markeddates: [] }();
+            return new { items: [], markeddates: [], message: 'No data this month' }();
           } else {
             return results[0];
           }
@@ -2631,9 +2706,9 @@ module.exports = {
     var reservations = await sequelize.query(
       `SELECT
                 coalesce(all_order, 0) "ALL_ORDER",
-                coalesce(order_new, 0) "ORDER_NEW",
+                coalesce(order_waiting_confirm, 0) "ORDER_NEW",
                 coalesce(order_partner_confirm, 0) "ORDER_PARTNER_CONFIRM",
-                coalesce(order_new, 0) + coalesce(order_partner_confirm, 0) "ORDER_NEED_PAYMENT",
+                coalesce(order_waiting_confirm, 0) + coalesce(order_partner_confirm, 0) + coalesce(payment_request, 0) "ORDER_NEED_PAYMENT",
                 coalesce(order_dp_completed, 0) "ORDER_DP_COMPLETED",
                 coalesce(order_payment_completed, 0) "ORDER_PAYMENT_COMPLETED",
                 coalesce(order_dp_completed, 0) + coalesce(order_payment_completed, 0) "ORDER_PROCESS",
@@ -2647,10 +2722,10 @@ module.exports = {
                 ) sum0 on true
                 left join lateral (
                   SELECT 
-                    count(reservation_no) order_new
+                    count(reservation_no) order_waiting_confirm
                   from reservation orn
                   where orn.partner_id = part.id
-                  and orn.status_code = 'ORDER_NEW'
+                  and orn.status_code = 'ORDER_WAITING_CONFIRM'
                 ) sum1 on true
                 left join lateral (
                   SELECT count(reservation_no) order_partner_confirm
@@ -2676,6 +2751,12 @@ module.exports = {
                   where oc.partner_id = part.id
                   and oc.status_code = 'ORDER_COMPLETED'
                 ) sum5 on true
+                left join lateral (
+                  SELECT count(reservation_no) payment_request
+                  from reservation oc
+                  where oc.partner_id = part.id
+                  and oc.status_code = 'PAYMENT_REQUEST'
+                ) sum6 on true
               WHERE part.type = 2
               and part.id = ` +
         partnerId +
@@ -2711,9 +2792,9 @@ module.exports = {
     var reservations = await sequelize.query(
       `SELECT
               count(*) FILTER (WHERE status_code IS NOT NULL) AS "ALL_ORDER",
-              count(*) FILTER (WHERE status_code = 'ORDER_NEW') AS "ORDER_NEW",
+              count(*) FILTER (WHERE status_code = 'ORDER_WAITING_CONFIRM') AS "ORDER_NEW",
               count(*) FILTER (WHERE status_code = 'ORDER_PARTNER_CONFIRM') AS "ORDER_PARTNER_CONFIRM",
-              (count(*) FILTER (WHERE status_code = 'ORDER_NEW')
+              (count(*) FILTER (WHERE status_code = 'ORDER_WAITING_CONFIRM')
               + count(*) FILTER (WHERE status_code = 'ORDER_PARTNER_CONFIRM')) AS "ORDER_NEED_PAYMENT",
               count(*) FILTER (WHERE status_code = 'ORDER_DP_COMPLETED') AS "ORDER_DP_COMPLETED",
               count(*) FILTER (WHERE status_code = 'ORDER_PAYMENT_COMPLETED') AS "ORDER_PAYMENT_COMPLETED",
@@ -2754,9 +2835,9 @@ module.exports = {
     var reservations = await sequelize.query(
       `SELECT
               coalesce(all_order, 0) "ALL_ORDER",
-              coalesce(order_new, 0) "ORDER_NEW",
+              coalesce(order_waiting_confirm, 0) "ORDER_NEW",
               coalesce(order_partner_confirm, 0) "ORDER_PARTNER_CONFIRM",
-              coalesce(order_new, 0) + coalesce(order_partner_confirm, 0) "ORDER_NEED_PAYMENT",
+              coalesce(order_waiting_confirm, 0) + coalesce(order_partner_confirm, 0) "ORDER_NEED_PAYMENT",
               coalesce(order_dp_completed, 0) "ORDER_DP_COMPLETED",
               coalesce(order_payment_completed, 0) "ORDER_PAYMENT_COMPLETED",
               coalesce(order_dp_completed, 0) + coalesce(order_payment_completed, 0) "ORDER_PROCESS",
@@ -2770,10 +2851,10 @@ module.exports = {
               ) sum0 on true
               left join lateral (
                 SELECT 
-                  count(reservation_no) order_new
+                  count(reservation_no) order_waiting_confirm
                 from reservation orn
                 where orn.user_id = part.id
-                and orn.status_code = 'ORDER_NEW'
+                and orn.status_code = 'ORDER_WAITING_CONFIRM'
               ) sum1 on true
               left join lateral (
                 SELECT count(reservation_no) order_partner_confirm
@@ -3008,6 +3089,7 @@ module.exports = {
       // total dp blum dieksekusi
       var objReservationConfirmationPayment = {
         confirmation_payment: confirmationPayment,
+        status_code: "PAYMENT_REQUEST",
         updated_at: moment().utcOffset(0),
         updated_by: userId,
       };
@@ -3080,6 +3162,7 @@ module.exports = {
           data: upReserv,
         };
       } catch (err) {
+        console.log(err);
         // kalau ada error → rollback
         await transaction.rollback();
         return {

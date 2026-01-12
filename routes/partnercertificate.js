@@ -57,7 +57,8 @@ partnerCertificateRouter.post("/add", headerAuth.isPartnerAuthenticated, upload.
   if (!imagefile) {
     res.status(400).send({
         status: false,
-        data: 'No file is selected.'
+        message: 'No file is selected.',
+        data: {}
     });
   } else {
     const data = { 

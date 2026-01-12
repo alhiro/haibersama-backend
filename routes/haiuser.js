@@ -224,6 +224,15 @@ authRouter.get("/me", headerAuth.isUserAuthenticated, headerAuth.updateFcmToken,
   authController.getProfile(data, res);
 });
 
+authRouter.get("/user/:id", headerAuth.isUserAuthenticated, headerAuth.updateFcmToken, (req, res, next) => {
+  console.log("endpoint : get user detail")
+  const data = { 
+    id: req.params.id
+  };
+  
+  authController.getUser(data, res);
+});
+
 authRouter.delete("/delete", headerAuth.isPartnerAuthenticated, (req, res, next) => {
   const partner_id = res.locals.auth.id;
   const data = { 

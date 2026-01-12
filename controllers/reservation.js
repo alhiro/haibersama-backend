@@ -257,14 +257,14 @@ exports.updateStatus = async function(req, res, next) {
         if (data.success) {
           var reservation = data.data;
 
-          if(reservation.status_code == "ORDER_NEW" || reservation.status_code == "ORDER_DP_COMPLETED" || reservation.status_code == "ORDER_PAYMENT_COMPLETED")
+          if(reservation.status_code == "ORDER_WAITING_CONFIRM" || reservation.status_code == "ORDER_DP_COMPLETED" || reservation.status_code == "ORDER_PAYMENT_COMPLETED")
           {
             let getData = await resv.findReservation(reservation.reservation_no);   
             let dataUser = await partnerResv.getDetail(reservation.partner_id);  
             //console.log(dataUser);     
   
             var statusPayment = "";
-            if (reservation.status_code == "ORDER_NEW") {
+            if (reservation.status_code == "ORDER_WAITING_CONFIRM") {
               statusPayment = "Belum Dibayar";
             } else if (reservation.status_code == "ORDER_DP_COMPLETED") {
               statusPayment = "Sudah DP";
@@ -376,14 +376,14 @@ exports.updateStatusManual = async function(req, res, next) {
         // console.log('list banks');
         // console.log(detailBank);
 
-        if(reservation.status_code == "ORDER_NEW" || reservation.status_code == "ORDER_PARTNER_CONFIRM" || reservation.status_code == "ORDER_DP_COMPLETED" || reservation.status_code == "ORDER_PAYMENT_COMPLETED")
+        if(reservation.status_code == "ORDER_WAITING_CONFIRM" || reservation.status_code == "ORDER_PARTNER_CONFIRM" || reservation.status_code == "ORDER_DP_COMPLETED" || reservation.status_code == "ORDER_PAYMENT_COMPLETED")
         {
           let getData = await resv.findReservation(reservation.reservation_no);
           let dataUser = await partnerResv.getDetail(reservation.partner_id);  
           //console.log(dataUser);
 
           var statusPayment = "";
-          if (reservation.status_code == "ORDER_NEW" || reservation.status_code == "ORDER_PARTNER_CONFIRM") {
+          if (reservation.status_code == "ORDER_WAITING_CONFIRM" || reservation.status_code == "ORDER_PARTNER_CONFIRM") {
             statusPayment = "Belum Dibayar";
           } else if (reservation.status_code == "ORDER_DP_COMPLETED") {
             statusPayment = "Sudah DP";
@@ -1302,7 +1302,7 @@ exports.getCountCart = async function(req, res, next) {
           where += " AND rv.user_id = " + userId;
       }        
 
-      where += " AND (rv.status_code = '" + "ORDER_NEW" + "' OR rv.status_code = '" + "ORDER_PARTNER_CONFIRM" + "' OR rv.transaction_status_code = '" + "ORDER_NEW" + "'OR rv.transaction_status_code = '" + "ORDER_PARTNER_CONFIRM" + "') ";
+      where += " AND (rv.status_code = '" + "ORDER_NEW" + "' OR rv.status_code = '" + "ORDER_PARTNER_CONFIRM" + "' OR rv.status_code = '" + "PAYMENT_REQUEST" + "' OR rv.transaction_status_code = '" + "ORDER_NEW" + "'OR rv.transaction_status_code = '" + "ORDER_PARTNER_CONFIRM" + "') ";
           
       console.log(where);
       let data = await resv.findReservations(where);
@@ -1634,7 +1634,7 @@ exports.getSuccessReservationsCart = async function(req, res, next) {
 
       // where += " AND rv.transaction_status_code = 'SUCCESS' ";
      
-      where += " AND (rv.status_code = '" + "ORDER_NEW" + "' OR rv.status_code = '" + "ORDER_PARTNER_CONFIRM" + "' OR rv.transaction_status_code = '" + "ORDER_NEW" + "'OR rv.transaction_status_code = '" + "ORDER_PARTNER_CONFIRM" + "') ";
+      where += " AND (rv.status_code = '" + "ORDER_NEW" + "' OR rv.status_code = '" + "ORDER_WAITING_CONFIRM" + "' OR rv.status_code = '" + "ORDER_PARTNER_CONFIRM" + "' OR rv.status_code = '" + "PAYMENT_REQUEST" + "' OR rv.transaction_status_code = '" + "NEW" + "') ";
       
       if(categoryId > 0){
         params.category_id = categoryId;
@@ -1898,7 +1898,7 @@ exports.getSuccessReservationEmail = async function(req, res, next) {
        //console.log('reservation[0] ' + JSON.stringify(getData.data.reservation_no));
  
        var statusPayment = "";
-       if (getData.data.status_code == "ORDER_NEW" || getData.data.status_code == "ORDER_PARTNER_CONFIRM") {
+       if (getData.data.status_code == "ORDER_WAITING_CONFIRM" || getData.data.status_code == "ORDER_PARTNER_CONFIRM") {
          statusPayment = "Belum Dibayar";
        } else if (getData.data.status_code == "ORDER_DP_COMPLETED") {
          statusPayment = "Sudah DP";
@@ -2045,7 +2045,7 @@ exports.sendEmailToCustomer = async function (req, res, next) {
        var detailBank = bankPartner.data[0];
        var termPartner = await term.getPackage(reservation.package_id);
       
-        if (reservation.status_code == "ORDER_NEW" || reservation.status_code == "ORDER_PARTNER_CONFIRM" || reservation.status_code == "ORDER_DP_COMPLETED" || reservation.status_code == "ORDER_PAYMENT_COMPLETED")
+        if (reservation.status_code == "ORDER_WAITING_CONFIRM" || reservation.status_code == "ORDER_PARTNER_CONFIRM" || reservation.status_code == "ORDER_DP_COMPLETED" || reservation.status_code == "ORDER_PAYMENT_COMPLETED")
         {
           let getData = await resv.findReservation(reservationNo);   
           let dataUser = await partnerResv.getDetail(userId); 
@@ -2057,7 +2057,7 @@ exports.sendEmailToCustomer = async function (req, res, next) {
           //console.log('reservation[0] ' + JSON.stringify(getData.data.reservation_no));
     
           var statusPayment = "";
-          if (reservation.status_code == "ORDER_NEW" || reservation.status_code == "ORDER_PARTNER_CONFIRM") {
+          if (reservation.status_code == "ORDER_WAITING_CONFIRM" || reservation.status_code == "ORDER_PARTNER_CONFIRM") {
             statusPayment = "Belum Dibayar";
           } else if (reservation.status_code == "ORDER_DP_COMPLETED") {
             statusPayment = "Sudah DP";
@@ -2330,7 +2330,7 @@ exports.sendEmailToCustomerManual = async function (req, res, next) {
        var detailBank = bankPartner.data[0];
        var termPartner = await term.getPackage(reservation.package_id);
 
-        if (reservation.status_code == "ORDER_NEW" || reservation.status_code == "ORDER_PARTNER_CONFIRM" || reservation.status_code == "ORDER_DP_COMPLETED" || reservation.status_code == "ORDER_PAYMENT_COMPLETED" || reservation.status_code == "ORDER_COMPLETED")
+        if (reservation.status_code == "ORDER_WAITING_CONFIRM" || reservation.status_code == "ORDER_PARTNER_CONFIRM" || reservation.status_code == "ORDER_DP_COMPLETED" || reservation.status_code == "ORDER_PAYMENT_COMPLETED" || reservation.status_code == "ORDER_COMPLETED")
         {
           let getData = await resv.findReservation(reservationNo);   
           let dataUser = await partnerResv.getDetail(userId); 
@@ -2343,7 +2343,7 @@ exports.sendEmailToCustomerManual = async function (req, res, next) {
           //console.log('reservation[0] ' + JSON.stringify(getData.data.reservation_no));
     
           var statusPayment = "";
-          if (reservation.status_code == "ORDER_NEW" || reservation.status_code == "ORDER_PARTNER_CONFIRM") {
+          if (reservation.status_code == "ORDER_WAITING_CONFIRM" || reservation.status_code == "ORDER_PARTNER_CONFIRM") {
             statusPayment = "Belum Dibayar";
           } else if (reservation.status_code == "ORDER_DP_COMPLETED") {
             statusPayment = "Sudah DP";

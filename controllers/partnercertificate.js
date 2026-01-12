@@ -38,7 +38,7 @@ exports.getDetail = async function(req, res, next) {
     var certificate = await partnercertificate.getDetail(id);
     return res
       .status(200)
-      .json({ status: 200, data: certificate, message: "Detail Sertifikat Partner Berhasil Diambil" });
+      .send({ status: 200, data: certificate, message: "Detail Sertifikat Partner Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)
@@ -53,7 +53,7 @@ exports.addCertificate = async function(req, res, next) {
     let result = await partnercertificate.findOrCreateCertificate(params, req);
     return res.status(200).send(result);
   } catch (err) {
-    return res.status(500).send({ data: err });
+    return res.status(500).send(err);
   }
 };
 
