@@ -116,6 +116,22 @@ const Reservation = dbSeq.define('reservation', {
       key: 'id'
     }
   },
+  tracking_started_at: {
+    type: Sequelize.DATE,
+    allowNull: true,
+  },
+  tracking_finished_at: {
+    type: Sequelize.DATE,
+    allowNull: true,
+  },
+  event_lat: {
+    type: Sequelize.DECIMAL(10, 7),
+    allowNull: true,
+  },
+  event_lng: {
+    type: Sequelize.DECIMAL(10, 7),
+    allowNull: true,
+  },
   created_at: {
     type: Sequelize.DATE,
     allowNull: true

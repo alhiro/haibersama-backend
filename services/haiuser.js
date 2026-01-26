@@ -138,36 +138,41 @@ module.exports = {
       var users = await User.findOne({ 
         where: params,
         attributes: [
-          "id", "email", "name", "picture", "given_name", "family_name", "phone_number", "active", "token", "address", "nation", "dob", "province", "city", "postalcode", "type", "title", "description", "longitude", "latitude", "whatsapp_number", "last_login", "refresh_token", "reset_token", "expired_reset_token", "verified_document", "is_verified", "process_verified", "created_at", "created_by", "updated_at", "updated_by", "createdAt", "updatedAt",
+          "id", "email", "name", "picture", "given_name", "family_name", "phone_number", "active", "token", "address", "nation", "dob", "province", "city", "postalcode", [sequelize.col('hai_user.type'), 'user_type'], "title", "description", "longitude", "latitude", "whatsapp_number", "last_login", "refresh_token", "reset_token", "expired_reset_token", "verified_document", "is_verified", "process_verified", "created_by", "updated_by", "createdAt", "updatedAt",
           [
             sequelize.literal(`(
             SELECT COUNT(reservation_no)
                 FROM reservation rv
                 WHERE rv.user_id = `+partner_id+`
                 AND (rv.status_code = 'ORDER_NEW' OR rv.status_code = 'ORDER_WAITING_CONFIRM' OR rv.status_code = 'ORDER_PARTNER_CONFIRM' OR rv.status_code = 'PAYMENT_REQUEST')
-                ORDER BY COUNT(reservation_no) DESC
             )`),
             'cart_length',
           ],
         ],
         include: [
           {
-            model: PartnerAward
+            model: PartnerAward,
+            limit: 9
           },
           {
-            model: PartnerCertificate
+            model: PartnerCertificate,
+            limit: 9
           },
           {
-            model: PartnerExperience
+            model: PartnerExperience,
+            limit: 9
           },
           {
-            model: PartnerPortfolio
+            model: PartnerPortfolio,
+            limit: 9
           },
           {
-            model: PartnerPackage
+            model: PartnerPackage,
+            limit: 9
           },
           {
-            model: PartnerFollower
+            model: PartnerFollower,
+            limit: 9
           }
         ]
       });
@@ -624,7 +629,7 @@ module.exports = {
         };
       })
       .catch(err => {
-        return { success: false, message: "Profil Gagal Diubah", data: err };
+        throw (err)
       });
   },
 

@@ -172,6 +172,8 @@ reservationRouter.post("/create", headerAuth.isUserAuthenticated , (req, res, ne
     eventDate: req.body.eventDate, 
     eventTime: req.body.eventTime, 
     eventAddress: req.body.eventAddress, 
+    eventLat: req.body.eventLat, 
+    eventLng: req.body.eventLng, 
     name: req.body.name, 
     provinsi: req.body.provinsi, 
     city: req.body.city,
