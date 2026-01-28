@@ -138,7 +138,7 @@ module.exports = {
       var users = await User.findOne({ 
         where: params,
         attributes: [
-          "id", "email", "name", "picture", "given_name", "family_name", "phone_number", "active", "token", "address", "nation", "dob", "province", "city", "postalcode", [sequelize.col('hai_user.type'), 'user_type'], "title", "description", "longitude", "latitude", "whatsapp_number", "last_login", "refresh_token", "reset_token", "expired_reset_token", "verified_document", "is_verified", "process_verified", "created_by", "updated_by", "createdAt", "updatedAt",
+          "id", "email", "name", "picture", "given_name", "family_name", "phone_number", "active", "token", "address", "nation", "dob", "province", "city", "postalcode", "type", "title", "description", "longitude", "latitude", "whatsapp_number", "last_login", "refresh_token", "reset_token", "expired_reset_token", "verified_document", "is_verified", "process_verified", "created_by", "updated_by", "createdAt", "updatedAt",
           [
             sequelize.literal(`(
             SELECT COUNT(reservation_no)
@@ -183,6 +183,7 @@ module.exports = {
       } 
       else 
       {
+        const { cart_length } = users.get();
         console.log('users.type');
         console.log(users.type);
         if(users.type == "2")
@@ -191,7 +192,7 @@ module.exports = {
           if(partnerResult.success){ 
             var partner = partnerResult.data;
             // console.log("Data Partner");
-            // console.log(JSON.stringify(users));
+            // console.log(JSON.stringify(partner));
             var user = {
               id: users.id,
               email: users.email,
@@ -226,6 +227,8 @@ module.exports = {
               tiernames: partner.tiernames,  
               points: partner.points, 
               is_verified: !partner.is_verified ? false : partner.is_verified,
+              verified_document: users.verified_document,
+              cart_length: cart_length,
               process_verified: users.process_verified,     
               partner_awards: users.partner_awards,
               partner_portfolios: users.partner_portfolios,
