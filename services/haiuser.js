@@ -597,7 +597,8 @@ module.exports = {
       city,
       postalcode,
       verified_document,
-      type 
+      type,
+      uid_firebase
     } = params;
     console.log("params :", params);
     let data = {
@@ -614,7 +615,8 @@ module.exports = {
       city: city,
       postalcode: postalcode,
       verified_document: verified_document,
-      type: type
+      type: type,
+      uid_firebase: uid_firebase
     };
 
     return User.update(data, {

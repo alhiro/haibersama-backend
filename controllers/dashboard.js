@@ -51,12 +51,7 @@ exports.getPartnerReminder = async function (req, res, next) {
   try {
     const { userId } = req;
 
-    var where = " WHERE 1=1 ";
-    where += " AND rv.partner_id = " + userId;
-    where += " AND rv.transaction_status_code = 'ON_PROCESS' ";
-    where += " AND DATE(rv.event_date) = DATE(now() + interval '1' day) ";
-    
-    let data = await resv.findReminder(where);
+    let data = await resv.findReminder(userId);
     data.code = data.success ? 200 : 500;
     return res.status(200).send(data);
 

@@ -714,13 +714,13 @@ module.exports = {
     const reservations = await sequelize.query(
       `SELECT 
             rv.id, rv.reservation_no, rv.reservation_date, rv.user_id, 
-            usr.name AS user_name, usr.picture AS user_picture,
-            rv.partner_id, prt.name AS partner_name, prt.picture AS partner_picture,
+            usr.name AS user_name, usr.picture AS user_picture, usr.uid_firebase AS user_uid_firebase,
+            rv.partner_id, prt.name AS partner_name, prt.picture AS partner_picture, prt.uid_firebase AS partner_uid_firebase,
             prt.type AS partner_type, rv.category_id, cat.description AS category,
             rv.service_id, srv.description AS service, rv.name, rc.email, rc.address,
             rc.other_description, rv.package_id, rv.package_name,
             rv.description AS reservation_description, rv.event_date, rv.event_time,
-            rv.event_address, rv.total_price, rv.total_discount, rv.total_payment, 
+            rv.event_lat, rv.event_lng, rv.event_address, rv.total_price, rv.total_discount, rv.total_payment, 
             rv.total_ppn, rv.total_down_payment, rv.status_code, ci.description AS status,
             rv.duration, rv.reservation_type, rt.description AS reservation_type_desc,
             rv.confirmation_payment,
@@ -2915,7 +2915,7 @@ module.exports = {
     }
   },
 
-  findReminder: async (where) => {
+  findReminder: async (userId) => {
     var reservations = await sequelize.query(
       `SELECT 
               rv.id, 
@@ -2924,9 +2924,11 @@ module.exports = {
               user_id, 
               usr.name user_name,
               usr.picture user_picture,
+              usr.uid_firebase AS user_uid_firebase,
               partner_id, 
               prt.name partner_name,
               prt.picture partner_picture,
+              prt.uid_firebase AS partner_uid_firebase,
               rv.category_id, 
               cat.description category,
               service_id, 
@@ -2939,6 +2941,8 @@ module.exports = {
               event_date, 
               event_time, 
               event_address, 
+              event_lat,
+              event_lng,
               total_price, 
               total_discount, 
               total_payment, 
@@ -2956,12 +2960,19 @@ module.exports = {
             left join info_code ci on ci.code = rv.status_code
             left join info_code rt on rt.code = rv.reservation_type
             left join reservation_contact rc on rc.reservation_id = rv.id
-            ` +
-        where +
-        `
+            where rv.partner_id = :userId
+              AND rv.transaction_status_code = 'ON_PROCESS'
+              AND (
+                  (
+                    rv.event_date = CURRENT_DATE
+                    AND (rv.event_date + rv.event_time)
+                        >= (now() AT TIME ZONE 'Asia/Jakarta')
+                  )
+                  OR (rv.event_date = CURRENT_DATE + 1)
+              )
             order by event_time asc;`,
       {
-        raw: true,
+        replacements: { userId },
         type: sequelize.QueryTypes.SELECT,
       }
     );

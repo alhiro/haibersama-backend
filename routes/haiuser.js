@@ -150,7 +150,8 @@ authRouter.post("/updateProfile", headerAuth.isUserAuthenticated, upload.fields(
       postalcode: req.body.postalcode,
       verified_document: verifiedFile[0],
       email: email,
-      type: req.body.usertype
+      type: req.body.usertype,
+      uid_firebase: req.body.uid_firebase
     }
     authController.updateProfile(data, res);
   });
