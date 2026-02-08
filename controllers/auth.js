@@ -665,7 +665,6 @@ exports.googleLoginCallBack = async function(req, res, next) {
 
       smtpTransport.sendMail(mailoptions, function(error, res) {
         if (error) {
-          console.log(error);
         } else {
           console.log("Message sent: " + res.response);
         }

@@ -35,31 +35,30 @@ var async = require('async');
 var cryptos = require('crypto');
 const resetSecret = process.env.TOKEN_JWT_SECRET;
 const {check, validationResult} = require('express-validator');
-const partnerfollower = require("./partnerfollower");
-
+const {generateFirebaseToken} = require('../helpers/firebaseAuth');
 const sequelize = require("../config/sequelize");
 
 module.exports = {
   login: async (users, revoke) => {
+    let user = await transformers.user(users);
     console.log("login service");
-    let user = {};
-
-    user = await transformers.user(users);
-
     console.log(user);
     const token = await jwt.sign(user);
     const decoded = await jwt.verify(token);
     const random = await utils.randomChar(8);
-    console.log("token", decoded);
     //check if revoke refresh token is true. return null if true, or assign new refresh token if false
     const refresh_token = revoke ? null : await jwt.sign({ random });
+
+    // 🔥 generate firebase custom token
+    const firebaseToken = await generateFirebaseToken(users);
 
     let data = {
       last_login: now,
       refresh_token: refresh_token
     };
 
-    return User.update(data, { where: { email: users.email }, 
+    return User.update(data, { 
+      where: { email: users.email }, 
       returning: true,
       plain: true })
       .then(updated => {
@@ -77,7 +76,8 @@ module.exports = {
             idx: user.id,
             token,
             expiresIn: new Date(decoded.exp * 1000),
-            refresh_token
+            refresh_token,
+            firebaseToken
           }
         };
       })

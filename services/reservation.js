@@ -3069,7 +3069,7 @@ module.exports = {
         return {
           success: true,
           message: "Reminder Tidak Ditemukan!",
-          data: {},
+          data: [],
         };
       }
       // const {limit, offset} = paging;
