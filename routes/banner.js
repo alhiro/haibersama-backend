@@ -42,6 +42,9 @@ bannerRouter.get("/getall", (req, res, next) => {
   bannerController.getAllBanners(req, res);
 });
 
+bannerRouter.get("/getallAdmin", headerAuth.isAdminAuthenticated, (req, res, next) => {
+  bannerController.getAllBannersAdmin(req, res);
+});
 
 bannerRouter.get("/get", (req, res, next) => {
   bannerController.getBanner(req, res);
@@ -81,32 +84,41 @@ bannerRouter.post("/update", headerAuth.isAdminAuthenticated, upload.single('ban
   const bannerImage = req.file;
   // make sure file is available
   if (!bannerImage) {
-    const data = { 
-      id: parseInt(req.body.id), 
-      title: req.body.title, 
-      description: req.body.description, 
-      image_url: req.body.bannerImage, 
-      link_url: req.body.bannerLink,
-      order_no: parseInt(req.body.orderNo), 
-      active: req.body.active,
-      updated_by: admin_email
+    const data = {
+      id: parseInt(req.body.id),
+      title: req.body.title,
+      description: req.body.description,
+      image_url: req.body.image_url,
+      link_url: req.body.link_url,
+      order_no: parseInt(req.body.order_no),
+      active: req.body.active || req.body.active == 1 ? 1 : 0,
+      updated_by: admin_email,
     };
-    
+    console.log("data banner")
+    console.log(data);
+
     bannerController.updateBanner(data, res);
   } else {
-      const data = { 
-        id: parseInt(req.body.id), 
-        title: req.body.title, 
-        description: req.body.description, 
-        image_url: ENV.API_URL + '/ftp/'+ FILE_PATH + '/' + bannerImage.filename, 
-        link_url: req.body.bannerLink,
-        order_no: parseInt(req.body.orderNo), 
-        active: req.body.active,
-        updated_by: admin_email
-      };
-      
-      bannerController.updateBanner(data, res);
+    const data = {
+      id: parseInt(req.body.id),
+      title: req.body.title,
+      description: req.body.description,
+      image_url: ENV.API_URL + "/ftp/" + FILE_PATH + "/" + bannerImage.filename,
+      link_url: req.body.link_url,
+      order_no: parseInt(req.body.order_no),
+      active: req.body.active || req.body.active == 1 ? 1 : 0,
+      updated_by: admin_email,
+    };
+
+    bannerController.updateBanner(data, res);
   }   
+});
+
+bannerRouter.delete("/delete", headerAuth.isAdminAuthenticated, upload.single('bannerImage'), (req, res, next) => {
+  const data = { 
+    id: req.body.id
+  };
+  bannerController.deleteBanner(data, res);
 });
 
 module.exports = bannerRouter;

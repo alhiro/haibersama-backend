@@ -554,6 +554,22 @@ reservationRouter.post("/getinvoicelists", headerAuth.isUserAuthenticated, (req,
   reservationController.getSuccessReservations(data, res);
 });
 
+reservationRouter.post("/getinvoicelistsadmin", headerAuth.isUserAuthenticated, (req, res, next) => {
+  const data = { 
+    statusCode: req.body.statusCode, 
+    categoryId: req.body.categoryId,
+    eventFrom: req.body.eventFrom, 
+    eventTo: req.body.eventTo,
+    page: req.body.page,
+    limitItem: req.body.limitItem,
+    userId: req.body.userId,
+    type: req.body.type,
+  };
+  console.log(data);
+  
+  reservationController.getSuccessReservationsAdmin(data, res);
+});
+
 reservationRouter.post("/sendinvoicelistemail", headerAuth.isUserAuthenticated, (req, res, next) => {
   const id = res.locals.auth.id;
   const email = res.locals.auth.email;

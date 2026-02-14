@@ -1612,6 +1612,53 @@ exports.getSuccessReservations = async function(req, res, next) {
     }    
 };
 
+exports.getSuccessReservationsAdmin = async function(req, res, next) {
+  try {
+      const { statusCode, categoryId, eventFrom, eventTo, limitItem, page, userId, type } = req;
+      
+      //const paging = { limit: pageSize, offset: (page - 1) *  pageSize};
+
+      const params = { };
+      var where = " WHERE 1=1 "
+
+      // params.partner_id = userId;
+      // where += " AND rv.partner_id = " + userId; 
+      
+      if (type) {
+        params.user_id = userId;
+        where += " AND rv.user_id = " + userId;
+      }    
+
+      // where += " AND rv.transaction_status_code = 'SUCCESS' ";
+      
+      if(eventFrom != null){
+        where += " AND date(rv.event_date) >= date('" + eventFrom + "') ";
+      }
+      
+      if(eventTo != null){
+        where += " AND date(rv.event_date) <= date('" + eventTo + "') ";
+      }
+
+      if(statusCode != ""){
+        params.status_code = statusCode;
+        where += " AND (rv.status_code = '" + statusCode + "' OR rv.transaction_status_code = '" + statusCode + "') ";
+      }
+      
+      if(categoryId > 0){
+        params.category_id = categoryId;
+        where += " AND rv.category_id = " + categoryId + " ";
+      }
+          
+      let data = await resv.findSuccessReservations(where, limitItem, page);
+      data.code = data.success ? 200 : 500;
+      return res.status(200).send(data);
+  
+    } catch (err) {
+      console.log(err);
+      return res.status(500).send({ data: err });
+    }    
+};
+
 exports.getSuccessReservationsCart = async function(req, res, next) {
   try {
       const { statusCode, categoryId, eventFrom, eventTo, limitItem, page, userId, type } = req;

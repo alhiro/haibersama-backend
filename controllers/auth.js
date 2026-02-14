@@ -18,18 +18,59 @@ const resetSecret = process.env.TOKEN_JWT_SECRET;
 
 exports.getAll =  async function(req, res, next) {
   try {
-    let response = await auth.getAll();
+    const params = {
+      categoryId: req.query.categoryId,
+      page: req.query.page,
+      limit: req.query.limit,
+      search: req.query.search,
+    };
 
-    response.code = response.success ? 200 : 500;
-    
-    console.log( response.code, "error")
-    return res.status(response.code).send(response);
+    var all = await auth.getAll(
+      params,
+      res
+    );
+    return res.status(200).json({
+      success: all.success,
+      data: all.data,
+      message: all.message,
+      page: all.page,
+      pageCount: all.count,
+      length: all.length,
+      totalCustomer: all.totalCustomer,  
+      totalPartner: all.totalPartner,
+    });
   } catch (err) {
+    console.error("Error err:", err);
     return res
       .status(500)
       .send({ code: 500, success: false, message: "Error Data User", data: { err } });
   }
 }
+
+exports.getDetailUser = async function (req, res, next) {
+  console.log("controller partner detail");
+  
+  // const { body } = req;
+  // const partner_id = req.query.id;
+
+  const params = { 
+    partner_id: req.partner_id,
+    user_id: req.user_id,
+    user_email: req.user_email 
+  };
+  console.log('params get detail');
+  console.log(params);
+
+  try {
+    var partnerDetail = await auth.getDetailUser(params, req);
+    console.log("controller test test");
+    return res.status(200).json({ status: 200, data: partnerDetail.data, message: "Detail User Berhasil Diambil" });
+  } catch (err) {
+    return res
+      .status(500)
+      .send({ code: 500, success: false, message: err.message, data: { err } });
+  }
+};
 
 exports.login = async function(req, res, next) {
   console.log("controller login");

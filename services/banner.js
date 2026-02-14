@@ -22,6 +22,18 @@ module.exports =
       }
     },
 
+    getAllAdmin: async () => {
+      try {
+        return await Banner.findAll({
+            order:[
+                ["order_no", "ASC"]
+            ]
+        });
+      } catch (error) {
+        throw error
+      }
+    },
+
     findBanner: async (params) => {
       return await Banner.findOne({ where: params })
         .then((banners) => {
@@ -63,21 +75,46 @@ module.exports =
           var objBanner = {
             title: title,
             description: description, 
-            image_url: image_url,
             link_url: link_url,
             order_no: order_no,
-            active: active == 1 ? true : false,
+            active: active == 'true' || active == 1 ? true : false,
             updated_by: updated_by
           }
+
+          if (image_url){
+            objBanner.image_url = image_url;
+          }
+          
           console.log(JSON.stringify(objBanner), "objBanner")
 
           return Banner.update(objBanner,{where: params} )
           .then(async (updated) => { 
               const upService = await Banner.findOne({ where: { id: id } })
-              console.log(JSON.stringify(upService), "upService")
               return { success: true, message: "Banner Berhasil Diubah", data: upService } })
           .catch((err) => { return { success: false, message: "Banner Gagal Diubah", data: err } });
         } catch (error) {
+          throw (error)
+        }
+      },
+
+      deleteBanner: async (data) => {
+        try {
+          const { partner_id, id } = data;
+  
+          return Banner.destroy({
+            where: {
+              id: id,
+            },
+          })
+            .then(async (deleted) => {
+              return { success: true, message: "Banner Berhasil Dihapus", data: [] }
+            })
+            .catch((err) => {
+              console.log(err);
+              return { success: false, message: "Banner Gagal Dihapus", data: err }
+            });
+        } catch (error) {
+          console.log(error);
           throw (error)
         }
       },

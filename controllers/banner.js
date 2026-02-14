@@ -12,6 +12,16 @@ exports.getAllBanners = async function (req, res, next) {
   }
 };
 
+exports.getAllBannersAdmin = async function (req, res, next) {
+  try {
+        var banners = await bannerService.getAllAdmin();
+        return res.status(200).json({ status: 200, data: banners, message: "Semua Banner Berhasil Diambil" });
+  } catch (err) {
+    return res
+      .status(500)
+      .send({ code: 500, success: false, message: err.message, data: { err } });
+  }
+};
 
 exports.getBanner = async function (req, res, next) {
   try {
@@ -42,17 +52,26 @@ exports.updateBanner = async function(req, res, next) {
   try {
     //const transaction = await sequelizeTransaction.transaction();
     const params = { id: req.id };
-    console.log(req);
 
     const findBanner = await bannerService.findBanner(params);
-    console.log("findBanner :", findBanner)
-    if (findBanner.success=== true){
+    console.log("findBanner :", findBanner.success)
+    if (findBanner.success === true){
       let updateBanner = await bannerService.updateBanner(params, req);
       return res.status(200).send(updateBanner);
     }else
     return res.status(400).send(findBanner);
     
   } catch (err) {
+    return res.status(500).send({ data: err });
+  }
+};
+
+exports.deleteBanner = async function(req, res, next) {
+  try {
+    var result = await bannerService.deleteBanner(req);
+    return res.status(200).send(result);
+  } catch (err) {
+    console.log(err);
     return res.status(500).send({ data: err });
   }
 };

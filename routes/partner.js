@@ -18,7 +18,7 @@ partnerRouter.get("/getdetail", headerAuth.isUserAuthenticated, (req, res, next)
   console.log('data partner');
   console.log(data);
 
-  partnerController.getDetailUser(data, res);
+  partnerController.getDetailPartner(data, res);
 });
 
 // partnerRouter.get("/getdetail", (req, res, next) => {

@@ -6,6 +6,8 @@ const Sequelize = require('sequelize');
 const { Op } = Sequelize;
 const appSetting = require('../models/applicationsetting');
 
+const { fn, col } = require("sequelize");
+
 module.exports = {
   getList: async (req) => {
     const { userId, date_from, date_to } = req;
@@ -402,6 +404,43 @@ module.exports = {
           success: false,
           message:
             "Saldo Wallet Partner Wallet Belum Ada, Ada Kesalahan Server!",
+          data: err,
+        };
+      });
+  },
+
+  getBalanceAdmin: async (params) => {
+    return await wallethistory
+      .findOne({
+        where: {
+          status: {
+            [Op.in]: ["ADMIN_FEE", "OTHERS_FEE"],
+          },
+        },
+        attributes: [
+          [fn("COALESCE", fn("SUM", col("total_amount")), 0), "current_balance"],
+        ],
+        raw: true,
+      })
+      .then((Wallet) => {
+        return !Wallet
+          ? {
+              success: true,
+              message: "Saldo Wallet Admin Wallet Belum Ada!",
+              data: { current_balance: 0 },
+            }
+          : {
+              success: true,
+              message: "Riwayat Saldo Wallet Admin Ditemukan",
+              data: Wallet,
+            };
+      })
+      .catch((err) => {
+        console.log(err);
+        return {
+          success: false,
+          message:
+            "Saldo Wallet Admin Wallet Belum Ada, Ada Kesalahan Server!",
           data: err,
         };
       });
@@ -888,5 +927,116 @@ module.exports = {
       throw error;
     }
   },
+
+  getHistoriesGroupByEventDateAdmin: async (req) => {
+    try {
+      const { userId, date_from, date_to, type } = req;
+  
+      const query = `
+      WITH base_data AS (
+        SELECT
+          r.*,
+          date(
+            CASE
+              WHEN r.status = 'ORDER_COMPLETED' THEN r.event_date
+              ELSE r.created_at
+            END
+          ) AS event_date_group
+        FROM partner_wallet_history r
+        WHERE date(
+          CASE
+            WHEN r.status = 'ORDER_COMPLETED' THEN r.event_date
+            ELSE r.created_at
+          END
+        ) BETWEEN '${date_from}' AND '${date_to}'
+      ),
+
+      reservation_aggregates AS (
+        SELECT
+          reservation_no,
+          SUM(
+            CASE
+              WHEN status IN ('ADMIN_FEE', 'OTHERS_FEE')
+              THEN total_amount
+              ELSE 0
+            END
+          ) AS total_fee,
+          SUM(
+            CASE
+              WHEN status IN ('REWARD_DISCOUNT', 'REWARD_SHARE', 'REWARD_REFERRAL')
+              THEN total_amount
+              ELSE 0
+            END
+          ) AS total_reward
+        FROM base_data
+        GROUP BY reservation_no
+      )
+
+      SELECT
+        json_agg(
+          json_build_object(
+            to_char(a.event_date_group, 'YYYY-MM-DD'),
+            c.items
+          )
+        ) AS d
+      FROM (
+        SELECT DISTINCT event_date_group
+        FROM base_data
+        WHERE reservation_type = '${type}'
+      ) a
+      LEFT JOIN LATERAL (
+        SELECT json_agg(x) AS items
+        FROM (
+          SELECT
+            r.transaction_date,
+            r.transaction_type,
+            r.reservation_no,
+            r.reservation_type,
+            r.transaction_no,
+            r.status,
+            r.total_amount,
+            r.event_date,
+            r.created_at,
+            oyc.event_date AS event_date_reservation,
+            oyc.reservation_date,
+            oyc.name AS client_name,
+            CAST((
+              COALESCE(oyc.total_price, 0) +
+              COALESCE(ppd.total_price_detail, 0) +
+              COALESCE(oyc.total_ppn, 0)
+            ) AS INTEGER) AS total_price_payment,
+            COALESCE(ra.total_fee, 0) AS total_fee,
+            COALESCE(ra.total_reward, 0) AS total_reward
+          FROM base_data r
+          LEFT JOIN reservation oyc
+            ON oyc.reservation_no = r.reservation_no
+          LEFT JOIN (
+            SELECT reservation_no, SUM(price) AS total_price_detail
+            FROM partner_package_detail
+            GROUP BY reservation_no
+          ) ppd ON ppd.reservation_no = oyc.reservation_no
+          LEFT JOIN reservation_aggregates ra
+            ON ra.reservation_no = r.reservation_no
+          WHERE r.event_date_group = a.event_date_group
+            AND r.reservation_type = '${type}'
+            AND r.status = 'ORDER_COMPLETED'
+        ) x
+      ) c ON true
+      WHERE c.items IS NOT NULL
+      `;
+
+      const results = await sequelize.query(query, {
+        type: sequelize.QueryTypes.SELECT,
+      });
+  
+      if (!results?.[0]?.d) return null;
+  
+      return results[0].d;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  },
+  
 };
   

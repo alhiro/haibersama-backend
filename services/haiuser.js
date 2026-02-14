@@ -1,5 +1,4 @@
 const User = require("../models/haiuser");
-const PartnerCategory = require("../models/partnerCategory");
 const PartnerService = require("../services/partner");
 const PartnerAward = require('../models/partnerawards');
 const PartnerCertificate = require('../models/partnercertificate');
@@ -37,6 +36,7 @@ const resetSecret = process.env.TOKEN_JWT_SECRET;
 const {check, validationResult} = require('express-validator');
 const {generateFirebaseToken} = require('../helpers/firebaseAuth');
 const sequelize = require("../config/sequelize");
+const Sequelizes = require('sequelize');
 
 module.exports = {
   login: async (users, revoke) => {
@@ -54,14 +54,15 @@ module.exports = {
 
     let data = {
       last_login: now,
-      refresh_token: refresh_token
+      refresh_token: refresh_token,
     };
 
-    return User.update(data, { 
-      where: { email: users.email }, 
+    return User.update(data, {
+      where: { email: users.email },
       returning: true,
-      plain: true })
-      .then(updated => {
+      plain: true,
+    })
+      .then((updated) => {
         const user = updated[1].dataValues;
         // console.log("updated : ", user)
 
@@ -77,119 +78,321 @@ module.exports = {
             token,
             expiresIn: new Date(decoded.exp * 1000),
             refresh_token,
-            firebaseToken
-          }
+            firebaseToken,
+          },
         };
       })
-      .catch(err => {
+      .catch((err) => {
         return { success: false, message: "Gagal Login", data: err };
       });
   },
 
-  getAll: async () => {
+  getAll: async (params, res) => {
+    const Op = Sequelizes.Op;
+  
+    let { categoryId, page, limit, search } = params;
+    console.log("params users")
+    console.log(params)
+  
+    const pageNumber = Number.isInteger(parseInt(page)) ? parseInt(page) : 1;
+    const limitNumber = Number.isInteger(parseInt(limit)) ? parseInt(limit) : 10;
+  
+    let paramsFilter = {};
+  
+    if (search && search.trim() !== "") {
+      paramsFilter.name = {
+        [Op.iLike]: `%${search}%`,
+      };
+    }
+  
     try {
-      console.log("user get all");
-      return await User.findAll({
-        include: [
-          {
-            model: PartnerCategory,
-          },
-          // {
-          //   model: PartnerFollower,
-          // }
-        ]
-      }).then(users => {
-        //delete users.dataValues.password
-        return !users
-          ? { success: false, message: "User Belum Ada!", data: {} }
-          : { success: true, message: "User Berhasil Ditemukan", data: users };
-      })
-      .catch(err => {
-        return { success: false, message: "User Belum Ada, Ada Kesalahan Server!", data: err };
+      const resp = await User.findAndCountAll({
+        attributes: {
+          exclude: ["password", "refresh_token"],
+          include: [
+            [
+              Sequelizes.literal(`(
+                SELECT p.name
+                FROM province p
+                WHERE p.id = CAST("hai_user"."province" AS INTEGER)
+                LIMIT 1
+              )`),
+              "provinceName",
+            ],
+            [
+              Sequelizes.literal(`(
+                SELECT c.name
+                FROM city c
+                WHERE c.id = CAST("hai_user"."city" AS INTEGER)
+                LIMIT 1
+              )`),
+              "cityName",
+            ],
+          ]
+        },
+        where: paramsFilter,
+        order: [["created_at", "DESC"]],
+        limit: limitNumber,
+        offset: (pageNumber - 1) * limitNumber,
+        distinct: true,
       });
-      ;
+
+      const totalCustomer = await User.count({
+        where: {
+          type: 1,
+          ...paramsFilter,
+        },
+      });
+
+      const totalPartner = await User.count({
+        where: {
+          type: 2,
+          ...paramsFilter,
+        },
+      });
+  
+      return {
+        success: true,
+        message:
+          resp.rows.length > 0
+            ? "Semua data user berhasil diambil!"
+            : "Data user kosong!",
+        data: resp.rows,
+        page: pageNumber,
+        count: Math.ceil(resp.count / limitNumber),
+        length: resp.count,
+        totalCustomer: totalCustomer,  
+        totalPartner: totalPartner,
+      };
     } catch (error) {
+      console.error("Error get list user:", error);
+      throw error;
+    }
+  },  
+
+  getDetailUser: async (params, data) => {
+    try {
+      const { partner_id, user_id, user_email } = data;
+
+      var objData = {
+        partner_id: partner_id,
+        user_id: user_id,
+        user_email: user_email,
+      };
+
+      console.log("data get detail");
+      console.log(objData);
+
+      var totalPointResult = await sequelize.query(
+        `SELECT COALESCE(SUM(point), 0) AS point FROM point_history AS point_history WHERE point_history.user_id = :partner_id`,
+        {
+          raw: true,
+          type: sequelize.QueryTypes.SELECT,
+          replacements: { partner_id },
+        }
+      );
+
+      var totalPoint = totalPointResult[0].point;
+      console.log("totalPoint", totalPoint);
+      var partners = await sequelize.query(
+        `SELECT
+            part.id partnerid, 
+            part.name partnername,
+            part.description,
+            part.address, 
+            part.nation, 
+            part.picture,
+            part.is_verified,
+            part.title,
+            part.dob,
+            part.province,
+            part.phone_number,
+            part.whatsapp_number,
+            ph.user_id following_id,
+            coalesce(rating, 0) rating,
+            coalesce(reviewcount, 0) reviewcount,
+            coalesce(follower, 0) follower,
+            coalesce(successjob, 0) successjob,
+            coalesce(pbb.current_balance, 0) currentbalance,
+            coalesce(points, 0) points,
+            coalesce(pt.tier_name, 'Perintis') tiername
+            FROM hai_user part
+            left join lateral (
+              select sum(point) points
+              from point_history poo
+              where poo.user_id = part.id
+            ) po on true
+            left join lateral (
+              select avg(rating) rating, count(prr.user_id) reviewcount
+              from partner_rating prr
+              where prr.partner_id = part.id
+            ) pr on true
+            left join lateral (
+              select count(user_id) follower
+              from partner_follower pff
+              where pff.partner_id = part.id
+            ) pf on true
+            left join lateral (
+              select user_id
+              from partner_follower pfh
+              WHERE pfh.partner_id = ${objData.partner_id}
+              AND pfh.user_id = ${objData.user_id}
+            ) ph on true
+            left join lateral (
+              select count(reservation_no) successjob
+              from reservation rvv
+              where rvv.partner_id = part.id
+              and rvv.transaction_status_code = 'SUCCESS'
+            ) rv on true
+            left join lateral (
+              select current_balance
+              from partner_wallet_balance pb
+              where pb.partner_id = part.id
+            ) pbb on true
+            left join lateral (
+              select tier_name
+              from tier_history ppt
+              where ppt.user_id = part.id
+              AND date(start_date) <= date(now()) 
+              AND date(end_date) >= date(now()) 
+            ) pt on true
+            WHERE part.type IN (1, 2)
+            and part.id = ` +
+            objData.partner_id +
+            `;`,
+        {
+          raw: true,
+          type: sequelize.QueryTypes.SELECT,
+        }
+      );
+
+      if (partners.length > 0) {
+        var partner = partners[0];
+        console.log("detail partner");
+        console.log(partner);
+
+        return { success: true, data: partner };
+      } else {
+        return {
+          success: false,
+          message: "Informasi Partner Tidak Ada",
+          data: {},
+        };
+      }
+    } catch (error) {
+      console.log(error);
       throw error;
     }
   },
 
-  findUser: async params => {
-    console.log("servive findUser")
-    console.log("params : "+ JSON.stringify(params))
+  findUser: async (params) => {
+    console.log("servive findUser");
+    console.log("params : " + JSON.stringify(params));
     return await User.findOne({ where: params })
-      .then(users => {
+      .then((users) => {
         //delete users.dataValues.password
         return !users
           ? { success: false, message: "User Tidak Ditemukan", data: {} }
           : { success: true, message: "User Ditemukan", data: users };
       })
-      .catch(err => {
+      .catch((err) => {
         return { success: false, message: "User Tidak Ditemukan", data: err };
       });
   },
 
-  findUserProfile: async (params, req, res) => {    
+  findUserProfile: async (params, req, res) => {
     try {
-      console.log('req me' )
-      console.log(req)
+      console.log("req me");
+      console.log(req);
 
       let partner_id = req.partner_id ? req.partner_id : res.locals.auth.id;
 
-      var users = await User.findOne({ 
+      var users = await User.findOne({
         where: params,
         attributes: [
-          "id", "email", "name", "picture", "given_name", "family_name", "phone_number", "active", "token", "address", "nation", "dob", "province", "city", "postalcode", "type", "title", "description", "longitude", "latitude", "whatsapp_number", "last_login", "refresh_token", "reset_token", "expired_reset_token", "verified_document", "is_verified", "process_verified", "created_by", "updated_by", "createdAt", "updatedAt",
+          "id",
+          "email",
+          "name",
+          "picture",
+          "given_name",
+          "family_name",
+          "phone_number",
+          "active",
+          "token",
+          "address",
+          "nation",
+          "dob",
+          "province",
+          "city",
+          "postalcode",
+          "type",
+          "title",
+          "description",
+          "longitude",
+          "latitude",
+          "whatsapp_number",
+          "last_login",
+          "refresh_token",
+          "reset_token",
+          "expired_reset_token",
+          "verified_document",
+          "is_verified",
+          "process_verified",
+          "created_by",
+          "updated_by",
+          "createdAt",
+          "updatedAt",
           [
-            sequelize.literal(`(
+            sequelize.literal(
+              `(
             SELECT COUNT(reservation_no)
                 FROM reservation rv
-                WHERE rv.user_id = `+partner_id+`
+                WHERE rv.user_id = ` +
+                partner_id +
+                `
                 AND (rv.status_code = 'ORDER_NEW' OR rv.status_code = 'ORDER_WAITING_CONFIRM' OR rv.status_code = 'ORDER_PARTNER_CONFIRM' OR rv.status_code = 'PAYMENT_REQUEST')
-            )`),
-            'cart_length',
+            )`
+            ),
+            "cart_length",
           ],
         ],
         include: [
           {
             model: PartnerAward,
-            limit: 9
+            limit: 9,
           },
           {
             model: PartnerCertificate,
-            limit: 9
+            limit: 9,
           },
           {
             model: PartnerExperience,
-            limit: 9
+            limit: 9,
           },
           {
             model: PartnerPortfolio,
-            limit: 9
+            limit: 9,
           },
           {
             model: PartnerPackage,
-            limit: 9
+            limit: 9,
           },
           {
             model: PartnerFollower,
-            limit: 9
-          }
-        ]
+            limit: 9,
+          },
+        ],
       });
-        
-      if(!users)
-      {
-        return { success: false, message: "User Tidak Ditemukan", data: {} }
-      } 
-      else 
-      {
+
+      if (!users) {
+        return { success: false, message: "User Tidak Ditemukan", data: {} };
+      } else {
         const { cart_length } = users.get();
-        console.log('users.type');
+        console.log("users.type");
         console.log(users.type);
-        if(users.type == "2")
-        {
+        if (users.type == "2") {
           var partnerResult = await PartnerService.getDetail(users.id);
-          if(partnerResult.success){ 
+          if (partnerResult.success) {
             var partner = partnerResult.data;
             // console.log("Data Partner");
             // console.log(JSON.stringify(partner));
@@ -218,38 +421,35 @@ module.exports = {
               whatsapp_number: users.whatsapp_number,
               last_login: users.last_login,
               refresh_token: users.refresh_token,
-              rating: partner.rating,   
-              review: partner.reviewcount,   
-              follower: partner.follower,   
-              successjob: partner.successjob, 
-              currentbalance: partner.currentbalance, 
-              tiername: partner.tiername,  
-              tiernames: partner.tiernames,  
-              points: partner.points, 
+              rating: partner.rating,
+              review: partner.reviewcount,
+              follower: partner.follower,
+              successjob: partner.successjob,
+              currentbalance: partner.currentbalance,
+              tiername: partner.tiername,
+              tiernames: partner.tiernames,
+              points: partner.points,
               is_verified: !partner.is_verified ? false : partner.is_verified,
               verified_document: users.verified_document,
               cart_length: cart_length,
-              process_verified: users.process_verified,     
+              process_verified: users.process_verified,
               partner_awards: users.partner_awards,
               partner_portfolios: users.partner_portfolios,
               partner_experiences: users.partner_experiences,
               partner_certificates: users.partner_certificates,
               partner_packages: users.partner_package_headers,
               partner_followers: users.partner_followers,
-            }
-            
-            return { success: true, message: "User Ditemukan", data: user };              
-          } else {                
-            return { success: true, message: "User Ditemukan", data: users };   
-          }           
-        }
-        else
-        {
+            };
+
+            return { success: true, message: "User Ditemukan", data: user };
+          } else {
+            return { success: true, message: "User Ditemukan", data: users };
+          }
+        } else {
           return { success: true, message: "User Ditemukan", data: users };
         }
       }
-    } 
-    catch (error) {
+    } catch (error) {
       console.log("error profile " + error);
       throw error;
     }
@@ -257,23 +457,20 @@ module.exports = {
 
   findUserDetail: async (params, req, res) => {
     try {
-      console.log('req user' )
-      console.log(req)
+      console.log("req user");
+      console.log(req);
 
-      var users = await User.findOne({ 
+      var users = await User.findOne({
         where: params,
-        attributes: [
-          "id", "email", "name",
-        ],
+        attributes: ["id", "email", "name"],
       });
-        
+
       if (!users) {
         return { success: false, message: "User Tidak Ditemukan", data: {} };
       } else {
         return { success: true, message: "User Ditemukan", data: users };
       }
-    } 
-    catch (error) {
+    } catch (error) {
       console.log("error profile " + error);
       throw error;
     }
@@ -291,7 +488,7 @@ module.exports = {
 
       const nowStoreId = await User.findOne({
         where: { storeid: { $like: `${currentDate}%` } },
-        order: [["storeid", "DESC"]]
+        order: [["storeid", "DESC"]],
       });
       //const nowStoreId = await User.findOne({ where: {storeid: {$like: `%190712001` }}, order: [['storeid', 'DESC']] })
 
@@ -319,27 +516,27 @@ module.exports = {
         console.log(storeData);
         const insertUser = await User.findOrCreate({
           where: params,
-          defaults: storeData
+          defaults: storeData,
         });
         if (!insertUser[1]) {
           throw {
             success: false,
             message: "Nomor Handphone Sudah Ada!",
-            data: {}
+            data: {},
           };
         } else {
           delete insertUser[0].dataValues.password;
           return {
             success: true,
             message: "User Berhasil Dibuat",
-            data: insertUser[0].dataValues
+            data: insertUser[0].dataValues,
           };
         }
       } else {
         return {
           success: false,
           message: "Nomor Handphone Sudah Ada!",
-          data: {}
+          data: {},
         };
       }
 
@@ -367,11 +564,11 @@ module.exports = {
         name: name,
         token: token,
         active: 0,
-        type: 1
+        type: 1,
       };
 
       const insertUser = await User.create(objHaiUser, {
-        transaction
+        transaction,
       });
       console.log("returning : " + JSON.stringify(insertUser));
       if (!insertUser) {
@@ -383,7 +580,7 @@ module.exports = {
         return {
           success: true,
           message: "User Berhasil Dibuat",
-          data: insertUser.dataValues
+          data: insertUser.dataValues,
         };
       }
     } catch (error) {
@@ -409,11 +606,11 @@ module.exports = {
         password: generateHashPassword,
         //picture: picture
         active: 0,
-        type: userType == "client" ? 1 : 2
+        type: userType == "client" ? 1 : 2,
       };
 
       const insertUser = await User.create(objHaiUser, {
-        transaction
+        transaction,
       });
 
       console.log("returning : " + JSON.stringify(insertUser));
@@ -426,7 +623,7 @@ module.exports = {
         return {
           success: true,
           message: "User Berhasil Dibuat",
-          data: insertUser.dataValues
+          data: insertUser.dataValues,
         };
       }
     } catch (error) {
@@ -437,23 +634,27 @@ module.exports = {
 
   verifyUser: async (email, token, res) => {
     let objUser = {
-      active: 1
+      active: 1,
     };
     console.log("email :" + email);
     console.log("token 2 :" + token.replace(/['"]+/g, ""));
     console.log("response :" + res);
 
     return await User.update(objUser, {
-      where: { token: token.replace(/['"]+/g, ""), email: email }
+      where: { token: token.replace(/['"]+/g, ""), email: email },
     })
-      .then(updated => {
+      .then((updated) => {
         console.log("updated : " + updated);
         if (updated > 0)
-          return res.sendFile(path.join(__dirname, '../views', 'success_activation.html'));
+          return res.sendFile(
+            path.join(__dirname, "../views", "success_activation.html")
+          );
         else
-          return res.sendFile(path.join(__dirname, '../views', 'failed_activation.html'));
+          return res.sendFile(
+            path.join(__dirname, "../views", "failed_activation.html")
+          );
       })
-      .catch(err => {
+      .catch((err) => {
         return { success: false, message: err.message, data: err };
       });
   },
@@ -483,43 +684,51 @@ module.exports = {
   //     })
   //     .catch(err => {
   //       return { success: false, message: "User Tidak Ditemukan", data: err };
-  //     });      
+  //     });
   // },
-
 
   resetPassword: async (users, req) => {
     console.log("req.query.email: " + req.query.email);
 
-    try {     
+    try {
       // generate new token expired
       const tokenX = cryptos.randomBytes(20).toString("hex");
-      console.log("generateToken: " + tokenX);         
-      
-       // set response token expired
+      console.log("generateToken: " + tokenX);
+
+      // set response token expired
       user = await transformers.resetToken(users);
-      const tokenExpired = await jwt.reset(user, resetSecret, { expiresIn: "1m" });
+      const tokenExpired = await jwt.reset(user, resetSecret, {
+        expiresIn: "1m",
+      });
       const decoded = await jwt.verify(tokenExpired);
       console.log("token decoded ", decoded);
-      console.log("token decoded expired : " + JSON.stringify(new Date(decoded.exp * 1000).toLocaleString()));
+      console.log(
+        "token decoded expired : " +
+          JSON.stringify(new Date(decoded.exp * 1000).toLocaleString())
+      );
 
       var object = {
         reset_token: tokenX,
-        expired_reset_token: new Date(decoded.exp * 1000)
+        expired_reset_token: new Date(decoded.exp * 1000),
       };
       const update = await User.update(object, {
-        where: { email: req.query.email }
-      })      
+        where: { email: req.query.email },
+      });
 
       if (!update) {
-        throw { success: false, message: "Gagal Update Token Reset Password User", data: {} };
+        throw {
+          success: false,
+          message: "Gagal Update Token Reset Password User",
+          data: {},
+        };
       } else {
         return {
           success: true,
           message: "Token Reset Password User Berhasil Dibuat",
-          data:  {
+          data: {
             email: req.query.email,
             reset_token: tokenX,
-          }
+          },
         };
       }
     } catch (error) {
@@ -528,7 +737,7 @@ module.exports = {
   },
 
   updateNewPassword: async (req, res) => {
-    console.log("Update reset new password service");    
+    console.log("Update reset new password service");
 
     const { reset_token, password, validate } = req;
     console.log("req new reset :", req);
@@ -538,7 +747,7 @@ module.exports = {
     console.log("validationResult new reset :", errors.errors);
 
     if (!errors.isEmpty()) {
-      res.render(path.join(__dirname, '../views', 'reset.jade'), {
+      res.render(path.join(__dirname, "../views", "reset.jade"), {
         errors: errors,
       });
     } else {
@@ -546,40 +755,44 @@ module.exports = {
 
       const generateHashPassword = await jwt.hash(password, 10);
       var data = {
-        password: generateHashPassword
+        password: generateHashPassword,
       };
 
       return User.update(data, {
         where: { reset_token: reset_token },
         returning: true,
-        plain: true
+        plain: true,
       })
-        .then(async updated => {
+        .then(async (updated) => {
           console.log(updated[1].dataValues);
           delete updated[1].dataValues.password;
           delete updated[1].dataValues.reset_token;
-  
+
           // set value null token reset after change new password via reset
           var object = {
             reset_token: null,
           };
           await User.update(object, {
-            where: { email: updated[1].dataValues.email }
-          })
-  
+            where: { email: updated[1].dataValues.email },
+          });
+
           return {
             success: true,
             message: "Password Berhasil Diubah",
-            data: updated[1]
+            data: updated[1],
           };
         })
-        .catch(err => {
-          return { success: false, message: "Password Gagal Diubah", data: err };
+        .catch((err) => {
+          return {
+            success: false,
+            message: "Password Gagal Diubah",
+            data: err,
+          };
         });
     }
   },
 
-  updateProfile: async params => {
+  updateProfile: async (params) => {
     console.log("Update profile service");
 
     const {
@@ -598,7 +811,7 @@ module.exports = {
       postalcode,
       verified_document,
       type,
-      uid_firebase
+      uid_firebase,
     } = params;
     console.log("params :", params);
     let data = {
@@ -616,60 +829,62 @@ module.exports = {
       postalcode: postalcode,
       verified_document: verified_document,
       type: type,
-      uid_firebase: uid_firebase
+      uid_firebase: uid_firebase,
     };
 
     return User.update(data, {
       where: { email: email },
       returning: true,
-      plain: true
+      plain: true,
     })
-      .then(updated => {
+      .then((updated) => {
         console.log(updated[1].dataValues);
         delete updated[1].dataValues.password;
         return {
           success: true,
           message: "Profil Berhasil Diubah",
-          data: updated[1]
+          data: updated[1],
         };
       })
-      .catch(err => {
-        throw (err)
+      .catch((err) => {
+        throw err;
       });
   },
 
-  updateActivatedUser: async params => {
+  updateActivatedUser: async (params) => {
     console.log("Update profile service");
 
-    const {
-      email,
-    } = params.body;
+    const { email } = params.body;
     console.log("params email :", email);
     let data = {
-      active: 1
+      active: 1,
     };
 
     return User.update(data, {
       where: { email: email },
       returning: true,
-      plain: true
+      plain: true,
     })
-      .then(updated => {
+      .then((updated) => {
         console.log(updated[1].dataValues);
         delete updated[1].dataValues.password;
         return {
           success: true,
           message: "Akun berhasil diaktifkan",
-          data: updated[1]
+          data: updated[1],
         };
       })
-      .catch(err => {
-        return { success: false, message: "Gagal mengaktifkan akun", data: err };
+      .catch((err) => {
+        return {
+          success: false,
+          message: "Gagal mengaktifkan akun",
+          data: err,
+        };
       });
   },
 
-  updatePassword: async params => {
-    console.log("Update profile password service");    
+  updatePassword: async (params) => {
+    console.log("Update profile password service");
 
     const { email, password } = params;
     console.log("params :", params);
@@ -678,7 +893,7 @@ module.exports = {
       return {
         success: false,
         message: "Password tidak boleh kosong",
-        data: {}
+        data: {},
       };
     }
 
@@ -686,31 +901,31 @@ module.exports = {
       return {
         success: false,
         message: "Password minimal 7 karakter",
-        data: {}
+        data: {},
       };
     }
 
     const generateHashPassword = await jwt.hash(password, 10);
     let data = {
       email: email,
-      password: generateHashPassword
+      password: generateHashPassword,
     };
 
     return User.update(data, {
       where: { email: email },
       returning: true,
-      plain: true
+      plain: true,
     })
-      .then(updated => {
+      .then((updated) => {
         console.log(updated[1].dataValues);
         delete updated[1].dataValues.password;
         return {
           success: true,
           message: "Password Berhasil Diubah",
-          data: updated[1]
+          data: updated[1],
         };
       })
-      .catch(err => {
+      .catch((err) => {
         return { success: false, message: "Password Gagal Diubah", data: err };
       });
   },
@@ -718,7 +933,7 @@ module.exports = {
   registerPartner: async (params, transaction, res) => {
     try {
       console.log("service register partner");
-      console.log(params)
+      console.log(params);
 
       const {
         email,
@@ -728,7 +943,7 @@ module.exports = {
         phone,
         whatsapp,
         code_referral,
-        firebaseUid
+        firebaseUid,
         // categoryid
       } = params;
       console.log("params register partner");
@@ -750,7 +965,7 @@ module.exports = {
         whatsapp_number: whatsapp,
         uid_firebase: firebaseUid,
         active: 0,
-        type: 2
+        type: 2,
       };
 
       const insertUser = await User.create(objHaiUser, transaction);
@@ -775,7 +990,7 @@ module.exports = {
         //   });
         //   console.log(
         //     "arrPartnerCategories: " + JSON.stringify(arrPartnerCategories)
-        //   );          
+        //   );
 
         //   const insertPartnerCategory = await PartnerCategory.bulkCreate(
         //     arrPartnerCategories
@@ -785,7 +1000,7 @@ module.exports = {
         return {
           success: true,
           message: "User Berhasil Dibuat",
-          data: insertUser.dataValues
+          data: insertUser.dataValues,
         };
       }
     } catch (error) {
@@ -804,21 +1019,29 @@ module.exports = {
         },
       })
         .then(async (deleted) => {
-          console.log('deleted')
-          console.log(deleted)
+          console.log("deleted");
+          console.log(deleted);
           if (deleted == 0) {
-            return { success: true, message: "Akun Ini Tidak Ditemukan", data: [] }
+            return {
+              success: true,
+              message: "Akun Ini Tidak Ditemukan",
+              data: [],
+            };
           } else {
-            return { success: true, message: "Akun Berhasil Dihapus", data: [] }
+            return {
+              success: true,
+              message: "Akun Berhasil Dihapus",
+              data: [],
+            };
           }
         })
         .catch((err) => {
           console.log(err);
-          return { success: false, message: "Akun Gagal Dihapus", data: err }
+          return { success: false, message: "Akun Gagal Dihapus", data: err };
         });
     } catch (error) {
       console.log(error);
-      throw (error)
+      throw error;
     }
   },
   /*

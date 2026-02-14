@@ -232,7 +232,7 @@ module.exports =
       }
     },
 
-    getDetailUser: async (params, data) => {
+    getDetailPartner: async (params, data) => {
         try{
           const { partner_id, user_id, user_email } = data;
 

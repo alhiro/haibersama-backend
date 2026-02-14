@@ -42,8 +42,26 @@ const upload = multer({
   }
 });
 
-authRouter.get("/getAll", headerAuth.isUserAuthenticated,(req, res, next) => {
+authRouter.get("/getAll", headerAuth.isAdminAuthenticated,(req, res, next) => {
   authController.getAll(req, res);
+});
+
+authRouter.get("/getdetail", headerAuth.isUserAuthenticated, (req, res, next) => {
+  const partner_id = req.query.id;
+  const user_id = res.locals.auth.id;
+  const user_email = res.locals.auth.email;
+  const type = res.locals.auth.type;
+
+  const data = {
+    partner_id: partner_id,
+    user_id: user_id,
+    user_email: user_email,
+    type: type
+  };
+  console.log('data user detail');
+  console.log(data);
+
+  authController.getDetailUser(data, res);
 });
 
 authRouter.post("/login", validator.login(), (req, res, next) => {

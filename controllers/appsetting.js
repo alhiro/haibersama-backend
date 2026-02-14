@@ -15,3 +15,18 @@ exports.getAllSetting = async function (req, res, next) {
       );
   }
 };
+
+exports.updateSetting = async function (req, res, next) {
+  try {
+    var categories = await Setting.updateSetting(req, res);
+    return res.status(200).json(
+      { status: 200, data: categories, message: "Update Setting Berhasil Diubah" }
+    );
+  } catch (err) {
+    return res
+      .status(500)
+      .send(
+        { code: 500, success: false, message: err.message, data: { err } }
+      );
+  }
+};

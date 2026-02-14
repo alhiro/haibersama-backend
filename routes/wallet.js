@@ -57,7 +57,21 @@ walletRouter.post("/historiesgroupbyeventdate", headerAuth.isUserAuthenticated, 
   walletController.getHistoriesGroupByEventDate(data, res);
 });
 
-walletRouter.get("/getbalance", (headerAuth.isPartnerAuthenticated, headerAuth.isUserAuthenticated), (req, res, next) => {
+walletRouter.post("/historiesgroupbyeventdateadmin", headerAuth.isUserAuthenticated, (req, res, next) => {
+  const id = res.locals.auth.id;
+  // const type = res.locals.auth.type;
+
+  const data = { 
+    userId: id,
+    date_from: req.body.date_from,
+    date_to: req.body.date_to,
+    type: req.body.type
+  };
+  
+  walletController.getHistoriesGroupByEventDateAdmin(data, res);
+});
+
+walletRouter.get("/getbalance", (headerAuth.isUserAuthenticated), (req, res, next) => {
   const id = res.locals.auth.id;
   const type = res.locals.auth.type;
 
@@ -66,6 +80,10 @@ walletRouter.get("/getbalance", (headerAuth.isPartnerAuthenticated, headerAuth.i
   };
   
   walletController.getbalance(data, res);
+});
+
+walletRouter.get("/getbalanceadmin", (headerAuth.isAdminAuthenticated), (req, res, next) => {
+  walletController.getbalanceAdmin(req, res);
 });
 
 walletRouter.post("/withdraw", headerAuth.isUserAuthenticated, (req, res, next) => {

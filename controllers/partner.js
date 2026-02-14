@@ -17,8 +17,8 @@ exports.getDetail = async function (req, res, next) {
   }
 };
 
-exports.getDetailUser = async function (req, res, next) {
-  console.log("controller partner");
+exports.getDetailPartner = async function (req, res, next) {
+  console.log("controller partner detail");
   
   // const { body } = req;
   // const partner_id = req.query.id;
@@ -32,9 +32,9 @@ exports.getDetailUser = async function (req, res, next) {
   console.log(params);
 
   try {
-        var partnerDetail = await partner.getDetailUser(params, req);
-        console.log("controller test test");
-        return res.status(200).json({ status: 200, data: partnerDetail.data, message: "Detail User Berhasil Diambil" });
+    var partnerDetail = await partner.getDetailPartner(params, req);
+    console.log("controller test test");
+    return res.status(200).json({ status: 200, data: partnerDetail.data, message: "Detail Partner Berhasil Diambil" });
   } catch (err) {
     return res
       .status(500)
