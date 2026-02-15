@@ -38,6 +38,8 @@ exports.getAll =  async function(req, res, next) {
       length: all.length,
       totalCustomer: all.totalCustomer,  
       totalPartner: all.totalPartner,
+      totalActive: all.totalActive,  
+      totalVerified: all.totalVerified,
     });
   } catch (err) {
     console.error("Error err:", err);

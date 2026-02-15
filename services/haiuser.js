@@ -150,6 +150,20 @@ module.exports = {
           ...paramsFilter,
         },
       });
+
+      const totalActive = await User.count({
+        where: {
+          active: 1,
+          ...paramsFilter,
+        },
+      });
+
+      const totalVerified = await User.count({
+        where: {
+          is_verified: true,
+          ...paramsFilter,
+        },
+      });
   
       return {
         success: true,
@@ -163,6 +177,8 @@ module.exports = {
         length: resp.count,
         totalCustomer: totalCustomer,  
         totalPartner: totalPartner,
+        totalActive: totalActive,
+        totalVerified: totalVerified
       };
     } catch (error) {
       console.error("Error get list user:", error);
