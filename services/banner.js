@@ -51,9 +51,11 @@ module.exports =
           image_url: image_url,
           link_url: link_url,
           order_no: order_no,
-          active: active == 1 ? true : false,
+          active: active,
           created_by: created_by
         }
+        console.log("add banner");
+        console.log(objBanner);
         const insertBanner = await Banner.findOrCreate({ where: params, defaults: objBanner })
   
         // check title already registered or not
@@ -77,15 +79,15 @@ module.exports =
             description: description, 
             link_url: link_url,
             order_no: order_no,
-            active: active == 'true' || active == 1 ? true : false,
+            active: active,
             updated_by: updated_by
           }
 
           if (image_url){
             objBanner.image_url = image_url;
           }
-          
-          console.log(JSON.stringify(objBanner), "objBanner")
+          console.log("update banner");
+          console.log(objBanner);
 
           return Banner.update(objBanner,{where: params} )
           .then(async (updated) => { 

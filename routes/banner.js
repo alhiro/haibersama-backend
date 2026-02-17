@@ -52,10 +52,14 @@ bannerRouter.get("/get", (req, res, next) => {
 
 bannerRouter.post("/add", headerAuth.isAdminAuthenticated, upload.single('bannerImage'), (req, res, next) => {
   const admin_email = res.locals.auth.email;
-
   const bannerImage = req.file;
   console.log(bannerImage);
   console.log('storage location is ', req.hostname +'/' + req.file.path);
+
+  const isActive =
+    String(req.body.active).toLowerCase() === 'true' ||
+    String(req.body.active) === '1';
+
   // make sure file is available
   if (!bannerImage) {
       res.status(400).send({
@@ -68,9 +72,9 @@ bannerRouter.post("/add", headerAuth.isAdminAuthenticated, upload.single('banner
         title: req.body.title, 
         description: req.body.description, 
         image_url: ENV.API_URL + '/ftp/'+ FILE_PATH + '/' + bannerImage.filename, 
-        link_url: req.body.bannerLink,
-        order_no: parseInt(req.body.orderNo), 
-        active: req.body.active,
+        link_url: req.body.link_url,
+        order_no: parseInt(req.body.order_no), 
+        active: isActive ? 1 : 0,
         created_by: admin_email
       };
       
@@ -80,6 +84,10 @@ bannerRouter.post("/add", headerAuth.isAdminAuthenticated, upload.single('banner
 
 bannerRouter.post("/update", headerAuth.isAdminAuthenticated, upload.single('bannerImage'), (req, res, next) => {
   const admin_email = res.locals.auth.email;
+
+  const isActive =
+    String(req.body.active).toLowerCase() === 'true' ||
+    String(req.body.active) === '1';
 
   const bannerImage = req.file;
   // make sure file is available
@@ -91,12 +99,9 @@ bannerRouter.post("/update", headerAuth.isAdminAuthenticated, upload.single('ban
       image_url: req.body.image_url,
       link_url: req.body.link_url,
       order_no: parseInt(req.body.order_no),
-      active: req.body.active || req.body.active == 1 ? 1 : 0,
+      active: isActive ? 1 : 0,
       updated_by: admin_email,
     };
-    console.log("data banner")
-    console.log(data);
-
     bannerController.updateBanner(data, res);
   } else {
     const data = {
@@ -106,10 +111,9 @@ bannerRouter.post("/update", headerAuth.isAdminAuthenticated, upload.single('ban
       image_url: ENV.API_URL + "/ftp/" + FILE_PATH + "/" + bannerImage.filename,
       link_url: req.body.link_url,
       order_no: parseInt(req.body.order_no),
-      active: req.body.active || req.body.active == 1 ? 1 : 0,
+      active: isActive ? 1 : 0,
       updated_by: admin_email,
     };
-
     bannerController.updateBanner(data, res);
   }   
 });
