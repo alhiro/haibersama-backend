@@ -1,5 +1,9 @@
 const ser = require("../services/service");
 const sequelizeTransaction = require("../config/sequelizeTransaction");
+const admin = require("firebase-admin");
+const utilility = require("../lib/utils");
+
+const HaiUser = require('../models/haiuser');
 
 exports.getAllServices = async function(req, res, next) {
   console.log("controller service");
@@ -43,6 +47,70 @@ exports.updateService = async function(req, res, next) {
     }
     
   } catch (err) {
+    return res.status(500).send({ data: err });
+  }
+};
+
+exports.sendChatService = async function(req, res, next) {
+  try {
+    //const transaction = await sequelizeTransaction.transaction();
+    const {
+      senderName,
+      receiverId,
+      message,
+    } = req.body;
+    console.log(req.body);
+
+    // 🔔 Kirim Notifikasi FCM ke user dan partner
+    // Ambil token penerima
+    const receiverToken = await utilility.getFcmTokens(receiverId, HaiUser);
+
+    // Notifikasi untuk Partner
+    try {
+      if (receiverToken) {
+        const partnerPayload = {
+          notification: {
+            title: senderName,
+            body: message,
+          },
+          android: {
+            notification: {
+              icon: "ic_notification", // harus cocok dengan nama ikon di drawable
+              color: "#1B84FF", // opsional
+            },
+            priority: "high",
+          },
+          apns: {
+            headers: {
+              "apns-priority": "10",
+            },
+            payload: {
+              aps: {
+                alert: {
+                  title: senderName,
+                  body: message,
+                },
+                sound: "default",
+                badge: 1,
+              },
+            },
+          },
+          data: {
+            type: "chat",
+          },
+          token: receiverToken,
+        };
+        const partnerRes = await admin.messaging().send(partnerPayload);
+        console.log("✅ Notifikasi chat sent:", partnerRes);
+      } else {
+        console.log("⚠️ No token for chat messaging");
+      }
+    } catch (err) {
+      console.error("❌ Error FCM: no token receiver", err);
+    }
+
+  } catch (err) {
+    console.error("❌ Error chat API:", err);
     return res.status(500).send({ data: err });
   }
 };

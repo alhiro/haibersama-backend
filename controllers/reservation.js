@@ -163,6 +163,7 @@ exports.createReservation = async function(params, req, res, next) {
                   icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
                   color: '#1B84FF', // opsional
                 },
+                priority: "high",
               },
               apns: {
                 headers: {
@@ -209,6 +210,7 @@ exports.createReservation = async function(params, req, res, next) {
                   icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
                   color: '#1B84FF', // opsional
                 },
+                priority: "high",
               },
               apns: {
                 headers: {
@@ -723,6 +725,7 @@ exports.updateStatusBookingManual = async function(params, req, res, next) {
                 icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
                 color: '#1B84FF', // opsional
               },
+              priority: "high",
             },
             apns: {
               headers: {
@@ -769,6 +772,7 @@ exports.updateStatusBookingManual = async function(params, req, res, next) {
                 icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
                 color: '#1B84FF', // opsional
               },
+              priority: "high",
             },
             apns: {
               headers: {
@@ -924,6 +928,7 @@ exports.updateStatusBooking = async function(params, req, res, next) {
                 icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
                 color: '#1B84FF', // opsional
               },
+              priority: "high",
             },
             apns: {
               headers: {
@@ -970,6 +975,7 @@ exports.updateStatusBooking = async function(params, req, res, next) {
                 icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
                 color: '#1B84FF', // opsional
               },
+              priority: "high",
             },
             apns: {
               headers: {
@@ -1125,6 +1131,7 @@ exports.updateStatusBookingAdmin = async function(params, req, res, next) {
                 icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
                 color: '#1B84FF', // opsional
               },
+              priority: "high",
             },
             apns: {
               headers: {
@@ -1171,6 +1178,7 @@ exports.updateStatusBookingAdmin = async function(params, req, res, next) {
                 icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
                 color: '#1B84FF', // opsional
               },
+              priority: "high",
             },
             apns: {
               headers: {
@@ -2760,6 +2768,7 @@ exports.updateConfirmationPayment = async function (req, res, next) {
               icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
               color: '#1B84FF', // opsional
             },
+            priority: "high",
           },
           apns: {
             headers: {
@@ -2806,6 +2815,7 @@ exports.updateConfirmationPayment = async function (req, res, next) {
               icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
               color: '#1B84FF', // opsional
             },
+            priority: "high",
           },
           apns: {
             headers: {
@@ -2852,6 +2862,7 @@ exports.updateConfirmationPayment = async function (req, res, next) {
               icon: 'ic_notification', // harus cocok dengan nama ikon di drawable
               color: '#1B84FF', // opsional
             },
+            priority: "high",
           },
           apns: {
             headers: {
