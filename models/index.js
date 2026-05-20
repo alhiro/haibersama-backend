@@ -200,6 +200,12 @@
 //         console.log(`Table erp report updated!`)
 //     })
 
+// const ErpCashFlow = require('./erpCashFlow');
+// ErpCashFlow.sequelize.sync({ alter: true })
+//     .then(() => {
+//         console.log(`Table erp cash flow updated!`)
+//     })
+
 // const ErpScanHistory = require('./erpScanHistory');
 // ErpScanHistory.sequelize.sync({ alter: true })
 //     .then(() => {

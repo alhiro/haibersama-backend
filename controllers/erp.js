@@ -13,6 +13,10 @@ const listParams = (req) => ({
   production_place: req.query.production_place || req.query.productionPlace,
   output_product: req.query.output_product || req.query.outputProduct,
   report_type: req.query.report_type || req.query.reportType,
+  cash_type: req.query.cash_type || req.query.cashType,
+  category: req.query.category,
+  payment_method: req.query.payment_method || req.query.paymentMethod,
+  source_module: req.query.source_module || req.query.sourceModule,
 });
 
 const sendList = (res, result) => res.status(200).json({

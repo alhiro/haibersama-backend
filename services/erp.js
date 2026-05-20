@@ -4,6 +4,7 @@ const ErpWarehouse = require('../models/erpWarehouse');
 const ErpInventory = require('../models/erpInventory');
 const ErpProduction = require('../models/erpProduction');
 const ErpReport = require('../models/erpReport');
+const ErpCashFlow = require('../models/erpCashFlow');
 const ErpScanHistory = require('../models/erpScanHistory');
 
 const Op = Sequelize.Op;
@@ -121,6 +122,29 @@ const MODULES = {
       defaultQuantity: '3 gulung',
     },
   },
+  cashflow: {
+    label: 'Cash Flow',
+    model: ErpCashFlow,
+    titleField: 'name',
+    defaultStatus: 'Tercatat',
+    statuses: ['Tercatat', 'Menunggu', 'Lunas', 'Batal'],
+    extraFields: {
+      cashType: ['Uang Masuk', 'Uang Keluar'],
+      category: [
+        'Penjualan Produk',
+        'Penjualan Jasa',
+        'Pembelian Supplier',
+        'Biaya Produksi',
+        'Gaji Karyawan',
+        'Ongkir',
+        'Iklan Marketplace',
+        'Refund/Retur',
+        'Operasional',
+      ],
+      paymentMethod: ['Tunai', 'Transfer Bank', 'QRIS', 'E-Wallet', 'Marketplace', 'Tempo'],
+      sourceModule: ['Transaction', 'Invoice', 'Supplier', 'Production', 'Inventory', 'Expense', 'Manual'],
+    },
+  },
   report: {
     label: 'Laporan',
     model: ErpReport,
@@ -196,7 +220,18 @@ const buildFilter = (module, partnerId, params = {}) => {
     filter.created_at = { [Op.lte]: new Date(params.endDate) };
   }
 
-  ['warehouse', 'supplier', 'reference', 'production_place', 'output_product', 'report_type'].forEach((key) => {
+  [
+    'warehouse',
+    'supplier',
+    'reference',
+    'production_place',
+    'output_product',
+    'report_type',
+    'cash_type',
+    'category',
+    'payment_method',
+    'source_module',
+  ].forEach((key) => {
     if (params[key]) filter[key] = params[key];
   });
 
@@ -215,6 +250,9 @@ const baseRelations = (data) => {
   if (data.source_warehouse) relations.push(`Gudang Asal: ${data.source_warehouse}`);
   if (data.destination_warehouse) relations.push(`Gudang Tujuan: ${data.destination_warehouse}`);
   if (data.output_product) relations.push(`Produk jadi: ${data.output_product}`);
+  if (data.cash_type) relations.push(`Tipe Kas: ${data.cash_type}`);
+  if (data.source_module) relations.push(`Sumber: ${data.source_module}`);
+  if (data.source_reference) relations.push(`Ref Sumber: ${data.source_reference}`);
   if (data.relation) relations.push(data.relation);
   return relations;
 };
@@ -229,6 +267,10 @@ const baseFlowFlags = (data) => {
   if (data.destination_warehouse) flags.push({ label: 'Gudang Tujuan', value: data.destination_warehouse });
   if (data.output_product) flags.push({ label: 'Produk Jadi', value: data.output_product });
   if (data.quantity) flags.push({ label: 'Jumlah', value: `${data.quantity} ${data.unit || ''}`.trim() });
+  if (data.cash_type) flags.push({ label: 'Arus Kas', value: data.cash_type });
+  if (data.category) flags.push({ label: 'Kategori', value: data.category });
+  if (data.payment_method) flags.push({ label: 'Pembayaran', value: data.payment_method });
+  if (data.source_module) flags.push({ label: 'Sumber', value: data.source_module });
   return flags;
 };
 
@@ -256,6 +298,11 @@ const normalize = (module, row) => {
     destinationWarehouse: data.destination_warehouse,
     productionPlace: data.production_place,
     reportType: data.report_type,
+    cashType: data.cash_type,
+    paymentMethod: data.payment_method,
+    transactionDate: data.transaction_date,
+    sourceModule: data.source_module,
+    sourceReference: data.source_reference,
     details,
     relations,
     flow_flags: flowFlags,
@@ -334,6 +381,22 @@ const payloadByModule = (module, body) => {
     });
   }
 
+  if (module === 'cashflow') {
+    const nominal = toNumber(pickFirst(body.nominal, body.Nominal, body.amount, body.Amount), 0);
+    Object.assign(common, {
+      nominal,
+      amount: common.amount || `Rp${nominal.toLocaleString('id-ID')}`,
+      cash_type: pickFirst(body.cash_type, body.cashType, body.CashType),
+      category: pickFirst(body.category, body.Category),
+      payment_method: pickFirst(body.payment_method, body.paymentMethod, body.PaymentMethod),
+      transaction_date: pickFirst(body.transaction_date, body.transactionDate, body.TransactionDate),
+      source_module: pickFirst(body.source_module, body.sourceModule, body.SourceModule),
+      source_reference: pickFirst(body.source_reference, body.sourceReference, body.SourceReference),
+      reference: pickFirst(body.reference, body.Reference),
+      note: pickFirst(body.note, body.Note),
+    });
+  }
+
   common.details = stringifyArray(pickFirst(body.details, body.Details));
   common.relations = stringifyArray(pickFirst(body.relations, body.Relations) || baseRelations(common));
   common.flow_flags = stringifyArray(pickFirst(body.flow_flags, body.flowFlags, body.FlowFlags) || baseFlowFlags(common));
@@ -395,6 +458,24 @@ const buildMetrics = async (module, partnerId) => {
       metric('Output', output),
       metric('Produk Gagal', failed),
       metric('QC Pass', output ? `${Math.round((qcPass / output) * 100)}%` : '0%'),
+    ];
+  }
+
+  if (module === 'cashflow') {
+    const rows = await config.model.findAll({ where, attributes: ['nominal', 'amount', 'cash_type', 'status'] });
+    const activeRows = rows.filter((item) => item.status !== 'Batal');
+    const inRows = activeRows.filter((item) => String(item.cash_type).toLowerCase().includes('masuk'));
+    const outRows = activeRows.filter((item) => String(item.cash_type).toLowerCase().includes('keluar'));
+    const sumNominal = (items) => items.reduce((sum, item) => sum + toNumber(item.nominal || item.amount), 0);
+    const cashIn = sumNominal(inRows);
+    const cashOut = sumNominal(outRows);
+    const rupiah = (value) => `Rp${Number(value).toLocaleString('id-ID')}`;
+
+    return [
+      metric('Saldo Kas', rupiah(cashIn - cashOut)),
+      metric('Uang Masuk', rupiah(cashIn)),
+      metric('Uang Keluar', rupiah(cashOut)),
+      metric('Transaksi Kas', activeRows.length),
     ];
   }
 

@@ -14,6 +14,7 @@ supplier
 warehouse
 production
 inventory
+cashflow
 report
 ```
 
@@ -54,7 +55,8 @@ Query list:
 
 ```text
 page, limit, search, status, startDate, endDate,
-warehouse, supplier, reference, productionPlace, outputProduct, reportType
+warehouse, supplier, reference, productionPlace, outputProduct, reportType,
+cashType, category, paymentMethod, sourceModule
 ```
 
 ## Payload Supplier
@@ -146,6 +148,31 @@ warehouse, supplier, reference, productionPlace, outputProduct, reportType
 }
 ```
 
+## Payload Cash Flow
+
+```json
+{
+  "name": "Penjualan Marketplace OUT-2405",
+  "description": "Pembayaran masuk dari pesanan marketplace produk jadi.",
+  "status": "Lunas",
+  "meta": "Invoice",
+  "amount": "Rp12800000",
+  "nominal": 12800000,
+  "cashType": "Uang Masuk",
+  "category": "Penjualan Produk",
+  "paymentMethod": "Marketplace",
+  "transactionDate": "2026-05-20T10:30:00.000Z",
+  "sourceModule": "Invoice",
+  "sourceReference": "INV-MP-2405-018",
+  "reference": "Order marketplace batch OUT-2405",
+  "note": "Masuk dari penjualan produk jadi."
+}
+```
+
+`cashType = Uang Masuk` menambah saldo kas, sedangkan `Uang Keluar`
+mengurangi saldo. Nanti invoice, transaksi customer, pembelian supplier, dan
+biaya produksi bisa membuat data cash flow otomatis dari backend.
+
 ## Payload Scan
 
 ```json
@@ -188,6 +215,7 @@ erp_supplier
 erp_warehouse
 erp_inventory
 erp_production
+erp_cash_flow
 erp_report
 erp_scan_history
 partner_product

@@ -5,6 +5,7 @@
 -- - erp_warehouse
 -- - erp_inventory
 -- - erp_production
+-- - erp_cash_flow
 -- - erp_report
 -- - erp_scan_history
 --
@@ -212,6 +213,63 @@ CREATE INDEX IF NOT EXISTS idx_erp_production_output_product
 
 CREATE INDEX IF NOT EXISTS idx_erp_production_search_name
   ON public.erp_production (LOWER(name));
+
+CREATE TABLE IF NOT EXISTS public.erp_cash_flow (
+  id SERIAL PRIMARY KEY,
+  partner_id INTEGER NOT NULL REFERENCES public.hai_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  name VARCHAR(150) NOT NULL,
+  description VARCHAR(1000),
+  status VARCHAR(30) NOT NULL DEFAULT 'Tercatat',
+  meta VARCHAR(200),
+  amount VARCHAR(100),
+  nominal NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  cash_type VARCHAR(30) NOT NULL DEFAULT 'Uang Masuk',
+  category VARCHAR(100),
+  payment_method VARCHAR(80),
+  transaction_date TIMESTAMP WITH TIME ZONE,
+  source_module VARCHAR(80),
+  source_reference VARCHAR(150),
+  reference VARCHAR(150),
+  note VARCHAR(1000),
+  details TEXT,
+  relations TEXT,
+  flow_flags TEXT,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE,
+  created_by VARCHAR(50),
+  updated_at TIMESTAMP WITH TIME ZONE,
+  updated_by VARCHAR(50)
+);
+
+CREATE INDEX IF NOT EXISTS idx_erp_cash_flow_partner
+  ON public.erp_cash_flow (partner_id);
+
+CREATE INDEX IF NOT EXISTS idx_erp_cash_flow_status
+  ON public.erp_cash_flow (status);
+
+CREATE INDEX IF NOT EXISTS idx_erp_cash_flow_cash_type
+  ON public.erp_cash_flow (cash_type);
+
+CREATE INDEX IF NOT EXISTS idx_erp_cash_flow_category
+  ON public.erp_cash_flow (category);
+
+CREATE INDEX IF NOT EXISTS idx_erp_cash_flow_payment_method
+  ON public.erp_cash_flow (payment_method);
+
+CREATE INDEX IF NOT EXISTS idx_erp_cash_flow_source_module
+  ON public.erp_cash_flow (source_module);
+
+CREATE INDEX IF NOT EXISTS idx_erp_cash_flow_reference
+  ON public.erp_cash_flow (reference);
+
+CREATE INDEX IF NOT EXISTS idx_erp_cash_flow_transaction_date
+  ON public.erp_cash_flow (transaction_date);
+
+CREATE INDEX IF NOT EXISTS idx_erp_cash_flow_created_at
+  ON public.erp_cash_flow (created_at);
+
+CREATE INDEX IF NOT EXISTS idx_erp_cash_flow_search_name
+  ON public.erp_cash_flow (LOWER(name));
 
 CREATE TABLE IF NOT EXISTS public.erp_report (
   id SERIAL PRIMARY KEY,
