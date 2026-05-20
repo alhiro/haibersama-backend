@@ -65,6 +65,8 @@ const walletRouter = require('./routes/wallet');
 const settingRouter = require('./routes/appsetting');
 const aiRouter = require('./routes/ai');
 const eventCommentRouter = require('./routes/eventcomment');
+const productRouter = require('./routes/partnerproduct');
+const erpRouter = require('./routes/erp');
 
 // Seed model into table
 // const haiuser = require("./models/reservation");
@@ -123,6 +125,8 @@ app.use(process.env.APP_API_PREFIX + '/follower', followerRouter);
 app.use(process.env.APP_API_PREFIX + '/setting', settingRouter);
 app.use(process.env.APP_API_PREFIX + '/ai', aiRouter);
 app.use(process.env.APP_API_PREFIX + '/eventcomment', eventCommentRouter);
+app.use(process.env.APP_API_PREFIX + '/product', productRouter);
+app.use(process.env.APP_API_PREFIX + '/erp', erpRouter);
 
 // ✅ ERROR HANDLER MULTER
 app.use((err, req, res, next) => {

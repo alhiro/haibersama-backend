@@ -164,6 +164,48 @@
 //         console.log(`Table partner package header updated!`)
 //     })
 
+// const PartnerProduct = require('./partnerProduct');
+// PartnerProduct.sequelize.sync({ alter: true })
+//     .then(() => {
+//         console.log(`Table partner product updated!`)
+//     })
+
+// const ErpSupplier = require('./erpSupplier');
+// ErpSupplier.sequelize.sync({ alter: true })
+//     .then(() => {
+//         console.log(`Table erp supplier updated!`)
+//     })
+
+// const ErpWarehouse = require('./erpWarehouse');
+// ErpWarehouse.sequelize.sync({ alter: true })
+//     .then(() => {
+//         console.log(`Table erp warehouse updated!`)
+//     })
+
+// const ErpInventory = require('./erpInventory');
+// ErpInventory.sequelize.sync({ alter: true })
+//     .then(() => {
+//         console.log(`Table erp inventory updated!`)
+//     })
+
+// const ErpProduction = require('./erpProduction');
+// ErpProduction.sequelize.sync({ alter: true })
+//     .then(() => {
+//         console.log(`Table erp production updated!`)
+//     })
+
+// const ErpReport = require('./erpReport');
+// ErpReport.sequelize.sync({ alter: true })
+//     .then(() => {
+//         console.log(`Table erp report updated!`)
+//     })
+
+// const ErpScanHistory = require('./erpScanHistory');
+// ErpScanHistory.sequelize.sync({ alter: true })
+//     .then(() => {
+//         console.log(`Table erp scan history updated!`)
+//     })
+
 // const partnerPortfolio = require('./partnerportfolio');
 // partnerPortfolio.sequelize.sync({ alter: true })
 //     .then(() => {

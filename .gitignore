@@ -8,3 +8,10 @@
 # Ignore environment files
 .env
 .env-production
+.env.*
+*.env
+.*.env
+
+# Ignore local credentials/secrets
+config/*firebase-adminsdk*.json
+config/*service-account*.json
