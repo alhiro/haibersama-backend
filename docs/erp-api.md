@@ -14,6 +14,8 @@ supplier
 warehouse
 production
 inventory
+transaction
+invoice
 cashflow
 report
 ```
@@ -56,7 +58,8 @@ Query list:
 ```text
 page, limit, search, status, startDate, endDate,
 warehouse, supplier, reference, productionPlace, outputProduct, reportType,
-cashType, category, paymentMethod, sourceModule
+cashType, category, paymentMethod, sourceModule, invoiceType, invoiceNo,
+customer, transactionType, transactionNo, channel, paymentStatus
 ```
 
 ## Payload Supplier
@@ -130,6 +133,68 @@ cashType, category, paymentMethod, sourceModule
   "productionPlace": "Tempat Jahit Bu Rina",
   "failedQuantity": 0,
   "qcPassQuantity": 210
+}
+```
+
+## Payload Transaction
+
+```json
+{
+  "name": "Order Marketplace OUT-2405",
+  "description": "Penjualan produk jadi dari warehouse produk jadi.",
+  "status": "Order Masuk",
+  "meta": "Shopee - Toko Bintang",
+  "amount": "Rp12800000",
+  "transactionNo": "TRX-MP-2405-018",
+  "transactionType": "Produk",
+  "channel": "Marketplace",
+  "customer": "Toko Bintang",
+  "customerContact": "0812-8899-1122",
+  "product": "Outer Linen Oversize",
+  "quantity": 64,
+  "unit": "pcs",
+  "warehouse": "Warehouse Produk Jadi",
+  "invoiceNo": "INV-MP-2405-018",
+  "paymentStatus": "Belum Bayar",
+  "paymentMethod": "Marketplace",
+  "subtotal": 12800000,
+  "discount": 0,
+  "tax": 0,
+  "shippingCost": 0,
+  "total": 12800000,
+  "transactionDate": "2026-05-20T10:30:00.000Z",
+  "dueDate": "2026-05-27T10:30:00.000Z",
+  "sourceReference": "ORD-SHP-2405-018",
+  "reference": "Siap dibuatkan invoice",
+  "note": "Stok akan berkurang dari warehouse produk jadi saat transaksi diproses backend."
+}
+```
+
+## Payload Invoice
+
+```json
+{
+  "name": "Invoice Marketplace OUT-2405",
+  "description": "Tagihan untuk penjualan produk jadi batch OUT-2405.",
+  "status": "Dikirim",
+  "meta": "Customer: Toko Bintang",
+  "amount": "Rp12800000",
+  "invoiceNo": "INV-MP-2405-018",
+  "invoiceType": "Produk",
+  "customer": "Toko Bintang",
+  "customerContact": "0812-8899-1122",
+  "issueDate": "2026-05-20T10:30:00.000Z",
+  "dueDate": "2026-05-27T10:30:00.000Z",
+  "subtotal": 12800000,
+  "discount": 0,
+  "tax": 0,
+  "total": 12800000,
+  "paidAmount": 0,
+  "paymentMethod": "Transfer Bank",
+  "sourceModule": "Transaction",
+  "sourceReference": "TRX-MP-2405-018",
+  "reference": "Outer Linen Oversize x 64 pcs",
+  "note": "Invoice akan masuk Cash Flow saat pembayaran diterima."
 }
 ```
 
@@ -215,6 +280,8 @@ erp_supplier
 erp_warehouse
 erp_inventory
 erp_production
+erp_transaction
+erp_invoice
 erp_cash_flow
 erp_report
 erp_scan_history

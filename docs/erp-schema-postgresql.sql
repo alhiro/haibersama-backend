@@ -5,6 +5,8 @@
 -- - erp_warehouse
 -- - erp_inventory
 -- - erp_production
+-- - erp_transaction
+-- - erp_invoice
 -- - erp_cash_flow
 -- - erp_report
 -- - erp_scan_history
@@ -213,6 +215,142 @@ CREATE INDEX IF NOT EXISTS idx_erp_production_output_product
 
 CREATE INDEX IF NOT EXISTS idx_erp_production_search_name
   ON public.erp_production (LOWER(name));
+
+CREATE TABLE IF NOT EXISTS public.erp_transaction (
+  id SERIAL PRIMARY KEY,
+  partner_id INTEGER NOT NULL REFERENCES public.hai_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  name VARCHAR(150) NOT NULL,
+  description VARCHAR(1000),
+  status VARCHAR(40) NOT NULL DEFAULT 'Order Masuk',
+  meta VARCHAR(200),
+  amount VARCHAR(100),
+  transaction_no VARCHAR(80),
+  transaction_type VARCHAR(40),
+  channel VARCHAR(80),
+  customer VARCHAR(150),
+  customer_contact VARCHAR(120),
+  product VARCHAR(150),
+  quantity NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  unit VARCHAR(40),
+  warehouse VARCHAR(150),
+  invoice_no VARCHAR(80),
+  payment_status VARCHAR(40),
+  payment_method VARCHAR(80),
+  subtotal NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  discount NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  tax NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  shipping_cost NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  total NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  transaction_date TIMESTAMP WITH TIME ZONE,
+  due_date TIMESTAMP WITH TIME ZONE,
+  source_reference VARCHAR(150),
+  reference VARCHAR(150),
+  note VARCHAR(1000),
+  details TEXT,
+  relations TEXT,
+  flow_flags TEXT,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE,
+  created_by VARCHAR(50),
+  updated_at TIMESTAMP WITH TIME ZONE,
+  updated_by VARCHAR(50)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_erp_transaction_partner_transaction_no
+  ON public.erp_transaction (partner_id, transaction_no)
+  WHERE transaction_no IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_erp_transaction_partner
+  ON public.erp_transaction (partner_id);
+
+CREATE INDEX IF NOT EXISTS idx_erp_transaction_status
+  ON public.erp_transaction (status);
+
+CREATE INDEX IF NOT EXISTS idx_erp_transaction_type
+  ON public.erp_transaction (transaction_type);
+
+CREATE INDEX IF NOT EXISTS idx_erp_transaction_channel
+  ON public.erp_transaction (channel);
+
+CREATE INDEX IF NOT EXISTS idx_erp_transaction_customer
+  ON public.erp_transaction (customer);
+
+CREATE INDEX IF NOT EXISTS idx_erp_transaction_payment_status
+  ON public.erp_transaction (payment_status);
+
+CREATE INDEX IF NOT EXISTS idx_erp_transaction_warehouse
+  ON public.erp_transaction (warehouse);
+
+CREATE INDEX IF NOT EXISTS idx_erp_transaction_invoice_no
+  ON public.erp_transaction (invoice_no);
+
+CREATE INDEX IF NOT EXISTS idx_erp_transaction_date
+  ON public.erp_transaction (transaction_date);
+
+CREATE INDEX IF NOT EXISTS idx_erp_transaction_search_name
+  ON public.erp_transaction (LOWER(name));
+
+CREATE TABLE IF NOT EXISTS public.erp_invoice (
+  id SERIAL PRIMARY KEY,
+  partner_id INTEGER NOT NULL REFERENCES public.hai_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  name VARCHAR(150) NOT NULL,
+  description VARCHAR(1000),
+  status VARCHAR(40) NOT NULL DEFAULT 'Draft',
+  meta VARCHAR(200),
+  amount VARCHAR(100),
+  invoice_no VARCHAR(80),
+  invoice_type VARCHAR(40),
+  customer VARCHAR(150),
+  customer_contact VARCHAR(120),
+  issue_date TIMESTAMP WITH TIME ZONE,
+  due_date TIMESTAMP WITH TIME ZONE,
+  subtotal NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  discount NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  tax NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  total NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  paid_amount NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  payment_method VARCHAR(80),
+  source_module VARCHAR(80),
+  source_reference VARCHAR(150),
+  reference VARCHAR(150),
+  note VARCHAR(1000),
+  details TEXT,
+  relations TEXT,
+  flow_flags TEXT,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE,
+  created_by VARCHAR(50),
+  updated_at TIMESTAMP WITH TIME ZONE,
+  updated_by VARCHAR(50)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_erp_invoice_partner_invoice_no
+  ON public.erp_invoice (partner_id, invoice_no)
+  WHERE invoice_no IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_erp_invoice_partner
+  ON public.erp_invoice (partner_id);
+
+CREATE INDEX IF NOT EXISTS idx_erp_invoice_status
+  ON public.erp_invoice (status);
+
+CREATE INDEX IF NOT EXISTS idx_erp_invoice_type
+  ON public.erp_invoice (invoice_type);
+
+CREATE INDEX IF NOT EXISTS idx_erp_invoice_customer
+  ON public.erp_invoice (customer);
+
+CREATE INDEX IF NOT EXISTS idx_erp_invoice_payment_method
+  ON public.erp_invoice (payment_method);
+
+CREATE INDEX IF NOT EXISTS idx_erp_invoice_source_module
+  ON public.erp_invoice (source_module);
+
+CREATE INDEX IF NOT EXISTS idx_erp_invoice_due_date
+  ON public.erp_invoice (due_date);
+
+CREATE INDEX IF NOT EXISTS idx_erp_invoice_search_name
+  ON public.erp_invoice (LOWER(name));
 
 CREATE TABLE IF NOT EXISTS public.erp_cash_flow (
   id SERIAL PRIMARY KEY,

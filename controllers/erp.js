@@ -17,6 +17,13 @@ const listParams = (req) => ({
   category: req.query.category,
   payment_method: req.query.payment_method || req.query.paymentMethod,
   source_module: req.query.source_module || req.query.sourceModule,
+  invoice_type: req.query.invoice_type || req.query.invoiceType,
+  invoice_no: req.query.invoice_no || req.query.invoiceNo,
+  customer: req.query.customer,
+  transaction_type: req.query.transaction_type || req.query.transactionType,
+  transaction_no: req.query.transaction_no || req.query.transactionNo,
+  channel: req.query.channel,
+  payment_status: req.query.payment_status || req.query.paymentStatus,
 });
 
 const sendList = (res, result) => res.status(200).json({

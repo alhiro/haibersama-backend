@@ -5,6 +5,8 @@ const ErpInventory = require('../models/erpInventory');
 const ErpProduction = require('../models/erpProduction');
 const ErpReport = require('../models/erpReport');
 const ErpCashFlow = require('../models/erpCashFlow');
+const ErpInvoice = require('../models/erpInvoice');
+const ErpTransaction = require('../models/erpTransaction');
 const ErpScanHistory = require('../models/erpScanHistory');
 
 const Op = Sequelize.Op;
@@ -122,6 +124,32 @@ const MODULES = {
       defaultQuantity: '3 gulung',
     },
   },
+  invoice: {
+    label: 'Invoice',
+    model: ErpInvoice,
+    titleField: 'name',
+    defaultStatus: 'Draft',
+    statuses: ['Draft', 'Dikirim', 'Menunggu Bayar', 'Dibayar', 'Jatuh Tempo', 'Batal'],
+    extraFields: {
+      invoiceType: ['Produk', 'Jasa', 'Marketplace', 'Manual'],
+      paymentMethod: ['Tunai', 'Transfer Bank', 'QRIS', 'E-Wallet', 'Marketplace', 'Tempo'],
+      sourceModule: ['Transaction', 'Product', 'Service', 'Marketplace', 'Manual'],
+    },
+  },
+  transaction: {
+    label: 'Transaction',
+    model: ErpTransaction,
+    titleField: 'name',
+    defaultStatus: 'Order Masuk',
+    statuses: ['Order Masuk', 'Diproses', 'Dikirim', 'Selesai', 'Retur', 'Batal'],
+    extraFields: {
+      transactionType: ['Produk', 'Jasa', 'Marketplace', 'Manual'],
+      channel: ['Toko', 'Marketplace', 'WhatsApp', 'Website', 'Manual'],
+      paymentStatus: ['Belum Bayar', 'DP', 'Lunas', 'Refund', 'Batal'],
+      paymentMethod: ['Tunai', 'Transfer Bank', 'QRIS', 'E-Wallet', 'Marketplace', 'Tempo'],
+      warehouse: ['Warehouse Produk Jadi', 'Warehouse Bahan Baku', 'Area QC', 'Gudang Retur'],
+    },
+  },
   cashflow: {
     label: 'Cash Flow',
     model: ErpCashFlow,
@@ -231,6 +259,13 @@ const buildFilter = (module, partnerId, params = {}) => {
     'category',
     'payment_method',
     'source_module',
+    'invoice_type',
+    'invoice_no',
+    'customer',
+    'transaction_type',
+    'transaction_no',
+    'channel',
+    'payment_status',
   ].forEach((key) => {
     if (params[key]) filter[key] = params[key];
   });
@@ -251,6 +286,11 @@ const baseRelations = (data) => {
   if (data.destination_warehouse) relations.push(`Gudang Tujuan: ${data.destination_warehouse}`);
   if (data.output_product) relations.push(`Produk jadi: ${data.output_product}`);
   if (data.cash_type) relations.push(`Tipe Kas: ${data.cash_type}`);
+  if (data.invoice_no) relations.push(`Invoice: ${data.invoice_no}`);
+  if (data.customer) relations.push(`Customer: ${data.customer}`);
+  if (data.transaction_no) relations.push(`Transaksi: ${data.transaction_no}`);
+  if (data.product) relations.push(`Produk/Jasa: ${data.product}`);
+  if (data.channel) relations.push(`Channel: ${data.channel}`);
   if (data.source_module) relations.push(`Sumber: ${data.source_module}`);
   if (data.source_reference) relations.push(`Ref Sumber: ${data.source_reference}`);
   if (data.relation) relations.push(data.relation);
@@ -271,6 +311,15 @@ const baseFlowFlags = (data) => {
   if (data.category) flags.push({ label: 'Kategori', value: data.category });
   if (data.payment_method) flags.push({ label: 'Pembayaran', value: data.payment_method });
   if (data.source_module) flags.push({ label: 'Sumber', value: data.source_module });
+  if (data.invoice_type) flags.push({ label: 'Jenis Invoice', value: data.invoice_type });
+  if (data.invoice_no) flags.push({ label: 'No Invoice', value: data.invoice_no });
+  if (data.customer) flags.push({ label: 'Customer', value: data.customer });
+  if (data.total) flags.push({ label: 'Total', value: data.total });
+  if (data.transaction_type) flags.push({ label: 'Jenis Transaksi', value: data.transaction_type });
+  if (data.transaction_no) flags.push({ label: 'No Transaksi', value: data.transaction_no });
+  if (data.channel) flags.push({ label: 'Channel', value: data.channel });
+  if (data.payment_status) flags.push({ label: 'Status Bayar', value: data.payment_status });
+  if (data.product) flags.push({ label: 'Produk/Jasa', value: data.product });
   return flags;
 };
 
@@ -303,6 +352,16 @@ const normalize = (module, row) => {
     transactionDate: data.transaction_date,
     sourceModule: data.source_module,
     sourceReference: data.source_reference,
+    invoiceNo: data.invoice_no,
+    invoiceType: data.invoice_type,
+    customerContact: data.customer_contact,
+    issueDate: data.issue_date,
+    dueDate: data.due_date,
+    paidAmount: data.paid_amount,
+    transactionNo: data.transaction_no,
+    transactionType: data.transaction_type,
+    paymentStatus: data.payment_status,
+    shippingCost: data.shipping_cost,
     details,
     relations,
     flow_flags: flowFlags,
@@ -397,6 +456,66 @@ const payloadByModule = (module, body) => {
     });
   }
 
+  if (module === 'invoice') {
+    const subtotal = toNumber(pickFirst(body.subtotal, body.Subtotal, body.total, body.Total, body.amount, body.Amount), 0);
+    const discount = toNumber(pickFirst(body.discount, body.Discount), 0);
+    const tax = toNumber(pickFirst(body.tax, body.Tax), 0);
+    const total = toNumber(pickFirst(body.total, body.Total, body.amount, body.Amount), subtotal - discount + tax);
+    const paidAmount = toNumber(pickFirst(body.paid_amount, body.paidAmount, body.PaidAmount), 0);
+    Object.assign(common, {
+      invoice_no: pickFirst(body.invoice_no, body.invoiceNo, body.InvoiceNo),
+      invoice_type: pickFirst(body.invoice_type, body.invoiceType, body.InvoiceType),
+      customer: pickFirst(body.customer, body.Customer),
+      customer_contact: pickFirst(body.customer_contact, body.customerContact, body.CustomerContact),
+      issue_date: pickFirst(body.issue_date, body.issueDate, body.IssueDate),
+      due_date: pickFirst(body.due_date, body.dueDate, body.DueDate),
+      subtotal,
+      discount,
+      tax,
+      total,
+      paid_amount: paidAmount,
+      amount: common.amount || `Rp${total.toLocaleString('id-ID')}`,
+      payment_method: pickFirst(body.payment_method, body.paymentMethod, body.PaymentMethod),
+      source_module: pickFirst(body.source_module, body.sourceModule, body.SourceModule),
+      source_reference: pickFirst(body.source_reference, body.sourceReference, body.SourceReference),
+      reference: pickFirst(body.reference, body.Reference),
+      note: pickFirst(body.note, body.Note),
+    });
+  }
+
+  if (module === 'transaction') {
+    const subtotal = toNumber(pickFirst(body.subtotal, body.Subtotal, body.total, body.Total, body.amount, body.Amount), 0);
+    const discount = toNumber(pickFirst(body.discount, body.Discount), 0);
+    const tax = toNumber(pickFirst(body.tax, body.Tax), 0);
+    const shippingCost = toNumber(pickFirst(body.shipping_cost, body.shippingCost, body.ShippingCost), 0);
+    const total = toNumber(pickFirst(body.total, body.Total, body.amount, body.Amount), subtotal - discount + tax + shippingCost);
+    Object.assign(common, {
+      transaction_no: pickFirst(body.transaction_no, body.transactionNo, body.TransactionNo),
+      transaction_type: pickFirst(body.transaction_type, body.transactionType, body.TransactionType),
+      channel: pickFirst(body.channel, body.Channel),
+      customer: pickFirst(body.customer, body.Customer),
+      customer_contact: pickFirst(body.customer_contact, body.customerContact, body.CustomerContact),
+      product: pickFirst(body.product, body.Product),
+      quantity: toNumber(pickFirst(body.quantity, body.Quantity), 0),
+      unit: pickFirst(body.unit, body.Unit),
+      warehouse: pickFirst(body.warehouse, body.Warehouse),
+      invoice_no: pickFirst(body.invoice_no, body.invoiceNo, body.InvoiceNo),
+      payment_status: pickFirst(body.payment_status, body.paymentStatus, body.PaymentStatus),
+      payment_method: pickFirst(body.payment_method, body.paymentMethod, body.PaymentMethod),
+      subtotal,
+      discount,
+      tax,
+      shipping_cost: shippingCost,
+      total,
+      amount: common.amount || `Rp${total.toLocaleString('id-ID')}`,
+      transaction_date: pickFirst(body.transaction_date, body.transactionDate, body.TransactionDate),
+      due_date: pickFirst(body.due_date, body.dueDate, body.DueDate),
+      source_reference: pickFirst(body.source_reference, body.sourceReference, body.SourceReference),
+      reference: pickFirst(body.reference, body.Reference),
+      note: pickFirst(body.note, body.Note),
+    });
+  }
+
   common.details = stringifyArray(pickFirst(body.details, body.Details));
   common.relations = stringifyArray(pickFirst(body.relations, body.Relations) || baseRelations(common));
   common.flow_flags = stringifyArray(pickFirst(body.flow_flags, body.flowFlags, body.FlowFlags) || baseFlowFlags(common));
@@ -476,6 +595,45 @@ const buildMetrics = async (module, partnerId) => {
       metric('Uang Masuk', rupiah(cashIn)),
       metric('Uang Keluar', rupiah(cashOut)),
       metric('Transaksi Kas', activeRows.length),
+    ];
+  }
+
+  if (module === 'invoice') {
+    const rows = await config.model.findAll({ where, attributes: ['total', 'paid_amount', 'status', 'due_date'] });
+    const activeRows = rows.filter((item) => item.status !== 'Batal');
+    const totalTagihan = activeRows.reduce((sum, item) => sum + toNumber(item.total), 0);
+    const totalDibayar = activeRows.reduce((sum, item) => sum + toNumber(item.paid_amount), 0);
+    const now = new Date();
+    const overdue = activeRows.filter((item) => {
+      if (!item.due_date) return false;
+      return new Date(item.due_date) < now && item.status !== 'Dibayar';
+    }).length;
+    const rupiah = (value) => `Rp${Number(value).toLocaleString('id-ID')}`;
+
+    return [
+      metric('Total Tagihan', rupiah(totalTagihan)),
+      metric('Sudah Dibayar', rupiah(totalDibayar)),
+      metric('Belum Dibayar', rupiah(Math.max(totalTagihan - totalDibayar, 0))),
+      metric('Jatuh Tempo', overdue),
+    ];
+  }
+
+  if (module === 'transaction') {
+    const rows = await config.model.findAll({ where, attributes: ['total', 'quantity', 'status', 'payment_status'] });
+    const activeRows = rows.filter((item) => item.status !== 'Batal');
+    const omzet = activeRows
+      .filter((item) => item.status === 'Selesai')
+      .reduce((sum, item) => sum + toNumber(item.total), 0);
+    const pending = activeRows.filter((item) => ['Order Masuk', 'Diproses', 'Dikirim'].includes(item.status)).length;
+    const qty = activeRows.reduce((sum, item) => sum + toNumber(item.quantity), 0);
+    const paid = activeRows.filter((item) => item.payment_status === 'Lunas').length;
+    const rupiah = (value) => `Rp${Number(value).toLocaleString('id-ID')}`;
+
+    return [
+      metric('Transaksi Aktif', activeRows.length),
+      metric('Omzet Selesai', rupiah(omzet)),
+      metric('Order Diproses', pending),
+      metric('Item Terjual', qty || paid),
     ];
   }
 

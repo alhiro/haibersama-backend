@@ -206,6 +206,18 @@
 //         console.log(`Table erp cash flow updated!`)
 //     })
 
+// const ErpInvoice = require('./erpInvoice');
+// ErpInvoice.sequelize.sync({ alter: true })
+//     .then(() => {
+//         console.log(`Table erp invoice updated!`)
+//     })
+
+// const ErpTransaction = require('./erpTransaction');
+// ErpTransaction.sequelize.sync({ alter: true })
+//     .then(() => {
+//         console.log(`Table erp transaction updated!`)
+//     })
+
 // const ErpScanHistory = require('./erpScanHistory');
 // ErpScanHistory.sequelize.sync({ alter: true })
 //     .then(() => {
