@@ -7,6 +7,8 @@ const ErpReport = require('../models/erpReport');
 const ErpCashFlow = require('../models/erpCashFlow');
 const ErpInvoice = require('../models/erpInvoice');
 const ErpTransaction = require('../models/erpTransaction');
+const ErpPurchaseOrder = require('../models/erpPurchaseOrder');
+const ErpExpense = require('../models/erpExpense');
 const ErpScanHistory = require('../models/erpScanHistory');
 
 const Op = Sequelize.Op;
@@ -20,6 +22,48 @@ const MODULES = {
     statuses: ['Aktif', 'Review', 'Hold'],
     extraFields: {
       relation: ['Outer Linen Oversize', 'Kemeja Basic Twill', 'Dress Rayon Premium', 'Semua SKU publish'],
+    },
+  },
+  purchaseorder: {
+    label: 'Purchase Order',
+    model: ErpPurchaseOrder,
+    titleField: 'name',
+    defaultStatus: 'Draft',
+    statuses: ['Draft', 'Dikirim Supplier', 'Dikonfirmasi', 'Barang Diterima', 'Sebagian Diterima', 'Batal'],
+    extraFields: {
+      poType: ['Bahan Baku', 'Produk Jadi', 'Packaging', 'Jasa Produksi', 'Operasional'],
+      supplier: ['CV Sumber Kain Bandung', 'PT Benang Nusantara', 'Gudang Packaging Prima', 'Vendor Aksesoris Garment'],
+      warehouse: ['Warehouse Bahan Baku', 'Warehouse Produk Jadi', 'Area QC', 'Gudang Retur'],
+      paymentStatus: ['Belum Bayar', 'DP', 'Lunas', 'Tempo', 'Batal'],
+      paymentMethod: ['Tunai', 'Transfer Bank', 'QRIS', 'E-Wallet', 'Tempo'],
+    },
+  },
+  expense: {
+    label: 'Expense',
+    model: ErpExpense,
+    titleField: 'name',
+    defaultStatus: 'Tercatat',
+    statuses: ['Tercatat', 'Menunggu Bayar', 'Dibayar', 'Reimburse', 'Batal'],
+    extraFields: {
+      expenseType: ['Operasional', 'Produksi', 'Gaji', 'Marketing', 'Ongkir', 'Refund/Retur', 'Marketplace Fee', 'Lainnya'],
+      category: [
+        'Biaya Produksi',
+        'Gaji Karyawan',
+        'Ongkir',
+        'Iklan Marketplace',
+        'Refund/Retur',
+        'Operasional Toko',
+        'Sewa Gudang',
+        'Lainnya',
+      ],
+      paymentStatus: ['Belum Bayar', 'DP', 'Lunas', 'Reimburse', 'Batal'],
+      paymentMethod: ['Tunai', 'Transfer Bank', 'QRIS', 'E-Wallet', 'Marketplace', 'Tempo'],
+      supplier: ['CV Sumber Kain Bandung', 'PT Benang Nusantara', 'Gudang Packaging Prima', 'Vendor Aksesoris Garment'],
+      warehouse: ['Warehouse Bahan Baku', 'Warehouse Produk Jadi', 'Area QC', 'Gudang Retur'],
+      product: ['Outer Linen Oversize', 'Kemeja Basic Twill', 'Dress Rayon Premium', 'Biaya non produk'],
+      purchaseOrderNo: ['PO-SUP-2405-018', 'PO-PKG-2405-007'],
+      productionBatch: ['Batch OUT-2405', 'Batch KMJ-1182', 'Batch DRS-2109'],
+      sourceModule: ['Purchase Order', 'Production', 'Transaction', 'Invoice', 'Cash Flow', 'Manual'],
     },
   },
   warehouse: {
@@ -266,6 +310,15 @@ const buildFilter = (module, partnerId, params = {}) => {
     'transaction_no',
     'channel',
     'payment_status',
+    'po_type',
+    'po_no',
+    'expense_type',
+    'expense_no',
+    'product',
+    'production_batch',
+    'cashflow_reference',
+    'vendor',
+    'employee',
   ].forEach((key) => {
     if (params[key]) filter[key] = params[key];
   });
@@ -289,7 +342,14 @@ const baseRelations = (data) => {
   if (data.invoice_no) relations.push(`Invoice: ${data.invoice_no}`);
   if (data.customer) relations.push(`Customer: ${data.customer}`);
   if (data.transaction_no) relations.push(`Transaksi: ${data.transaction_no}`);
+  if (data.po_no) relations.push(`PO: ${data.po_no}`);
+  if (data.expense_no) relations.push(`Expense: ${data.expense_no}`);
+  if (data.production_batch) relations.push(`Produksi: ${data.production_batch}`);
+  if (data.cashflow_reference) relations.push(`Cash Flow: ${data.cashflow_reference}`);
+  if (data.vendor) relations.push(`Vendor: ${data.vendor}`);
+  if (data.employee) relations.push(`Karyawan: ${data.employee}`);
   if (data.product) relations.push(`Produk/Jasa: ${data.product}`);
+  if (data.item) relations.push(`Barang: ${data.item}`);
   if (data.channel) relations.push(`Channel: ${data.channel}`);
   if (data.source_module) relations.push(`Sumber: ${data.source_module}`);
   if (data.source_reference) relations.push(`Ref Sumber: ${data.source_reference}`);
@@ -320,6 +380,17 @@ const baseFlowFlags = (data) => {
   if (data.channel) flags.push({ label: 'Channel', value: data.channel });
   if (data.payment_status) flags.push({ label: 'Status Bayar', value: data.payment_status });
   if (data.product) flags.push({ label: 'Produk/Jasa', value: data.product });
+  if (data.po_type) flags.push({ label: 'Jenis PO', value: data.po_type });
+  if (data.po_no) flags.push({ label: 'No PO', value: data.po_no });
+  if (data.expense_type) flags.push({ label: 'Jenis Expense', value: data.expense_type });
+  if (data.expense_no) flags.push({ label: 'No Expense', value: data.expense_no });
+  if (data.production_batch) flags.push({ label: 'Produksi', value: data.production_batch });
+  if (data.cashflow_reference) flags.push({ label: 'Cash Flow', value: data.cashflow_reference });
+  if (data.vendor) flags.push({ label: 'Vendor', value: data.vendor });
+  if (data.employee) flags.push({ label: 'Karyawan', value: data.employee });
+  if (data.item) flags.push({ label: 'Barang', value: data.item });
+  if (data.expected_date) flags.push({ label: 'Estimasi Datang', value: data.expected_date });
+  if (data.received_quantity) flags.push({ label: 'Diterima', value: `${data.received_quantity} ${data.unit || ''}`.trim() });
   return flags;
 };
 
@@ -362,6 +433,16 @@ const normalize = (module, row) => {
     transactionType: data.transaction_type,
     paymentStatus: data.payment_status,
     shippingCost: data.shipping_cost,
+    purchaseOrderNo: data.po_no,
+    purchaseOrderType: data.po_type,
+    supplierContact: data.supplier_contact,
+    expectedDate: data.expected_date,
+    receivedQuantity: data.received_quantity,
+    expenseNo: data.expense_no,
+    expenseType: data.expense_type,
+    expenseDate: data.expense_date,
+    productionBatch: data.production_batch,
+    cashflowReference: data.cashflow_reference,
     details,
     relations,
     flow_flags: flowFlags,
@@ -516,6 +597,72 @@ const payloadByModule = (module, body) => {
     });
   }
 
+  if (module === 'purchaseorder') {
+    const subtotal = toNumber(pickFirst(body.subtotal, body.Subtotal, body.total, body.Total, body.amount, body.Amount), 0);
+    const discount = toNumber(pickFirst(body.discount, body.Discount), 0);
+    const tax = toNumber(pickFirst(body.tax, body.Tax), 0);
+    const shippingCost = toNumber(pickFirst(body.shipping_cost, body.shippingCost, body.ShippingCost), 0);
+    const total = toNumber(pickFirst(body.total, body.Total, body.amount, body.Amount), subtotal - discount + tax + shippingCost);
+    Object.assign(common, {
+      po_no: pickFirst(body.po_no, body.purchaseOrderNo, body.poNo, body.PurchaseOrderNo, body.PoNo),
+      po_type: pickFirst(body.po_type, body.purchaseOrderType, body.poType, body.PurchaseOrderType, body.PoType),
+      supplier: pickFirst(body.supplier, body.Supplier),
+      supplier_contact: pickFirst(body.supplier_contact, body.supplierContact, body.SupplierContact),
+      warehouse: pickFirst(body.warehouse, body.Warehouse),
+      item: pickFirst(body.item, body.Item),
+      quantity: toNumber(pickFirst(body.quantity, body.Quantity), 0),
+      received_quantity: toNumber(pickFirst(body.received_quantity, body.receivedQuantity, body.ReceivedQuantity), 0),
+      unit: pickFirst(body.unit, body.Unit),
+      expected_date: pickFirst(body.expected_date, body.expectedDate, body.ExpectedDate),
+      payment_status: pickFirst(body.payment_status, body.paymentStatus, body.PaymentStatus),
+      payment_method: pickFirst(body.payment_method, body.paymentMethod, body.PaymentMethod),
+      subtotal,
+      discount,
+      tax,
+      shipping_cost: shippingCost,
+      total,
+      amount: common.amount || `Rp${total.toLocaleString('id-ID')}`,
+      source_reference: pickFirst(body.source_reference, body.sourceReference, body.SourceReference),
+      reference: pickFirst(body.reference, body.Reference),
+      note: pickFirst(body.note, body.Note),
+    });
+  }
+
+  if (module === 'expense') {
+    const subtotal = toNumber(pickFirst(body.subtotal, body.Subtotal, body.total, body.Total, body.amount, body.Amount), 0);
+    const discount = toNumber(pickFirst(body.discount, body.Discount), 0);
+    const tax = toNumber(pickFirst(body.tax, body.Tax), 0);
+    const total = toNumber(pickFirst(body.total, body.Total, body.amount, body.Amount), subtotal - discount + tax);
+    Object.assign(common, {
+      expense_no: pickFirst(body.expense_no, body.expenseNo, body.ExpenseNo),
+      expense_type: pickFirst(body.expense_type, body.expenseType, body.ExpenseType),
+      category: pickFirst(body.category, body.Category),
+      supplier: pickFirst(body.supplier, body.Supplier),
+      warehouse: pickFirst(body.warehouse, body.Warehouse),
+      product: pickFirst(body.product, body.Product),
+      po_no: pickFirst(body.po_no, body.purchaseOrderNo, body.poNo, body.PurchaseOrderNo, body.PoNo),
+      production_batch: pickFirst(body.production_batch, body.productionBatch, body.ProductionBatch),
+      transaction_no: pickFirst(body.transaction_no, body.transactionNo, body.TransactionNo),
+      invoice_no: pickFirst(body.invoice_no, body.invoiceNo, body.InvoiceNo),
+      cashflow_reference: pickFirst(body.cashflow_reference, body.cashflowReference, body.CashflowReference),
+      vendor: pickFirst(body.vendor, body.Vendor),
+      employee: pickFirst(body.employee, body.Employee),
+      payment_status: pickFirst(body.payment_status, body.paymentStatus, body.PaymentStatus),
+      payment_method: pickFirst(body.payment_method, body.paymentMethod, body.PaymentMethod),
+      expense_date: pickFirst(body.expense_date, body.expenseDate, body.ExpenseDate),
+      due_date: pickFirst(body.due_date, body.dueDate, body.DueDate),
+      subtotal,
+      discount,
+      tax,
+      total,
+      amount: common.amount || `Rp${total.toLocaleString('id-ID')}`,
+      source_module: pickFirst(body.source_module, body.sourceModule, body.SourceModule),
+      source_reference: pickFirst(body.source_reference, body.sourceReference, body.SourceReference),
+      reference: pickFirst(body.reference, body.Reference),
+      note: pickFirst(body.note, body.Note),
+    });
+  }
+
   common.details = stringifyArray(pickFirst(body.details, body.Details));
   common.relations = stringifyArray(pickFirst(body.relations, body.Relations) || baseRelations(common));
   common.flow_flags = stringifyArray(pickFirst(body.flow_flags, body.flowFlags, body.FlowFlags) || baseFlowFlags(common));
@@ -634,6 +781,41 @@ const buildMetrics = async (module, partnerId) => {
       metric('Omzet Selesai', rupiah(omzet)),
       metric('Order Diproses', pending),
       metric('Item Terjual', qty || paid),
+    ];
+  }
+
+  if (module === 'purchaseorder') {
+    const rows = await config.model.findAll({ where, attributes: ['total', 'quantity', 'received_quantity', 'status'] });
+    const activeRows = rows.filter((item) => item.status !== 'Batal');
+    const nilaiPo = activeRows.reduce((sum, item) => sum + toNumber(item.total), 0);
+    const waiting = activeRows.filter((item) => ['Dikirim Supplier', 'Dikonfirmasi', 'Sebagian Diterima'].includes(item.status)).length;
+    const receivedQty = activeRows.reduce((sum, item) => sum + toNumber(item.received_quantity), 0);
+    const orderedQty = activeRows.reduce((sum, item) => sum + toNumber(item.quantity), 0);
+    const rupiah = (value) => `Rp${Number(value).toLocaleString('id-ID')}`;
+
+    return [
+      metric('Total PO', activeRows.length),
+      metric('Nilai PO', rupiah(nilaiPo)),
+      metric('Menunggu Barang', waiting),
+      metric('Barang Diterima', receivedQty || orderedQty),
+    ];
+  }
+
+  if (module === 'expense') {
+    const rows = await config.model.findAll({ where, attributes: ['total', 'status', 'payment_status'] });
+    const activeRows = rows.filter((item) => item.status !== 'Batal');
+    const totalExpense = activeRows.reduce((sum, item) => sum + toNumber(item.total), 0);
+    const waiting = activeRows.filter((item) => item.payment_status !== 'Lunas' && item.status !== 'Dibayar').length;
+    const paidValue = activeRows
+      .filter((item) => item.payment_status === 'Lunas' || item.status === 'Dibayar')
+      .reduce((sum, item) => sum + toNumber(item.total), 0);
+    const rupiah = (value) => `Rp${Number(value).toLocaleString('id-ID')}`;
+
+    return [
+      metric('Total Expense', activeRows.length),
+      metric('Nilai Expense', rupiah(totalExpense)),
+      metric('Belum Dibayar', waiting),
+      metric('Sudah Dibayar', rupiah(paidValue)),
     ];
   }
 

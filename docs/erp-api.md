@@ -11,6 +11,8 @@ ERP Produk punya modul:
 
 ```text
 supplier
+purchaseorder
+expense
 warehouse
 production
 inventory
@@ -59,7 +61,10 @@ Query list:
 page, limit, search, status, startDate, endDate,
 warehouse, supplier, reference, productionPlace, outputProduct, reportType,
 cashType, category, paymentMethod, sourceModule, invoiceType, invoiceNo,
-customer, transactionType, transactionNo, channel, paymentStatus
+customer, transactionType, transactionNo, channel, paymentStatus,
+purchaseOrderType, purchaseOrderNo, poType, poNo,
+expenseType, expenseNo, vendor, employee,
+product, productionBatch, cashflowReference
 ```
 
 ## Payload Supplier
@@ -77,6 +82,81 @@ customer, transactionType, transactionNo, channel, paymentStatus
   "relation": "Dipakai untuk produk: Outer Linen Oversize"
 }
 ```
+
+## Payload Purchase Order
+
+```json
+{
+  "name": "PO Kain Cotton Combed 30s",
+  "description": "Pembelian bahan baku untuk produksi Outer Linen Oversize.",
+  "status": "Dikirim Supplier",
+  "meta": "Supplier: CV Sumber Kain Bandung",
+  "amount": "Rp7400000",
+  "purchaseOrderNo": "PO-SUP-2405-018",
+  "purchaseOrderType": "Bahan Baku",
+  "supplier": "CV Sumber Kain Bandung",
+  "supplierContact": "0812-7788-1100",
+  "warehouse": "Warehouse Bahan Baku",
+  "item": "Kain Cotton Combed 30s",
+  "quantity": 10,
+  "receivedQuantity": 0,
+  "unit": "gulung",
+  "expectedDate": "2026-05-24T10:00:00.000Z",
+  "paymentStatus": "Belum Bayar",
+  "paymentMethod": "Transfer Bank",
+  "subtotal": 7400000,
+  "discount": 0,
+  "tax": 0,
+  "shippingCost": 0,
+  "total": 7400000,
+  "sourceReference": "REQ-PROD-OUT-2405",
+  "reference": "Bahan untuk batch OUT-2405",
+  "note": "Saat barang diterima, backend dapat membuat mutasi inventory barang masuk."
+}
+```
+
+## Payload Expense
+
+```json
+{
+  "name": "Biaya Jahit Batch OUT-2405",
+  "description": "Pembayaran jasa produksi untuk Outer Linen Oversize.",
+  "status": "Menunggu Bayar",
+  "meta": "Vendor: Tempat Jahit Bu Rina",
+  "amount": "Rp3600000",
+  "expenseNo": "EXP-PROD-2405-018",
+  "expenseType": "Produksi",
+  "category": "Biaya Produksi",
+  "vendor": "Tempat Jahit Bu Rina",
+  "supplier": "CV Sumber Kain Bandung",
+  "purchaseOrderNo": "PO-SUP-2405-018",
+  "warehouse": "Warehouse Bahan Baku",
+  "productionBatch": "Batch OUT-2405",
+  "product": "Outer Linen Oversize",
+  "transactionNo": "TRX-MP-2405-018",
+  "invoiceNo": "INV-MP-2405-018",
+  "employee": "Supervisor Produksi - Dimas",
+  "paymentStatus": "Belum Bayar",
+  "paymentMethod": "Transfer Bank",
+  "expenseDate": "2026-05-20T10:30:00.000Z",
+  "dueDate": "2026-05-25T10:30:00.000Z",
+  "subtotal": 3600000,
+  "discount": 0,
+  "tax": 0,
+  "total": 3600000,
+  "sourceModule": "Production",
+  "sourceReference": "BATCH-OUT-2405",
+  "cashflowReference": "CF-OUT-2405-EXP",
+  "reference": "Jahit 320 pcs Outer Linen Oversize",
+  "note": "Saat expense dibayar, backend dapat membuat Cash Flow uang keluar."
+}
+```
+
+Expense dipakai untuk biaya operasional, produksi, gaji, ongkir, marketing,
+refund, marketplace fee, dan biaya lain yang nantinya masuk Cash Flow sebagai
+`Uang Keluar`. Field relasi seperti `supplier`, `purchaseOrderNo`,
+`warehouse`, `productionBatch`, `product`, `transactionNo`, `invoiceNo`, dan
+`cashflowReference` menjaga biaya tetap terhubung dengan alur ERP lain.
 
 ## Payload Warehouse
 
@@ -277,6 +357,8 @@ Tabel yang perlu dibuat:
 
 ```text
 erp_supplier
+erp_purchase_order
+erp_expense
 erp_warehouse
 erp_inventory
 erp_production

@@ -2,6 +2,8 @@
 -- Tables:
 -- - partner_product
 -- - erp_supplier
+-- - erp_purchase_order
+-- - erp_expense
 -- - erp_warehouse
 -- - erp_inventory
 -- - erp_production
@@ -88,6 +90,173 @@ CREATE INDEX IF NOT EXISTS idx_erp_supplier_status
 
 CREATE INDEX IF NOT EXISTS idx_erp_supplier_search_name
   ON public.erp_supplier (LOWER(name));
+
+CREATE TABLE IF NOT EXISTS public.erp_purchase_order (
+  id SERIAL PRIMARY KEY,
+  partner_id INTEGER NOT NULL REFERENCES public.hai_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  name VARCHAR(150) NOT NULL,
+  description VARCHAR(1000),
+  status VARCHAR(40) NOT NULL DEFAULT 'Draft',
+  meta VARCHAR(200),
+  amount VARCHAR(100),
+  po_no VARCHAR(80),
+  po_type VARCHAR(40),
+  supplier VARCHAR(150),
+  supplier_contact VARCHAR(120),
+  warehouse VARCHAR(150),
+  item VARCHAR(150),
+  quantity NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  received_quantity NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  unit VARCHAR(40),
+  expected_date TIMESTAMP WITH TIME ZONE,
+  payment_status VARCHAR(40),
+  payment_method VARCHAR(80),
+  subtotal NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  discount NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  tax NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  shipping_cost NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  total NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  source_reference VARCHAR(150),
+  reference VARCHAR(150),
+  note VARCHAR(1000),
+  details TEXT,
+  relations TEXT,
+  flow_flags TEXT,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE,
+  created_by VARCHAR(50),
+  updated_at TIMESTAMP WITH TIME ZONE,
+  updated_by VARCHAR(50)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_erp_purchase_order_partner_po_no
+  ON public.erp_purchase_order (partner_id, po_no)
+  WHERE po_no IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_erp_purchase_order_partner
+  ON public.erp_purchase_order (partner_id);
+
+CREATE INDEX IF NOT EXISTS idx_erp_purchase_order_status
+  ON public.erp_purchase_order (status);
+
+CREATE INDEX IF NOT EXISTS idx_erp_purchase_order_type
+  ON public.erp_purchase_order (po_type);
+
+CREATE INDEX IF NOT EXISTS idx_erp_purchase_order_supplier
+  ON public.erp_purchase_order (supplier);
+
+CREATE INDEX IF NOT EXISTS idx_erp_purchase_order_warehouse
+  ON public.erp_purchase_order (warehouse);
+
+CREATE INDEX IF NOT EXISTS idx_erp_purchase_order_payment_status
+  ON public.erp_purchase_order (payment_status);
+
+CREATE INDEX IF NOT EXISTS idx_erp_purchase_order_expected_date
+  ON public.erp_purchase_order (expected_date);
+
+CREATE INDEX IF NOT EXISTS idx_erp_purchase_order_search_name
+  ON public.erp_purchase_order (LOWER(name));
+
+CREATE TABLE IF NOT EXISTS public.erp_expense (
+  id SERIAL PRIMARY KEY,
+  partner_id INTEGER NOT NULL REFERENCES public.hai_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  name VARCHAR(150) NOT NULL,
+  description VARCHAR(1000),
+  status VARCHAR(40) NOT NULL DEFAULT 'Tercatat',
+  meta VARCHAR(200),
+  amount VARCHAR(100),
+  expense_no VARCHAR(80),
+  expense_type VARCHAR(60),
+  category VARCHAR(100),
+  supplier VARCHAR(150),
+  warehouse VARCHAR(150),
+  product VARCHAR(150),
+  po_no VARCHAR(80),
+  production_batch VARCHAR(120),
+  transaction_no VARCHAR(80),
+  invoice_no VARCHAR(80),
+  cashflow_reference VARCHAR(150),
+  vendor VARCHAR(150),
+  employee VARCHAR(150),
+  payment_status VARCHAR(40),
+  payment_method VARCHAR(80),
+  expense_date TIMESTAMP WITH TIME ZONE,
+  due_date TIMESTAMP WITH TIME ZONE,
+  subtotal NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  discount NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  tax NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  total NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  source_module VARCHAR(80),
+  source_reference VARCHAR(150),
+  reference VARCHAR(150),
+  note VARCHAR(1000),
+  details TEXT,
+  relations TEXT,
+  flow_flags TEXT,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE,
+  created_by VARCHAR(50),
+  updated_at TIMESTAMP WITH TIME ZONE,
+  updated_by VARCHAR(50)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_erp_expense_partner_expense_no
+  ON public.erp_expense (partner_id, expense_no)
+  WHERE expense_no IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_erp_expense_partner
+  ON public.erp_expense (partner_id);
+
+CREATE INDEX IF NOT EXISTS idx_erp_expense_status
+  ON public.erp_expense (status);
+
+CREATE INDEX IF NOT EXISTS idx_erp_expense_type
+  ON public.erp_expense (expense_type);
+
+CREATE INDEX IF NOT EXISTS idx_erp_expense_category
+  ON public.erp_expense (category);
+
+CREATE INDEX IF NOT EXISTS idx_erp_expense_vendor
+  ON public.erp_expense (vendor);
+
+CREATE INDEX IF NOT EXISTS idx_erp_expense_supplier
+  ON public.erp_expense (supplier);
+
+CREATE INDEX IF NOT EXISTS idx_erp_expense_warehouse
+  ON public.erp_expense (warehouse);
+
+CREATE INDEX IF NOT EXISTS idx_erp_expense_product
+  ON public.erp_expense (product);
+
+CREATE INDEX IF NOT EXISTS idx_erp_expense_po_no
+  ON public.erp_expense (po_no);
+
+CREATE INDEX IF NOT EXISTS idx_erp_expense_production_batch
+  ON public.erp_expense (production_batch);
+
+CREATE INDEX IF NOT EXISTS idx_erp_expense_transaction_no
+  ON public.erp_expense (transaction_no);
+
+CREATE INDEX IF NOT EXISTS idx_erp_expense_invoice_no
+  ON public.erp_expense (invoice_no);
+
+CREATE INDEX IF NOT EXISTS idx_erp_expense_cashflow_reference
+  ON public.erp_expense (cashflow_reference);
+
+CREATE INDEX IF NOT EXISTS idx_erp_expense_employee
+  ON public.erp_expense (employee);
+
+CREATE INDEX IF NOT EXISTS idx_erp_expense_payment_status
+  ON public.erp_expense (payment_status);
+
+CREATE INDEX IF NOT EXISTS idx_erp_expense_source_module
+  ON public.erp_expense (source_module);
+
+CREATE INDEX IF NOT EXISTS idx_erp_expense_date
+  ON public.erp_expense (expense_date);
+
+CREATE INDEX IF NOT EXISTS idx_erp_expense_search_name
+  ON public.erp_expense (LOWER(name));
 
 CREATE TABLE IF NOT EXISTS public.erp_warehouse (
   id SERIAL PRIMARY KEY,

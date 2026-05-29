@@ -24,6 +24,15 @@ const listParams = (req) => ({
   transaction_no: req.query.transaction_no || req.query.transactionNo,
   channel: req.query.channel,
   payment_status: req.query.payment_status || req.query.paymentStatus,
+  po_type: req.query.po_type || req.query.poType || req.query.purchaseOrderType,
+  po_no: req.query.po_no || req.query.poNo || req.query.purchaseOrderNo,
+  expense_type: req.query.expense_type || req.query.expenseType,
+  expense_no: req.query.expense_no || req.query.expenseNo,
+  product: req.query.product,
+  production_batch: req.query.production_batch || req.query.productionBatch,
+  cashflow_reference: req.query.cashflow_reference || req.query.cashflowReference,
+  vendor: req.query.vendor,
+  employee: req.query.employee,
 });
 
 const sendList = (res, result) => res.status(200).json({

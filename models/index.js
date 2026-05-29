@@ -218,6 +218,18 @@
 //         console.log(`Table erp transaction updated!`)
 //     })
 
+// const ErpPurchaseOrder = require('./erpPurchaseOrder');
+// ErpPurchaseOrder.sequelize.sync({ alter: true })
+//     .then(() => {
+//         console.log(`Table erp purchase order updated!`)
+//     })
+
+// const ErpExpense = require('./erpExpense');
+// ErpExpense.sequelize.sync({ alter: true })
+//     .then(() => {
+//         console.log(`Table erp expense updated!`)
+//     })
+
 // const ErpScanHistory = require('./erpScanHistory');
 // ErpScanHistory.sequelize.sync({ alter: true })
 //     .then(() => {
