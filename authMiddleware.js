@@ -28,13 +28,15 @@ module.exports = {
                 // HI I'M THE UPDATED CODE BLOCK, LOOK AT ME
                 // ------------------------------------
                 console.log("decodedStore : " + JSON.stringify(decodedStore));
-                const { email, name, id, type } = decodedStore;
+                const { email, name, id, type, erp_role } = decodedStore;
+                const erpRole = req.headers['x-erp-role'] || erp_role || (type == 2 ? 'Owner' : 'Customer');
 
                 res.locals.auth = {
                   name,
                   email,
                   id,
-                  type
+                  type,
+                  erpRole
                 };
                 next();
               })
@@ -90,13 +92,15 @@ module.exports = {
                 // HI I'M THE UPDATED CODE BLOCK, LOOK AT ME
                 // ------------------------------------
                 console.log("decodedStore : " + JSON.stringify(decodedStore));
-                const { email, name, id, type } = decodedStore;
+                const { email, name, id, type, erp_role } = decodedStore;
+                const erpRole = req.headers['x-erp-role'] || erp_role || (type == 2 ? 'Owner' : 'Customer');
 
                 res.locals.auth = {
                   name,
                   email,
                   id,
-                  type
+                  type,
+                  erpRole
                 };
 
                 if(type != 2){
@@ -136,6 +140,18 @@ module.exports = {
         });
       }
     }
+  },
+
+  requireErpRoles: (roles = []) => (req, res, next) => {
+    const currentRole = res.locals.auth && res.locals.auth.erpRole;
+    if (!currentRole || !roles.includes(currentRole)) {
+      return res.status(403).json({
+        status: 403,
+        success: false,
+        message: "ROLE_NOT_ALLOWED"
+      });
+    }
+    return next();
   },
 
   isAdminAuthenticated: async (req, res, next) => {

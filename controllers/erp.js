@@ -87,7 +87,7 @@ exports.getRoleApprovalDashboard = async (req, res) => {
 exports.approveRequest = async (req, res) => {
   try {
     const id = req.body.id || req.query.id;
-    const result = await erpService.approveRequest(res.locals.auth.id, id, req.body, res.locals.auth.email);
+    const result = await erpService.approveRequest(res.locals.auth.id, id, req.body, res.locals.auth.email, res.locals.auth.erpRole);
     return res.status(result.success ? 200 : 404).send(result);
   } catch (err) {
     return handleError(res, err);
@@ -97,7 +97,7 @@ exports.approveRequest = async (req, res) => {
 exports.rejectRequest = async (req, res) => {
   try {
     const id = req.body.id || req.query.id;
-    const result = await erpService.rejectRequest(res.locals.auth.id, id, req.body, res.locals.auth.email);
+    const result = await erpService.rejectRequest(res.locals.auth.id, id, req.body, res.locals.auth.email, res.locals.auth.erpRole);
     return res.status(result.success ? 200 : 404).send(result);
   } catch (err) {
     return handleError(res, err);
@@ -133,7 +133,7 @@ exports.getDetail = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const result = await erpService.create(req.params.module, res.locals.auth.id, req.body, res.locals.auth.email);
+    const result = await erpService.create(req.params.module, res.locals.auth.id, req.body, res.locals.auth.email, res.locals.auth.erpRole);
     return res.status(result.success ? 200 : 400).send(result);
   } catch (err) {
     return handleError(res, err);
@@ -143,7 +143,7 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const id = req.body.id || req.query.id;
-    const result = await erpService.update(req.params.module, res.locals.auth.id, id, req.body, res.locals.auth.email);
+    const result = await erpService.update(req.params.module, res.locals.auth.id, id, req.body, res.locals.auth.email, res.locals.auth.erpRole);
     return res.status(result.success ? 200 : 404).send(result);
   } catch (err) {
     return handleError(res, err);
@@ -153,7 +153,7 @@ exports.update = async (req, res) => {
 exports.delete = async (req, res) => {
   try {
     const id = req.body.id || req.query.id;
-    const result = await erpService.delete(req.params.module, res.locals.auth.id, id);
+    const result = await erpService.delete(req.params.module, res.locals.auth.id, id, res.locals.auth.email, res.locals.auth.erpRole);
     return res.status(result.success ? 200 : 404).send(result);
   } catch (err) {
     return handleError(res, err);
@@ -180,7 +180,7 @@ exports.getBarcodeConfig = async (req, res) => {
 
 exports.scan = async (req, res) => {
   try {
-    const result = await erpService.scan(req.params.module, res.locals.auth.id, req.body, res.locals.auth.email);
+    const result = await erpService.scan(req.params.module, res.locals.auth.id, req.body, res.locals.auth.email, res.locals.auth.erpRole);
     return res.status(200).send(result);
   } catch (err) {
     return handleError(res, err);

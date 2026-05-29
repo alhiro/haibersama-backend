@@ -1233,10 +1233,17 @@ const buildRoleApprovalDashboard = async (partnerId) => {
   };
 };
 
-const decideApproval = async ({ partnerId, id, status, note, actor }) => {
+const decideApproval = async ({ partnerId, id, status, note, actor, actorRole }) => {
   const approval = await ErpApproval.findOne({ where: { id, partner_id: partnerId, active: true } });
   if (!approval) {
     return { success: false, message: 'Approval tidak ditemukan', data: {} };
+  }
+
+  const allowedRoles = approval.approver_role === 'Owner'
+    ? ['Owner']
+    : ['Supervisor', 'Owner'];
+  if (!allowedRoles.includes(actorRole)) {
+    return { success: false, message: 'Role tidak sesuai untuk approval ini', data: {} };
   }
 
   const beforeData = { ...approval.dataValues };
@@ -1256,7 +1263,7 @@ const decideApproval = async ({ partnerId, id, status, note, actor }) => {
     entityId: updated.id,
     entityTitle: updated.title,
     actor,
-    actorRole: updated.approver_role || 'Supervisor',
+    actorRole,
     beforeData,
     afterData: updated.dataValues,
     note,
@@ -1325,7 +1332,7 @@ module.exports = {
       : { success: false, message: `${config.label} Tidak Ditemukan`, data: {} };
   },
 
-  create: async (module, partnerId, body, createdBy) => {
+  create: async (module, partnerId, body, createdBy, actorRole = 'Staff') => {
     const config = getConfig(module);
     const payload = payloadByModule(module, body);
     payload.partner_id = partnerId;
@@ -1345,15 +1352,15 @@ module.exports = {
       entityId: row.id,
       entityTitle: titleFromPayload(module, payload, row),
       actor: createdBy,
-      actorRole: body.requesterRole || body.requester_role || 'Staff',
+      actorRole: body.requesterRole || body.requester_role || actorRole,
       afterData: row.dataValues,
       note: `${config.label} dibuat`,
     });
-    await maybeCreateApproval({ module, partnerId, payload, row, actor: createdBy });
+    await maybeCreateApproval({ module, partnerId, payload: { ...payload, requesterRole: body.requesterRole || body.requester_role || actorRole }, row, actor: createdBy });
     return { success: true, message: `${config.label} Berhasil Dibuat`, data: normalize(module, row) };
   },
 
-  update: async (module, partnerId, id, body, updatedBy) => {
+  update: async (module, partnerId, id, body, updatedBy, actorRole = 'Staff') => {
     const config = getConfig(module);
     const current = await config.model.findOne({ where: { id, partner_id: partnerId } });
     if (!current) {
@@ -1374,16 +1381,16 @@ module.exports = {
       entityId: updated.id,
       entityTitle: titleFromPayload(module, payload, updated),
       actor: updatedBy,
-      actorRole: body.requesterRole || body.requester_role || 'Staff',
+      actorRole: body.requesterRole || body.requester_role || actorRole,
       beforeData,
       afterData: updated.dataValues,
       note: `${config.label} diubah`,
     });
-    await maybeCreateApproval({ module, partnerId, payload, row: updated, actor: updatedBy });
+    await maybeCreateApproval({ module, partnerId, payload: { ...payload, requesterRole: body.requesterRole || body.requester_role || actorRole }, row: updated, actor: updatedBy });
     return { success: true, message: `${config.label} Berhasil Diubah`, data: normalize(module, updated) };
   },
 
-  delete: async (module, partnerId, id) => {
+  delete: async (module, partnerId, id, deletedBy, actorRole = 'Staff') => {
     const config = getConfig(module);
     const current = await config.model.findOne({ where: { id, partner_id: partnerId } });
     const deleted = await config.model.destroy({ where: { id, partner_id: partnerId } });
@@ -1394,8 +1401,8 @@ module.exports = {
         action: 'DELETE',
         entityId: current.id,
         entityTitle: titleFromPayload(module, current.dataValues, current),
-        actor: null,
-        actorRole: 'Staff',
+        actor: deletedBy,
+        actorRole,
         beforeData: current.dataValues,
         note: `${config.label} dihapus`,
       });
@@ -1423,20 +1430,22 @@ module.exports = {
     data: await buildRoleApprovalDashboard(partnerId),
   }),
 
-  approveRequest: async (partnerId, id, body, actor) => decideApproval({
+  approveRequest: async (partnerId, id, body, actor, actorRole) => decideApproval({
     partnerId,
     id,
     status: 'Disetujui',
     note: body.note || body.approvalNote || 'Disetujui',
     actor,
+    actorRole,
   }),
 
-  rejectRequest: async (partnerId, id, body, actor) => decideApproval({
+  rejectRequest: async (partnerId, id, body, actor, actorRole) => decideApproval({
     partnerId,
     id,
     status: 'Ditolak',
     note: body.note || body.approvalNote || 'Ditolak',
     actor,
+    actorRole,
   }),
 
   getBarcodeConfig: (module) => {
@@ -1448,7 +1457,7 @@ module.exports = {
     };
   },
 
-  scan: async (module, partnerId, body, createdBy) => {
+  scan: async (module, partnerId, body, createdBy, actorRole = 'Staff') => {
     const config = getConfig(module);
     const barcode = config.barcode || {};
     const scannedItem = body.scannedItem || barcode.scannedItem || {};
@@ -1472,7 +1481,7 @@ module.exports = {
       entityId: row.id,
       entityTitle: payload.result_name || payload.code,
       actor: createdBy,
-      actorRole: body.requesterRole || body.requester_role || 'Staff',
+      actorRole: body.requesterRole || body.requester_role || actorRole,
       afterData: payload,
       note: `Scan ${config.label}`,
     });
