@@ -10,6 +10,9 @@ const ErpTransaction = require('../models/erpTransaction');
 const ErpPurchaseOrder = require('../models/erpPurchaseOrder');
 const ErpExpense = require('../models/erpExpense');
 const ErpScanHistory = require('../models/erpScanHistory');
+const PartnerProduct = require('../models/partnerProduct');
+const ErpApproval = require('../models/erpApproval');
+const ErpAuditLog = require('../models/erpAuditLog');
 
 const Op = Sequelize.Op;
 
@@ -827,6 +830,445 @@ const buildMetrics = async (module, partnerId) => {
   ];
 };
 
+const rupiah = (value) => `Rp${Number(value || 0).toLocaleString('id-ID')}`;
+const APPROVAL_THRESHOLD = 5000000;
+
+const requestNo = () => `APR-${Date.now()}`;
+
+const compactJson = (value) => {
+  if (!value) return null;
+  try {
+    return JSON.stringify(value);
+  } catch (error) {
+    return null;
+  }
+};
+
+const titleFromPayload = (module, payload, row) => {
+  const config = MODULES[module];
+  const data = row && row.dataValues ? row.dataValues : row || payload || {};
+  const field = config ? config.titleField : 'name';
+  return data[field] || data.name || data.title || data.invoice_no || data.transaction_no || data.po_no || data.expense_no || 'Data ERP';
+};
+
+const writeAuditLog = async ({ partnerId, module, action, entityId, entityTitle, actor, actorRole, beforeData, afterData, note }) => {
+  try {
+    await ErpAuditLog.create({
+      partner_id: partnerId,
+      module,
+      action,
+      entity_id: entityId,
+      entity_title: entityTitle,
+      actor,
+      actor_role: actorRole || 'Staff',
+      before_data: compactJson(beforeData),
+      after_data: compactJson(afterData),
+      note,
+      created_by: actor,
+    });
+  } catch (error) {
+    // Audit logging must not block the operational flow.
+  }
+};
+
+const approvalRuleFor = (module, payload = {}) => {
+  const status = String(payload.status || '');
+  const paymentStatus = String(payload.payment_status || payload.paymentStatus || '');
+  const amount = toNumber(payload.total || payload.nominal || payload.amount);
+
+  if (module === 'inventory' && ['Dipakai Produksi', 'Transfer'].includes(status)) {
+    return {
+      action: 'Stok Keluar',
+      approverRole: 'Supervisor',
+      riskLevel: 'Medium',
+      threshold: 0,
+      reason: 'Stok keluar atau transfer gudang perlu approval supervisor.',
+    };
+  }
+
+  if (module === 'production' && ['QC', 'Selesai'].includes(status)) {
+    return {
+      action: 'Approval Produksi',
+      approverRole: 'Supervisor',
+      riskLevel: 'Medium',
+      threshold: 0,
+      reason: 'Perubahan status produksi perlu approval supervisor.',
+    };
+  }
+
+  if (['cashflow', 'expense', 'purchaseorder', 'invoice'].includes(module) && amount >= APPROVAL_THRESHOLD) {
+    return {
+      action: 'Pembayaran Besar',
+      approverRole: 'Owner',
+      riskLevel: 'High',
+      threshold: APPROVAL_THRESHOLD,
+      reason: `Nominal ${rupiah(amount)} melewati limit approval owner.`,
+    };
+  }
+
+  if (['cashflow', 'expense', 'purchaseorder'].includes(module) && ['Lunas', 'Dibayar'].includes(paymentStatus) && amount >= APPROVAL_THRESHOLD) {
+    return {
+      action: 'Konfirmasi Pembayaran',
+      approverRole: 'Owner',
+      riskLevel: 'High',
+      threshold: APPROVAL_THRESHOLD,
+      reason: `Pembayaran ${rupiah(amount)} perlu approval owner.`,
+    };
+  }
+
+  return null;
+};
+
+const maybeCreateApproval = async ({ module, partnerId, payload, row, actor }) => {
+  const rule = approvalRuleFor(module, payload);
+  if (!rule) return null;
+
+  const title = titleFromPayload(module, payload, row);
+  const amount = toNumber(payload.total || payload.nominal || payload.amount);
+  const entityId = row && row.id ? row.id : null;
+  const referenceNo = payload.reference || payload.invoice_no || payload.transaction_no || payload.po_no || payload.expense_no || payload.source_reference;
+
+  try {
+    const approval = await ErpApproval.create({
+      partner_id: partnerId,
+      request_no: requestNo(),
+      module,
+      action: rule.action,
+      title,
+      description: rule.reason,
+      status: 'Menunggu Approval',
+      requested_by: actor,
+      requester_role: payload.requester_role || payload.requesterRole || 'Staff',
+      approver_role: rule.approverRole,
+      amount,
+      threshold: rule.threshold,
+      reference_id: entityId,
+      reference_no: referenceNo,
+      risk_level: rule.riskLevel,
+      details: compactJson(payload),
+      created_by: actor,
+    });
+
+    await writeAuditLog({
+      partnerId,
+      module: 'approval',
+      action: 'REQUEST',
+      entityId: approval.id,
+      entityTitle: title,
+      actor,
+      actorRole: payload.requester_role || payload.requesterRole || 'Staff',
+      afterData: approval.dataValues,
+      note: rule.reason,
+    });
+
+    return approval;
+  } catch (error) {
+    return null;
+  }
+};
+
+const todayRange = () => {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+  return { start, end };
+};
+
+const safeFindAll = async (model, options = {}) => {
+  try {
+    return await model.findAll(options);
+  } catch (error) {
+    return [];
+  }
+};
+
+const safeCount = async (model, options = {}) => {
+  try {
+    return await model.count(options);
+  } catch (error) {
+    return 0;
+  }
+};
+
+const buildOwnerDashboard = async (partnerId) => {
+  const baseWhere = { partner_id: partnerId, active: true };
+  const { start, end } = todayRange();
+
+  const [
+    transactions,
+    invoices,
+    cashFlows,
+    purchaseOrders,
+    expenses,
+    products,
+    inventories,
+    productions,
+  ] = await Promise.all([
+    safeFindAll(ErpTransaction, { where: baseWhere, attributes: ['name', 'product', 'quantity', 'total', 'status', 'payment_status', 'transaction_date', 'created_at'] }),
+    safeFindAll(ErpInvoice, { where: baseWhere, attributes: ['invoice_no', 'customer', 'total', 'paid_amount', 'status', 'due_date'] }),
+    safeFindAll(ErpCashFlow, { where: baseWhere, attributes: ['nominal', 'amount', 'cash_type', 'status', 'transaction_date', 'created_at'] }),
+    safeFindAll(ErpPurchaseOrder, { where: baseWhere, attributes: ['po_no', 'supplier', 'item', 'total', 'payment_status', 'status'] }),
+    safeFindAll(ErpExpense, { where: baseWhere, attributes: ['name', 'total', 'category', 'payment_status', 'status', 'expense_date'] }),
+    safeFindAll(PartnerProduct, { where: baseWhere, attributes: ['name', 'price', 'stock_quantity', 'unit', 'status'] }),
+    safeFindAll(ErpInventory, { where: baseWhere, attributes: ['name', 'quantity', 'unit', 'warehouse', 'status'] }),
+    safeFindAll(ErpProduction, { where: baseWhere, attributes: ['name', 'output_product', 'quantity', 'status', 'production_place', 'created_at', 'updated_at'] }),
+  ]);
+
+  const isToday = (dateValue) => {
+    if (!dateValue) return false;
+    const date = new Date(dateValue);
+    return date >= start && date < end;
+  };
+  const isActive = (row) => row.status !== 'Batal';
+  const transactionDate = (row) => row.transaction_date || row.created_at;
+  const todayTransactions = transactions.filter((row) => isActive(row) && isToday(transactionDate(row)));
+  const completedTransactions = transactions.filter((row) => isActive(row) && (row.status === 'Selesai' || row.payment_status === 'Lunas'));
+  const todayRevenue = todayTransactions.reduce((sum, item) => sum + toNumber(item.total), 0);
+  const totalRevenue = completedTransactions.reduce((sum, item) => sum + toNumber(item.total), 0);
+
+  const cashIn = cashFlows
+    .filter((row) => isActive(row) && String(row.cash_type).toLowerCase().includes('masuk'))
+    .reduce((sum, item) => sum + toNumber(item.nominal || item.amount), 0);
+  const cashOut = cashFlows
+    .filter((row) => isActive(row) && String(row.cash_type).toLowerCase().includes('keluar'))
+    .reduce((sum, item) => sum + toNumber(item.nominal || item.amount), 0);
+  const cashAvailable = cashIn - cashOut;
+
+  const receivable = invoices
+    .filter((row) => isActive(row) && row.status !== 'Dibayar')
+    .reduce((sum, item) => sum + Math.max(toNumber(item.total) - toNumber(item.paid_amount), 0), 0);
+  const supplierDebt = purchaseOrders
+    .filter((row) => isActive(row) && row.payment_status !== 'Lunas')
+    .reduce((sum, item) => sum + toNumber(item.total), 0);
+  const unpaidExpense = expenses
+    .filter((row) => isActive(row) && row.payment_status !== 'Lunas' && row.status !== 'Dibayar')
+    .reduce((sum, item) => sum + toNumber(item.total), 0);
+
+  const salesByProduct = completedTransactions.reduce((result, row) => {
+    const name = row.product || row.name || 'Produk/Jasa';
+    const current = result[name] || { name, quantity: 0, total: 0 };
+    current.quantity += toNumber(row.quantity);
+    current.total += toNumber(row.total);
+    result[name] = current;
+    return result;
+  }, {});
+
+  const topProducts = Object.values(salesByProduct)
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 5)
+    .map((item) => ({
+      title: item.name,
+      subtitle: `${item.quantity || 0} terjual`,
+      value: rupiah(item.total),
+    }));
+
+  const lowProductStocks = products
+    .filter((row) => toNumber(row.stock_quantity) <= 10)
+    .map((row) => ({
+      title: row.name,
+      subtitle: row.status || 'Produk',
+      value: `${toNumber(row.stock_quantity)} ${row.unit || 'pcs'}`,
+    }));
+  const lowInventoryStocks = inventories
+    .filter((row) => toNumber(row.quantity) <= 5)
+    .map((row) => ({
+      title: row.name,
+      subtitle: row.warehouse || row.status || 'Inventory',
+      value: `${toNumber(row.quantity)} ${row.unit || ''}`.trim(),
+    }));
+  const lowStocks = [...lowProductStocks, ...lowInventoryStocks].slice(0, 6);
+
+  const lateLimit = new Date();
+  lateLimit.setDate(lateLimit.getDate() - 7);
+  const lateProductions = productions
+    .filter((row) => ['Berjalan', 'QC'].includes(row.status) && new Date(row.created_at || row.updated_at || Date.now()) < lateLimit)
+    .slice(0, 5)
+    .map((row) => ({
+      title: row.name,
+      subtitle: row.production_place || row.output_product || 'Produksi',
+      value: row.status,
+    }));
+
+  const productionCost = expenses
+    .filter((row) => isActive(row) && String(row.category || '').toLowerCase().includes('produksi'))
+    .reduce((sum, item) => sum + toNumber(item.total), 0);
+  const purchaseCost = purchaseOrders
+    .filter((row) => isActive(row) && row.payment_status === 'Lunas')
+    .reduce((sum, item) => sum + toNumber(item.total), 0);
+  const grossProfit = totalRevenue - productionCost - purchaseCost;
+  const grossMargin = totalRevenue > 0 ? Math.round((grossProfit / totalRevenue) * 100) : 0;
+
+  const overdueInvoices = invoices.filter((row) => {
+    if (!row.due_date || row.status === 'Dibayar' || row.status === 'Batal') return false;
+    return new Date(row.due_date) < new Date();
+  }).length;
+  const activeOrders = transactions.filter((row) => ['Order Masuk', 'Diproses', 'Dikirim'].includes(row.status)).length;
+
+  const alerts = [
+    lowStocks.length ? `${lowStocks.length} stok rendah perlu dicek` : null,
+    lateProductions.length ? `${lateProductions.length} produksi terlambat` : null,
+    overdueInvoices ? `${overdueInvoices} invoice jatuh tempo` : null,
+    supplierDebt > 0 ? `Hutang supplier ${rupiah(supplierDebt)}` : null,
+  ].filter(Boolean);
+
+  return {
+    generatedAt: new Date().toISOString(),
+    metrics: [
+      { key: 'todayRevenue', title: 'Omzet Hari Ini', value: rupiah(todayRevenue), subtitle: `${todayTransactions.length} transaksi hari ini`, status: todayRevenue > 0 ? 'good' : 'neutral' },
+      { key: 'cashAvailable', title: 'Kas Tersedia', value: rupiah(cashAvailable), subtitle: `Masuk ${rupiah(cashIn)} / Keluar ${rupiah(cashOut)}`, status: cashAvailable >= 0 ? 'good' : 'warning' },
+      { key: 'receivable', title: 'Piutang', value: rupiah(receivable), subtitle: `${overdueInvoices} jatuh tempo`, status: overdueInvoices ? 'warning' : 'neutral' },
+      { key: 'supplierDebt', title: 'Hutang Supplier', value: rupiah(supplierDebt), subtitle: `Biaya belum dibayar ${rupiah(unpaidExpense)}`, status: supplierDebt > 0 ? 'warning' : 'good' },
+      { key: 'grossMargin', title: 'Margin Kasar', value: `${grossMargin}%`, subtitle: `Laba kotor ${rupiah(grossProfit)}`, status: grossMargin >= 30 ? 'good' : grossMargin > 0 ? 'neutral' : 'warning' },
+      { key: 'activeOrders', title: 'Order Diproses', value: activeOrders, subtitle: 'Belum selesai', status: activeOrders ? 'neutral' : 'good' },
+      { key: 'lowStocks', title: 'Stok Rendah', value: lowStocks.length, subtitle: 'Produk dan inventory', status: lowStocks.length ? 'warning' : 'good' },
+      { key: 'lateProductions', title: 'Produksi Terlambat', value: lateProductions.length, subtitle: 'Batch berjalan > 7 hari', status: lateProductions.length ? 'warning' : 'good' },
+    ],
+    sections: {
+      topProducts,
+      lowStocks,
+      lateProductions,
+      alerts,
+    },
+  };
+};
+
+const normalizeApproval = (row) => {
+  const data = row && row.dataValues ? row.dataValues : row;
+  return {
+    id: data.id,
+    requestNo: data.request_no,
+    module: data.module,
+    action: data.action,
+    title: data.title,
+    description: data.description,
+    status: data.status,
+    requestedBy: data.requested_by,
+    requesterRole: data.requester_role,
+    approverRole: data.approver_role,
+    approvedBy: data.approved_by,
+    approvedAt: data.approved_at,
+    amount: rupiah(data.amount),
+    threshold: rupiah(data.threshold),
+    referenceId: data.reference_id,
+    referenceNo: data.reference_no,
+    riskLevel: data.risk_level,
+    approvalNote: data.approval_note,
+    createdAt: data.created_at,
+  };
+};
+
+const normalizeAuditLog = (row) => {
+  const data = row && row.dataValues ? row.dataValues : row;
+  return {
+    id: data.id,
+    module: data.module,
+    action: data.action,
+    entityId: data.entity_id,
+    entityTitle: data.entity_title,
+    actor: data.actor,
+    actorRole: data.actor_role,
+    note: data.note,
+    createdAt: data.created_at,
+  };
+};
+
+const roleRules = [
+  {
+    role: 'Staff',
+    scope: 'Input data operasional',
+    approval: 'Tidak bisa approve',
+    examples: ['Input supplier', 'Input transaksi', 'Input inventory masuk'],
+  },
+  {
+    role: 'Supervisor',
+    scope: 'Approve produksi dan stok keluar',
+    approval: 'Produksi, QC, transfer, stok keluar',
+    examples: ['Approve bahan keluar produksi', 'Approve batch selesai'],
+  },
+  {
+    role: 'Owner',
+    scope: 'Approve pembayaran besar',
+    approval: `Pembayaran di atas ${rupiah(APPROVAL_THRESHOLD)}`,
+    examples: ['Approve PO besar', 'Approve expense besar', 'Approve cash out besar'],
+  },
+];
+
+const buildRoleApprovalDashboard = async (partnerId) => {
+  const where = { partner_id: partnerId, active: true };
+  const [approvals, auditLogs] = await Promise.all([
+    safeFindAll(ErpApproval, {
+      where,
+      order: [['created_at', 'DESC']],
+      limit: 50,
+    }),
+    safeFindAll(ErpAuditLog, {
+      where: { partner_id: partnerId },
+      order: [['created_at', 'DESC']],
+      limit: 30,
+    }),
+  ]);
+
+  const today = todayRange();
+  const isToday = (dateValue) => {
+    if (!dateValue) return false;
+    const date = new Date(dateValue);
+    return date >= today.start && date < today.end;
+  };
+  const pending = approvals.filter((item) => item.status === 'Menunggu Approval');
+  const approvedToday = approvals.filter((item) => item.status === 'Disetujui' && isToday(item.approved_at || item.updated_at));
+  const rejected = approvals.filter((item) => item.status === 'Ditolak');
+
+  return {
+    metrics: [
+      { title: 'Menunggu Approval', value: pending.length, status: pending.length ? 'warning' : 'good' },
+      { title: 'Disetujui Hari Ini', value: approvedToday.length, status: 'good' },
+      { title: 'Ditolak', value: rejected.length, status: rejected.length ? 'warning' : 'neutral' },
+      { title: 'Audit Log', value: auditLogs.length, status: 'neutral' },
+    ],
+    pendingApprovals: pending.map(normalizeApproval),
+    recentApprovals: approvals.slice(0, 10).map(normalizeApproval),
+    auditLogs: auditLogs.map(normalizeAuditLog),
+    roleRules,
+  };
+};
+
+const decideApproval = async ({ partnerId, id, status, note, actor }) => {
+  const approval = await ErpApproval.findOne({ where: { id, partner_id: partnerId, active: true } });
+  if (!approval) {
+    return { success: false, message: 'Approval tidak ditemukan', data: {} };
+  }
+
+  const beforeData = { ...approval.dataValues };
+  await ErpApproval.update({
+    status,
+    approval_note: note,
+    approved_by: actor,
+    approved_at: new Date(),
+    updated_by: actor,
+  }, { where: { id, partner_id: partnerId } });
+
+  const updated = await ErpApproval.findOne({ where: { id, partner_id: partnerId } });
+  await writeAuditLog({
+    partnerId,
+    module: 'approval',
+    action: status === 'Disetujui' ? 'APPROVE' : 'REJECT',
+    entityId: updated.id,
+    entityTitle: updated.title,
+    actor,
+    actorRole: updated.approver_role || 'Supervisor',
+    beforeData,
+    afterData: updated.dataValues,
+    note,
+  });
+
+  return {
+    success: true,
+    message: `Approval ${status}`,
+    data: normalizeApproval(updated),
+  };
+};
+
 module.exports = {
   modules: () => Object.keys(MODULES).map((key) => ({
     module: key,
@@ -896,6 +1338,18 @@ module.exports = {
     }
 
     const row = await config.model.create(sanitizePayload(config.model, payload));
+    await writeAuditLog({
+      partnerId,
+      module,
+      action: 'CREATE',
+      entityId: row.id,
+      entityTitle: titleFromPayload(module, payload, row),
+      actor: createdBy,
+      actorRole: body.requesterRole || body.requester_role || 'Staff',
+      afterData: row.dataValues,
+      note: `${config.label} dibuat`,
+    });
+    await maybeCreateApproval({ module, partnerId, payload, row, actor: createdBy });
     return { success: true, message: `${config.label} Berhasil Dibuat`, data: normalize(module, row) };
   },
 
@@ -906,18 +1360,46 @@ module.exports = {
       return { success: false, message: `${config.label} Tidak Ditemukan`, data: {} };
     }
 
+    const beforeData = { ...current.dataValues };
     const payload = payloadByModule(module, { ...current.dataValues, ...body });
     payload.updated_by = updatedBy;
 
     await config.model.update(sanitizePayload(config.model, payload), { where: { id, partner_id: partnerId } });
 
     const updated = await config.model.findOne({ where: { id, partner_id: partnerId } });
+    await writeAuditLog({
+      partnerId,
+      module,
+      action: 'UPDATE',
+      entityId: updated.id,
+      entityTitle: titleFromPayload(module, payload, updated),
+      actor: updatedBy,
+      actorRole: body.requesterRole || body.requester_role || 'Staff',
+      beforeData,
+      afterData: updated.dataValues,
+      note: `${config.label} diubah`,
+    });
+    await maybeCreateApproval({ module, partnerId, payload, row: updated, actor: updatedBy });
     return { success: true, message: `${config.label} Berhasil Diubah`, data: normalize(module, updated) };
   },
 
   delete: async (module, partnerId, id) => {
     const config = getConfig(module);
+    const current = await config.model.findOne({ where: { id, partner_id: partnerId } });
     const deleted = await config.model.destroy({ where: { id, partner_id: partnerId } });
+    if (deleted && current) {
+      await writeAuditLog({
+        partnerId,
+        module,
+        action: 'DELETE',
+        entityId: current.id,
+        entityTitle: titleFromPayload(module, current.dataValues, current),
+        actor: null,
+        actorRole: 'Staff',
+        beforeData: current.dataValues,
+        note: `${config.label} dihapus`,
+      });
+    }
     return deleted
       ? { success: true, message: `${config.label} Berhasil Dihapus`, data: [] }
       : { success: false, message: `${config.label} Tidak Ditemukan`, data: {} };
@@ -928,6 +1410,34 @@ module.exports = {
     const metrics = await buildMetrics(module, partnerId);
     return { success: true, message: `Metrik ${config.label} Berhasil Diambil`, data: metrics };
   },
+
+  getOwnerDashboard: async (partnerId) => ({
+    success: true,
+    message: 'Ringkasan Owner Dashboard Berhasil Diambil',
+    data: await buildOwnerDashboard(partnerId),
+  }),
+
+  getRoleApprovalDashboard: async (partnerId) => ({
+    success: true,
+    message: 'Role & Approval Berhasil Diambil',
+    data: await buildRoleApprovalDashboard(partnerId),
+  }),
+
+  approveRequest: async (partnerId, id, body, actor) => decideApproval({
+    partnerId,
+    id,
+    status: 'Disetujui',
+    note: body.note || body.approvalNote || 'Disetujui',
+    actor,
+  }),
+
+  rejectRequest: async (partnerId, id, body, actor) => decideApproval({
+    partnerId,
+    id,
+    status: 'Ditolak',
+    note: body.note || body.approvalNote || 'Ditolak',
+    actor,
+  }),
 
   getBarcodeConfig: (module) => {
     const config = getConfig(module);
@@ -955,6 +1465,17 @@ module.exports = {
     };
 
     const row = await ErpScanHistory.create(payload);
+    await writeAuditLog({
+      partnerId,
+      module,
+      action: 'SCAN',
+      entityId: row.id,
+      entityTitle: payload.result_name || payload.code,
+      actor: createdBy,
+      actorRole: body.requesterRole || body.requester_role || 'Staff',
+      afterData: payload,
+      note: `Scan ${config.label}`,
+    });
     return {
       success: true,
       message: `Scan ${config.label} Berhasil Dicatat`,

@@ -7,6 +7,22 @@ erpRouter.get("/modules", headerAuth.isUserAuthenticated, (req, res, next) => {
   controller.getModules(req, res);
 });
 
+erpRouter.get("/owner-dashboard/summary", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+  controller.getOwnerDashboard(req, res);
+});
+
+erpRouter.get("/role-approval/summary", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+  controller.getRoleApprovalDashboard(req, res);
+});
+
+erpRouter.post("/approval/approve", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+  controller.approveRequest(req, res);
+});
+
+erpRouter.post("/approval/reject", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+  controller.rejectRequest(req, res);
+});
+
 erpRouter.get("/:module/options", headerAuth.isUserAuthenticated, (req, res, next) => {
   controller.getOptions(req, res);
 });

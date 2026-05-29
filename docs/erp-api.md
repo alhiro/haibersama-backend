@@ -44,6 +44,10 @@ Ganti `:module` dengan salah satu modul di atas.
 | Method | Path | Fungsi |
 | --- | --- | --- |
 | GET | `/erp/modules` | Daftar modul ERP dan status default |
+| GET | `/erp/owner-dashboard/summary` | Ringkasan owner dari transaksi, kas, piutang, hutang, stok, produksi, dan margin |
+| GET | `/erp/role-approval/summary` | Ringkasan role, approval pending, dan audit log |
+| POST | `/erp/approval/approve` | Approve request approval |
+| POST | `/erp/approval/reject` | Tolak request approval |
 | GET | `/erp/:module/options` | Opsi form mobile: status, field option, barcode config |
 | GET | `/erp/:module/getall` | List data modul milik partner login |
 | GET | `/erp/:module/get?id=1` | Detail data modul |
@@ -65,6 +69,86 @@ customer, transactionType, transactionNo, channel, paymentStatus,
 purchaseOrderType, purchaseOrderNo, poType, poNo,
 expenseType, expenseNo, vendor, employee,
 product, productionBatch, cashflowReference
+```
+
+## Response Owner Dashboard
+
+```json
+{
+  "generatedAt": "2026-05-29T10:00:00.000Z",
+  "metrics": [
+    {
+      "key": "todayRevenue",
+      "title": "Omzet Hari Ini",
+      "value": "Rp12.800.000",
+      "subtitle": "4 transaksi hari ini",
+      "status": "good"
+    },
+    {
+      "key": "cashAvailable",
+      "title": "Kas Tersedia",
+      "value": "Rp24.500.000",
+      "subtitle": "Masuk Rp38.000.000 / Keluar Rp13.500.000",
+      "status": "good"
+    }
+  ],
+  "sections": {
+    "topProducts": [],
+    "lowStocks": [],
+    "lateProductions": [],
+    "alerts": []
+  }
+}
+```
+
+Owner Dashboard tidak memakai tabel baru. Data dihitung dari tabel ERP yang
+sudah ada: `erp_transaction`, `erp_invoice`, `erp_cash_flow`,
+`erp_purchase_order`, `erp_expense`, `partner_product`, `erp_inventory`, dan
+`erp_production`.
+
+## Response Role & Approval
+
+```json
+{
+  "metrics": [
+    { "title": "Menunggu Approval", "value": 2, "status": "warning" },
+    { "title": "Disetujui Hari Ini", "value": 1, "status": "good" },
+    { "title": "Ditolak", "value": 0, "status": "neutral" },
+    { "title": "Audit Log", "value": 12, "status": "neutral" }
+  ],
+  "pendingApprovals": [
+    {
+      "id": 1,
+      "requestNo": "APR-1770000000000",
+      "module": "cashflow",
+      "action": "Pembayaran Besar",
+      "title": "Pembayaran Supplier",
+      "status": "Menunggu Approval",
+      "requestedBy": "staff@bisnis.com",
+      "requesterRole": "Staff",
+      "approverRole": "Owner",
+      "amount": "Rp8.000.000",
+      "riskLevel": "High"
+    }
+  ],
+  "auditLogs": [],
+  "roleRules": []
+}
+```
+
+Rule otomatis:
+- Staff bisa input data operasional.
+- Supervisor approve stok keluar, transfer, QC, dan produksi selesai.
+- Owner approve pembayaran besar di atas Rp5.000.000.
+- Semua create, update, delete, scan, approve, dan reject dicatat di audit log.
+
+Payload approve/reject:
+
+```json
+{
+  "id": 1,
+  "note": "Dokumen sudah sesuai"
+}
 ```
 
 ## Payload Supplier
@@ -359,6 +443,8 @@ Tabel yang perlu dibuat:
 erp_supplier
 erp_purchase_order
 erp_expense
+erp_approval
+erp_audit_log
 erp_warehouse
 erp_inventory
 erp_production

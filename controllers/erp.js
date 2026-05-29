@@ -66,6 +66,44 @@ exports.getModules = async (req, res) => {
   }
 };
 
+exports.getOwnerDashboard = async (req, res) => {
+  try {
+    const result = await erpService.getOwnerDashboard(res.locals.auth.id);
+    return res.status(200).send(result);
+  } catch (err) {
+    return handleError(res, err);
+  }
+};
+
+exports.getRoleApprovalDashboard = async (req, res) => {
+  try {
+    const result = await erpService.getRoleApprovalDashboard(res.locals.auth.id);
+    return res.status(200).send(result);
+  } catch (err) {
+    return handleError(res, err);
+  }
+};
+
+exports.approveRequest = async (req, res) => {
+  try {
+    const id = req.body.id || req.query.id;
+    const result = await erpService.approveRequest(res.locals.auth.id, id, req.body, res.locals.auth.email);
+    return res.status(result.success ? 200 : 404).send(result);
+  } catch (err) {
+    return handleError(res, err);
+  }
+};
+
+exports.rejectRequest = async (req, res) => {
+  try {
+    const id = req.body.id || req.query.id;
+    const result = await erpService.rejectRequest(res.locals.auth.id, id, req.body, res.locals.auth.email);
+    return res.status(result.success ? 200 : 404).send(result);
+  } catch (err) {
+    return handleError(res, err);
+  }
+};
+
 exports.getOptions = async (req, res) => {
   try {
     const result = erpService.getOptions(req.params.module);

@@ -4,6 +4,8 @@
 -- - erp_supplier
 -- - erp_purchase_order
 -- - erp_expense
+-- - erp_approval
+-- - erp_audit_log
 -- - erp_warehouse
 -- - erp_inventory
 -- - erp_production
@@ -257,6 +259,86 @@ CREATE INDEX IF NOT EXISTS idx_erp_expense_date
 
 CREATE INDEX IF NOT EXISTS idx_erp_expense_search_name
   ON public.erp_expense (LOWER(name));
+
+CREATE TABLE IF NOT EXISTS public.erp_approval (
+  id SERIAL PRIMARY KEY,
+  partner_id INTEGER NOT NULL REFERENCES public.hai_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  request_no VARCHAR(80),
+  module VARCHAR(60) NOT NULL,
+  action VARCHAR(80) NOT NULL,
+  title VARCHAR(150) NOT NULL,
+  description VARCHAR(1000),
+  status VARCHAR(40) NOT NULL DEFAULT 'Menunggu Approval',
+  requested_by VARCHAR(120),
+  requester_role VARCHAR(80),
+  approver_role VARCHAR(80),
+  approved_by VARCHAR(120),
+  approved_at TIMESTAMP WITH TIME ZONE,
+  amount NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  threshold NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  reference_id INTEGER,
+  reference_no VARCHAR(150),
+  risk_level VARCHAR(40),
+  approval_note VARCHAR(1000),
+  details TEXT,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE,
+  created_by VARCHAR(50),
+  updated_at TIMESTAMP WITH TIME ZONE,
+  updated_by VARCHAR(50)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_erp_approval_partner_request_no
+  ON public.erp_approval (partner_id, request_no)
+  WHERE request_no IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_erp_approval_partner
+  ON public.erp_approval (partner_id);
+
+CREATE INDEX IF NOT EXISTS idx_erp_approval_status
+  ON public.erp_approval (status);
+
+CREATE INDEX IF NOT EXISTS idx_erp_approval_module
+  ON public.erp_approval (module);
+
+CREATE INDEX IF NOT EXISTS idx_erp_approval_approver_role
+  ON public.erp_approval (approver_role);
+
+CREATE INDEX IF NOT EXISTS idx_erp_approval_reference
+  ON public.erp_approval (reference_id, reference_no);
+
+CREATE TABLE IF NOT EXISTS public.erp_audit_log (
+  id SERIAL PRIMARY KEY,
+  partner_id INTEGER NOT NULL REFERENCES public.hai_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  module VARCHAR(60) NOT NULL,
+  action VARCHAR(80) NOT NULL,
+  entity_id INTEGER,
+  entity_title VARCHAR(150),
+  actor VARCHAR(120),
+  actor_role VARCHAR(80),
+  before_data TEXT,
+  after_data TEXT,
+  note VARCHAR(1000),
+  created_at TIMESTAMP WITH TIME ZONE,
+  created_by VARCHAR(50),
+  updated_at TIMESTAMP WITH TIME ZONE,
+  updated_by VARCHAR(50)
+);
+
+CREATE INDEX IF NOT EXISTS idx_erp_audit_log_partner
+  ON public.erp_audit_log (partner_id);
+
+CREATE INDEX IF NOT EXISTS idx_erp_audit_log_module
+  ON public.erp_audit_log (module);
+
+CREATE INDEX IF NOT EXISTS idx_erp_audit_log_action
+  ON public.erp_audit_log (action);
+
+CREATE INDEX IF NOT EXISTS idx_erp_audit_log_entity
+  ON public.erp_audit_log (entity_id);
+
+CREATE INDEX IF NOT EXISTS idx_erp_audit_log_created_at
+  ON public.erp_audit_log (created_at);
 
 CREATE TABLE IF NOT EXISTS public.erp_warehouse (
   id SERIAL PRIMARY KEY,
