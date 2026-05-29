@@ -11,8 +11,12 @@ ERP Produk punya modul:
 
 ```text
 supplier
+employeerole
 purchaseorder
 expense
+stockledger
+returnrefund
+settlement
 warehouse
 production
 inventory
@@ -68,7 +72,9 @@ cashType, category, paymentMethod, sourceModule, invoiceType, invoiceNo,
 customer, transactionType, transactionNo, channel, paymentStatus,
 purchaseOrderType, purchaseOrderNo, poType, poNo,
 expenseType, expenseNo, vendor, employee,
-product, productionBatch, cashflowReference
+product, productionBatch, cashflowReference,
+role, department, movementType, returnNo, settlementNo, marketplace,
+approvalStatus
 ```
 
 ## Response Owner Dashboard
@@ -141,6 +147,11 @@ Rule otomatis:
 - Supervisor approve stok keluar, transfer, QC, dan produksi selesai.
 - Owner approve pembayaran besar di atas Rp5.000.000.
 - Semua create, update, delete, scan, approve, dan reject dicatat di audit log.
+- Data yang butuh approval akan diberi `approvalStatus = Menunggu Approval`
+  agar mobile bisa menampilkan penanda sebelum supervisor/owner menyetujui.
+- Backend membuat Stock Ledger otomatis dari inventory, produksi, PO,
+  transaksi, dan retur. Backend juga membuat Cash Flow otomatis dari invoice,
+  transaksi lunas, settlement marketplace cair, PO/expense dibayar, dan refund.
 
 Payload approve/reject:
 
@@ -241,6 +252,101 @@ refund, marketplace fee, dan biaya lain yang nantinya masuk Cash Flow sebagai
 `Uang Keluar`. Field relasi seperti `supplier`, `purchaseOrderNo`,
 `warehouse`, `productionBatch`, `product`, `transactionNo`, `invoiceNo`, dan
 `cashflowReference` menjaga biaya tetap terhubung dengan alur ERP lain.
+
+## Payload Employee Role
+
+```json
+{
+  "name": "Rani Admin Gudang",
+  "email": "rani@gudang.co.id",
+  "phone": "0812-7788-8899",
+  "role": "Warehouse Staff",
+  "department": "Warehouse",
+  "status": "Aktif",
+  "permissions": "Inventory: create, Warehouse: scan, Stock Ledger: read",
+  "note": "Boleh input barang masuk, stok keluar perlu approval supervisor."
+}
+```
+
+Gunakan header `x-erp-role` saat request dari mobile, misalnya `Owner`,
+`Supervisor`, `Warehouse Staff`, `Admin`, `Kasir`, atau `Marketplace Admin`.
+
+## Payload Stock Ledger
+
+Normalnya Stock Ledger dibuat otomatis oleh backend dari PO, inventory,
+produksi, transaksi, dan retur. Endpoint add/update untuk `stockledger`
+dipakai hanya untuk **Koreksi Stok** manual, misalnya selisih opname, barang
+rusak/hilang, stok awal, atau migrasi data.
+
+```json
+{
+  "name": "Kain Cotton Combed 30s",
+  "sku": "MAT-COT30-001",
+  "movementType": "Koreksi",
+  "status": "Tercatat",
+  "quantityIn": 0,
+  "quantityOut": 2,
+  "balanceAfter": 8,
+  "unit": "gulung",
+  "warehouse": "Warehouse Bahan Baku",
+  "sourceModule": "Manual",
+  "sourceReference": "SO-OPNAME-2405",
+  "supplier": "CV Sumber Kain Bandung",
+  "product": "Outer Linen Oversize",
+  "reason": "Selisih stok saat opname gudang",
+  "approvalStatus": "Menunggu Approval",
+  "note": "Koreksi stok manual, wajib ada alasan."
+}
+```
+
+Jika `movementType = Koreksi/Adjustment` dan `quantityOut > 0`, backend membuat
+approval supervisor. Field `reason` atau `note` wajib diisi untuk koreksi
+manual.
+
+## Payload Return & Refund
+
+```json
+{
+  "name": "Retur Outer Linen Oversize",
+  "returnNo": "RET-MP-2405-018",
+  "status": "Pengajuan",
+  "customer": "Toko Bintang",
+  "product": "Outer Linen Oversize",
+  "quantity": 2,
+  "unit": "pcs",
+  "transactionNo": "TRX-MP-2405-018",
+  "invoiceNo": "INV-MP-2405-018",
+  "warehouse": "Gudang Retur",
+  "refundAmount": 400000,
+  "refundMethod": "Marketplace",
+  "reason": "Ukuran tidak sesuai",
+  "cashflowReference": "CF-RET-2405-018",
+  "approvalStatus": "Menunggu Approval",
+  "note": "Retur masuk ke gudang retur dan refund masuk cash out setelah disetujui."
+}
+```
+
+## Payload Marketplace Settlement
+
+```json
+{
+  "name": "Settlement Shopee 20 Mei",
+  "settlementNo": "SET-SHP-2405-020",
+  "marketplace": "Shopee",
+  "status": "Cair",
+  "grossSales": 12800000,
+  "marketplaceFee": 640000,
+  "shippingFee": 180000,
+  "discount": 200000,
+  "refundAmount": 400000,
+  "netPayout": 11380000,
+  "payoutDate": "2026-05-20T17:00:00.000Z",
+  "transactionNo": "TRX-MP-2405-018",
+  "invoiceNo": "INV-MP-2405-018",
+  "cashflowReference": "CF-SET-SHP-2405-020",
+  "note": "Saat status Cair, backend membuat cash in otomatis sesuai net payout."
+}
+```
 
 ## Payload Warehouse
 
@@ -445,6 +551,10 @@ erp_purchase_order
 erp_expense
 erp_approval
 erp_audit_log
+erp_employee_role
+erp_stock_ledger
+erp_return_refund
+erp_marketplace_settlement
 erp_warehouse
 erp_inventory
 erp_production

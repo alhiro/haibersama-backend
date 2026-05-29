@@ -242,6 +242,30 @@
 //         console.log(`Table erp audit log updated!`)
 //     })
 
+// const ErpEmployeeRole = require('./erpEmployeeRole');
+// ErpEmployeeRole.sequelize.sync({ alter: true })
+//     .then(() => {
+//         console.log(`Table erp employee role updated!`)
+//     })
+
+// const ErpStockLedger = require('./erpStockLedger');
+// ErpStockLedger.sequelize.sync({ alter: true })
+//     .then(() => {
+//         console.log(`Table erp stock ledger updated!`)
+//     })
+
+// const ErpReturnRefund = require('./erpReturnRefund');
+// ErpReturnRefund.sequelize.sync({ alter: true })
+//     .then(() => {
+//         console.log(`Table erp return refund updated!`)
+//     })
+
+// const ErpMarketplaceSettlement = require('./erpMarketplaceSettlement');
+// ErpMarketplaceSettlement.sequelize.sync({ alter: true })
+//     .then(() => {
+//         console.log(`Table erp marketplace settlement updated!`)
+//     })
+
 // const ErpScanHistory = require('./erpScanHistory');
 // ErpScanHistory.sequelize.sync({ alter: true })
 //     .then(() => {

@@ -22,7 +22,8 @@ const sendListResponse = (res, result) => res.status(200).json({
 
 exports.getOptions = async (req, res) => {
   try {
-    const result = await partnerProductService.getOptions();
+    const partnerId = res.locals.auth && parseInt(res.locals.auth.type) === 2 ? res.locals.auth.id : null;
+    const result = await partnerProductService.getOptions(partnerId);
     return res.status(200).send(result);
   } catch (err) {
     return res.status(500).send({ code: 500, success: false, message: err.message, data: { err } });

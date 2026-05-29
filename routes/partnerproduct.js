@@ -105,6 +105,7 @@ partnerProductRouter.post("/add", headerAuth.isPartnerAuthenticated, upload.sing
 
   const data = buildPayload(req, res);
   data.created_by = res.locals.auth.email;
+  data.actor_role = res.locals.auth.erpRole;
   controller.create(data, res);
 });
 
@@ -116,6 +117,7 @@ partnerProductRouter.post("/update", headerAuth.isPartnerAuthenticated, upload.s
   const data = buildPayload(req, res);
   data.id = parseInt(req.body.id);
   data.updated_by = res.locals.auth.email;
+  data.actor_role = res.locals.auth.erpRole;
   controller.update(data, res);
 });
 
@@ -127,6 +129,7 @@ partnerProductRouter.patch("/update", headerAuth.isPartnerAuthenticated, upload.
   const data = buildPayload(req, res);
   data.id = parseInt(req.body.id);
   data.updated_by = res.locals.auth.email;
+  data.actor_role = res.locals.auth.erpRole;
   controller.update(data, res);
 });
 
@@ -134,6 +137,8 @@ partnerProductRouter.delete("/delete", headerAuth.isPartnerAuthenticated, (req, 
   const data = {
     partner_id: res.locals.auth.id,
     id: parseInt(req.body.id || req.query.id),
+    deleted_by: res.locals.auth.email,
+    actor_role: res.locals.auth.erpRole,
   };
   controller.delete(data, res);
 });

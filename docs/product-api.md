@@ -20,7 +20,7 @@ Endpoint partner memakai `isPartnerAuthenticated`, sehingga hanya user partner
 
 | Method | Path | Auth | Fungsi |
 | --- | --- | --- | --- |
-| GET | `/product/options` | User | Opsi form produk: status, warehouse, batch produksi, satuan, pilihan title mock |
+| GET | `/product/options` | User | Opsi form produk: status, warehouse, batch produksi, satuan, dan pilihan produk dari data warehouse/produksi partner |
 | GET | `/product/getall` | Partner | List produk milik partner login |
 | GET | `/product/get?id=1` | Partner | Detail produk milik partner login |
 | GET | `/product/listpublic?partner_id=2` | User | List produk publish untuk marketplace/member |
@@ -68,6 +68,13 @@ Field data:
 
 Alias lama juga diterima untuk beberapa field, misalnya `Name`, `Price`,
 `Warehouse`, `ProductionBatch`, `Quantity`, dan `Public`.
+
+Catatan relasi:
+- `warehouse` sebaiknya dipilih dari data `erp_warehouse` partner.
+- `production_batch` dan pilihan nama produk siap jual diambil dari
+  `erp_production.output_product` dan `erp_production.destination_warehouse`.
+- Jika belum ada warehouse/produksi, endpoint options akan mengembalikan list
+  kosong agar admin tidak tertukar dengan data contoh.
 
 ## Response Shape
 

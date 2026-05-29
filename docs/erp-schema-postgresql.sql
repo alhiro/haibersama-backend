@@ -6,6 +6,10 @@
 -- - erp_expense
 -- - erp_approval
 -- - erp_audit_log
+-- - erp_employee_role
+-- - erp_stock_ledger
+-- - erp_return_refund
+-- - erp_marketplace_settlement
 -- - erp_warehouse
 -- - erp_inventory
 -- - erp_production
@@ -120,6 +124,11 @@ CREATE TABLE IF NOT EXISTS public.erp_purchase_order (
   total NUMERIC(18, 2) NOT NULL DEFAULT 0,
   source_reference VARCHAR(150),
   reference VARCHAR(150),
+  approval_status VARCHAR(40) NOT NULL DEFAULT 'Tidak Perlu Approval',
+  approval_id INTEGER,
+  approved_by VARCHAR(120),
+  approved_at TIMESTAMP WITH TIME ZONE,
+  reason VARCHAR(500),
   note VARCHAR(1000),
   details TEXT,
   relations TEXT,
@@ -152,6 +161,9 @@ CREATE INDEX IF NOT EXISTS idx_erp_purchase_order_warehouse
 
 CREATE INDEX IF NOT EXISTS idx_erp_purchase_order_payment_status
   ON public.erp_purchase_order (payment_status);
+
+CREATE INDEX IF NOT EXISTS idx_erp_purchase_order_approval_status
+  ON public.erp_purchase_order (approval_status);
 
 CREATE INDEX IF NOT EXISTS idx_erp_purchase_order_expected_date
   ON public.erp_purchase_order (expected_date);
@@ -191,6 +203,10 @@ CREATE TABLE IF NOT EXISTS public.erp_expense (
   source_module VARCHAR(80),
   source_reference VARCHAR(150),
   reference VARCHAR(150),
+  approval_status VARCHAR(40) NOT NULL DEFAULT 'Tidak Perlu Approval',
+  approval_id INTEGER,
+  approved_by VARCHAR(120),
+  approved_at TIMESTAMP WITH TIME ZONE,
   note VARCHAR(1000),
   details TEXT,
   relations TEXT,
@@ -250,6 +266,9 @@ CREATE INDEX IF NOT EXISTS idx_erp_expense_employee
 
 CREATE INDEX IF NOT EXISTS idx_erp_expense_payment_status
   ON public.erp_expense (payment_status);
+
+CREATE INDEX IF NOT EXISTS idx_erp_expense_approval_status
+  ON public.erp_expense (approval_status);
 
 CREATE INDEX IF NOT EXISTS idx_erp_expense_source_module
   ON public.erp_expense (source_module);
@@ -340,6 +359,135 @@ CREATE INDEX IF NOT EXISTS idx_erp_audit_log_entity
 CREATE INDEX IF NOT EXISTS idx_erp_audit_log_created_at
   ON public.erp_audit_log (created_at);
 
+CREATE TABLE IF NOT EXISTS public.erp_employee_role (
+  id SERIAL PRIMARY KEY,
+  partner_id INTEGER NOT NULL REFERENCES public.hai_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  name VARCHAR(150) NOT NULL,
+  email VARCHAR(120),
+  phone VARCHAR(50),
+  role VARCHAR(80) NOT NULL DEFAULT 'Staff',
+  department VARCHAR(100),
+  status VARCHAR(40) NOT NULL DEFAULT 'Aktif',
+  permissions TEXT,
+  note VARCHAR(1000),
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE,
+  created_by VARCHAR(50),
+  updated_at TIMESTAMP WITH TIME ZONE,
+  updated_by VARCHAR(50)
+);
+
+CREATE INDEX IF NOT EXISTS idx_erp_employee_role_partner ON public.erp_employee_role (partner_id);
+CREATE INDEX IF NOT EXISTS idx_erp_employee_role_role ON public.erp_employee_role (role);
+CREATE INDEX IF NOT EXISTS idx_erp_employee_role_email ON public.erp_employee_role (email);
+
+CREATE TABLE IF NOT EXISTS public.erp_stock_ledger (
+  id SERIAL PRIMARY KEY,
+  partner_id INTEGER NOT NULL REFERENCES public.hai_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  name VARCHAR(150) NOT NULL,
+  sku VARCHAR(80),
+  movement_type VARCHAR(60) NOT NULL DEFAULT 'Masuk',
+  status VARCHAR(40) NOT NULL DEFAULT 'Tercatat',
+  quantity_in NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  quantity_out NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  balance_after NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  unit VARCHAR(40),
+  warehouse VARCHAR(150),
+  source_module VARCHAR(80),
+  source_reference VARCHAR(150),
+  supplier VARCHAR(150),
+  production_batch VARCHAR(120),
+  product VARCHAR(150),
+  approval_status VARCHAR(40) NOT NULL DEFAULT 'Tidak Perlu Approval',
+  approval_id INTEGER,
+  approved_by VARCHAR(120),
+  approved_at TIMESTAMP WITH TIME ZONE,
+  note VARCHAR(1000),
+  details TEXT,
+  relations TEXT,
+  flow_flags TEXT,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE,
+  created_by VARCHAR(50),
+  updated_at TIMESTAMP WITH TIME ZONE,
+  updated_by VARCHAR(50)
+);
+
+CREATE INDEX IF NOT EXISTS idx_erp_stock_ledger_partner ON public.erp_stock_ledger (partner_id);
+CREATE INDEX IF NOT EXISTS idx_erp_stock_ledger_warehouse ON public.erp_stock_ledger (warehouse);
+CREATE INDEX IF NOT EXISTS idx_erp_stock_ledger_source ON public.erp_stock_ledger (source_module, source_reference);
+CREATE INDEX IF NOT EXISTS idx_erp_stock_ledger_approval ON public.erp_stock_ledger (approval_status);
+
+CREATE TABLE IF NOT EXISTS public.erp_return_refund (
+  id SERIAL PRIMARY KEY,
+  partner_id INTEGER NOT NULL REFERENCES public.hai_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  name VARCHAR(150) NOT NULL,
+  return_no VARCHAR(80),
+  status VARCHAR(40) NOT NULL DEFAULT 'Pengajuan',
+  customer VARCHAR(150),
+  product VARCHAR(150),
+  quantity NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  unit VARCHAR(40),
+  transaction_no VARCHAR(80),
+  invoice_no VARCHAR(80),
+  warehouse VARCHAR(150),
+  refund_amount NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  refund_method VARCHAR(80),
+  reason VARCHAR(500),
+  cashflow_reference VARCHAR(150),
+  approval_status VARCHAR(40) NOT NULL DEFAULT 'Tidak Perlu Approval',
+  approval_id INTEGER,
+  approved_by VARCHAR(120),
+  approved_at TIMESTAMP WITH TIME ZONE,
+  note VARCHAR(1000),
+  details TEXT,
+  relations TEXT,
+  flow_flags TEXT,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE,
+  created_by VARCHAR(50),
+  updated_at TIMESTAMP WITH TIME ZONE,
+  updated_by VARCHAR(50)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_erp_return_refund_partner_return_no ON public.erp_return_refund (partner_id, return_no) WHERE return_no IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_erp_return_refund_partner ON public.erp_return_refund (partner_id);
+CREATE INDEX IF NOT EXISTS idx_erp_return_refund_status ON public.erp_return_refund (status);
+CREATE INDEX IF NOT EXISTS idx_erp_return_refund_transaction ON public.erp_return_refund (transaction_no);
+
+CREATE TABLE IF NOT EXISTS public.erp_marketplace_settlement (
+  id SERIAL PRIMARY KEY,
+  partner_id INTEGER NOT NULL REFERENCES public.hai_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  name VARCHAR(150) NOT NULL,
+  settlement_no VARCHAR(80),
+  marketplace VARCHAR(80),
+  status VARCHAR(40) NOT NULL DEFAULT 'Menunggu Cair',
+  gross_sales NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  marketplace_fee NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  shipping_fee NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  discount NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  refund_amount NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  net_payout NUMERIC(18, 2) NOT NULL DEFAULT 0,
+  payout_date TIMESTAMP WITH TIME ZONE,
+  transaction_no VARCHAR(80),
+  invoice_no VARCHAR(80),
+  cashflow_reference VARCHAR(150),
+  note VARCHAR(1000),
+  details TEXT,
+  relations TEXT,
+  flow_flags TEXT,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE,
+  created_by VARCHAR(50),
+  updated_at TIMESTAMP WITH TIME ZONE,
+  updated_by VARCHAR(50)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_erp_marketplace_settlement_partner_no ON public.erp_marketplace_settlement (partner_id, settlement_no) WHERE settlement_no IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_erp_marketplace_settlement_partner ON public.erp_marketplace_settlement (partner_id);
+CREATE INDEX IF NOT EXISTS idx_erp_marketplace_settlement_marketplace ON public.erp_marketplace_settlement (marketplace);
+CREATE INDEX IF NOT EXISTS idx_erp_marketplace_settlement_status ON public.erp_marketplace_settlement (status);
+
 CREATE TABLE IF NOT EXISTS public.erp_warehouse (
   id SERIAL PRIMARY KEY,
   partner_id INTEGER NOT NULL REFERENCES public.hai_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
@@ -391,6 +539,10 @@ CREATE TABLE IF NOT EXISTS public.erp_inventory (
   added_at TIMESTAMP WITH TIME ZONE,
   reference VARCHAR(100),
   relation VARCHAR(250),
+  approval_status VARCHAR(40) NOT NULL DEFAULT 'Tidak Perlu Approval',
+  approval_id INTEGER,
+  approved_by VARCHAR(120),
+  approved_at TIMESTAMP WITH TIME ZONE,
   details TEXT,
   relations TEXT,
   flow_flags TEXT,
@@ -416,6 +568,9 @@ CREATE INDEX IF NOT EXISTS idx_erp_inventory_warehouse
 CREATE INDEX IF NOT EXISTS idx_erp_inventory_reference
   ON public.erp_inventory (reference);
 
+CREATE INDEX IF NOT EXISTS idx_erp_inventory_approval_status
+  ON public.erp_inventory (approval_status);
+
 CREATE INDEX IF NOT EXISTS idx_erp_inventory_search_name
   ON public.erp_inventory (LOWER(name));
 
@@ -437,6 +592,10 @@ CREATE TABLE IF NOT EXISTS public.erp_production (
   failed_quantity INTEGER DEFAULT 0,
   qc_pass_quantity INTEGER DEFAULT 0,
   relation VARCHAR(250),
+  approval_status VARCHAR(40) NOT NULL DEFAULT 'Tidak Perlu Approval',
+  approval_id INTEGER,
+  approved_by VARCHAR(120),
+  approved_at TIMESTAMP WITH TIME ZONE,
   relations TEXT,
   flow_flags TEXT,
   active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -463,6 +622,9 @@ CREATE INDEX IF NOT EXISTS idx_erp_production_destination_warehouse
 
 CREATE INDEX IF NOT EXISTS idx_erp_production_output_product
   ON public.erp_production (output_product);
+
+CREATE INDEX IF NOT EXISTS idx_erp_production_approval_status
+  ON public.erp_production (approval_status);
 
 CREATE INDEX IF NOT EXISTS idx_erp_production_search_name
   ON public.erp_production (LOWER(name));
@@ -564,6 +726,10 @@ CREATE TABLE IF NOT EXISTS public.erp_invoice (
   source_module VARCHAR(80),
   source_reference VARCHAR(150),
   reference VARCHAR(150),
+  approval_status VARCHAR(40) NOT NULL DEFAULT 'Tidak Perlu Approval',
+  approval_id INTEGER,
+  approved_by VARCHAR(120),
+  approved_at TIMESTAMP WITH TIME ZONE,
   note VARCHAR(1000),
   details TEXT,
   relations TEXT,
@@ -600,6 +766,9 @@ CREATE INDEX IF NOT EXISTS idx_erp_invoice_source_module
 CREATE INDEX IF NOT EXISTS idx_erp_invoice_due_date
   ON public.erp_invoice (due_date);
 
+CREATE INDEX IF NOT EXISTS idx_erp_invoice_approval_status
+  ON public.erp_invoice (approval_status);
+
 CREATE INDEX IF NOT EXISTS idx_erp_invoice_search_name
   ON public.erp_invoice (LOWER(name));
 
@@ -619,6 +788,10 @@ CREATE TABLE IF NOT EXISTS public.erp_cash_flow (
   source_module VARCHAR(80),
   source_reference VARCHAR(150),
   reference VARCHAR(150),
+  approval_status VARCHAR(40) NOT NULL DEFAULT 'Tidak Perlu Approval',
+  approval_id INTEGER,
+  approved_by VARCHAR(120),
+  approved_at TIMESTAMP WITH TIME ZONE,
   note VARCHAR(1000),
   details TEXT,
   relations TEXT,
@@ -656,6 +829,9 @@ CREATE INDEX IF NOT EXISTS idx_erp_cash_flow_transaction_date
 
 CREATE INDEX IF NOT EXISTS idx_erp_cash_flow_created_at
   ON public.erp_cash_flow (created_at);
+
+CREATE INDEX IF NOT EXISTS idx_erp_cash_flow_approval_status
+  ON public.erp_cash_flow (approval_status);
 
 CREATE INDEX IF NOT EXISTS idx_erp_cash_flow_search_name
   ON public.erp_cash_flow (LOWER(name));
@@ -716,5 +892,57 @@ CREATE INDEX IF NOT EXISTS idx_erp_scan_history_module
 
 CREATE INDEX IF NOT EXISTS idx_erp_scan_history_code
   ON public.erp_scan_history (code);
+
+-- Migration helper untuk database yang sudah punya tabel ERP lama.
+-- Jalankan bagian ini jika tabel sudah ada sebelum fitur approval/ledger/retur/settlement ditambahkan.
+ALTER TABLE public.erp_purchase_order ADD COLUMN IF NOT EXISTS approval_status VARCHAR(40) NOT NULL DEFAULT 'Tidak Perlu Approval';
+ALTER TABLE public.erp_purchase_order ADD COLUMN IF NOT EXISTS approval_id INTEGER;
+ALTER TABLE public.erp_purchase_order ADD COLUMN IF NOT EXISTS approved_by VARCHAR(120);
+ALTER TABLE public.erp_purchase_order ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP WITH TIME ZONE;
+
+ALTER TABLE public.erp_expense ADD COLUMN IF NOT EXISTS approval_status VARCHAR(40) NOT NULL DEFAULT 'Tidak Perlu Approval';
+ALTER TABLE public.erp_expense ADD COLUMN IF NOT EXISTS approval_id INTEGER;
+ALTER TABLE public.erp_expense ADD COLUMN IF NOT EXISTS approved_by VARCHAR(120);
+ALTER TABLE public.erp_expense ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP WITH TIME ZONE;
+
+ALTER TABLE public.erp_inventory ADD COLUMN IF NOT EXISTS approval_status VARCHAR(40) NOT NULL DEFAULT 'Tidak Perlu Approval';
+ALTER TABLE public.erp_inventory ADD COLUMN IF NOT EXISTS approval_id INTEGER;
+ALTER TABLE public.erp_inventory ADD COLUMN IF NOT EXISTS approved_by VARCHAR(120);
+ALTER TABLE public.erp_inventory ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP WITH TIME ZONE;
+
+ALTER TABLE public.erp_production ADD COLUMN IF NOT EXISTS approval_status VARCHAR(40) NOT NULL DEFAULT 'Tidak Perlu Approval';
+ALTER TABLE public.erp_production ADD COLUMN IF NOT EXISTS approval_id INTEGER;
+ALTER TABLE public.erp_production ADD COLUMN IF NOT EXISTS approved_by VARCHAR(120);
+ALTER TABLE public.erp_production ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP WITH TIME ZONE;
+
+ALTER TABLE public.erp_invoice ADD COLUMN IF NOT EXISTS approval_status VARCHAR(40) NOT NULL DEFAULT 'Tidak Perlu Approval';
+ALTER TABLE public.erp_invoice ADD COLUMN IF NOT EXISTS approval_id INTEGER;
+ALTER TABLE public.erp_invoice ADD COLUMN IF NOT EXISTS approved_by VARCHAR(120);
+ALTER TABLE public.erp_invoice ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP WITH TIME ZONE;
+
+ALTER TABLE public.erp_cash_flow ADD COLUMN IF NOT EXISTS approval_status VARCHAR(40) NOT NULL DEFAULT 'Tidak Perlu Approval';
+ALTER TABLE public.erp_cash_flow ADD COLUMN IF NOT EXISTS approval_id INTEGER;
+ALTER TABLE public.erp_cash_flow ADD COLUMN IF NOT EXISTS approved_by VARCHAR(120);
+ALTER TABLE public.erp_cash_flow ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP WITH TIME ZONE;
+
+ALTER TABLE public.erp_stock_ledger ADD COLUMN IF NOT EXISTS approved_by VARCHAR(120);
+ALTER TABLE public.erp_stock_ledger ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE public.erp_stock_ledger ADD COLUMN IF NOT EXISTS reason VARCHAR(500);
+
+ALTER TABLE public.erp_return_refund ADD COLUMN IF NOT EXISTS approved_by VARCHAR(120);
+ALTER TABLE public.erp_return_refund ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP WITH TIME ZONE;
+
+CREATE INDEX IF NOT EXISTS idx_erp_purchase_order_approval_status
+  ON public.erp_purchase_order (approval_status);
+CREATE INDEX IF NOT EXISTS idx_erp_expense_approval_status
+  ON public.erp_expense (approval_status);
+CREATE INDEX IF NOT EXISTS idx_erp_inventory_approval_status
+  ON public.erp_inventory (approval_status);
+CREATE INDEX IF NOT EXISTS idx_erp_production_approval_status
+  ON public.erp_production (approval_status);
+CREATE INDEX IF NOT EXISTS idx_erp_invoice_approval_status
+  ON public.erp_invoice (approval_status);
+CREATE INDEX IF NOT EXISTS idx_erp_cash_flow_approval_status
+  ON public.erp_cash_flow (approval_status);
 
 COMMIT;

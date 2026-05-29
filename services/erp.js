@@ -13,6 +13,10 @@ const ErpScanHistory = require('../models/erpScanHistory');
 const PartnerProduct = require('../models/partnerProduct');
 const ErpApproval = require('../models/erpApproval');
 const ErpAuditLog = require('../models/erpAuditLog');
+const ErpEmployeeRole = require('../models/erpEmployeeRole');
+const ErpStockLedger = require('../models/erpStockLedger');
+const ErpReturnRefund = require('../models/erpReturnRefund');
+const ErpMarketplaceSettlement = require('../models/erpMarketplaceSettlement');
 
 const Op = Sequelize.Op;
 
@@ -25,6 +29,17 @@ const MODULES = {
     statuses: ['Aktif', 'Review', 'Hold'],
     extraFields: {
       relation: ['Outer Linen Oversize', 'Kemeja Basic Twill', 'Dress Rayon Premium', 'Semua SKU publish'],
+    },
+  },
+  employeerole: {
+    label: 'Employee Role',
+    model: ErpEmployeeRole,
+    titleField: 'name',
+    defaultStatus: 'Aktif',
+    statuses: ['Aktif', 'Nonaktif', 'Review'],
+    extraFields: {
+      role: ['Owner', 'Supervisor', 'Warehouse Staff', 'Admin', 'Penjahit', 'Kasir', 'Driver', 'Marketplace Admin'],
+      department: ['Owner', 'Warehouse', 'Produksi', 'Finance', 'Toko', 'Marketplace', 'Operasional'],
     },
   },
   purchaseorder: {
@@ -134,6 +149,18 @@ const MODULES = {
       defaultQuantity: '1 gulung',
     },
   },
+  stockledger: {
+    label: 'Stock Ledger',
+    model: ErpStockLedger,
+    titleField: 'name',
+    defaultStatus: 'Tercatat',
+    statuses: ['Tercatat', 'Menunggu Approval', 'Disetujui', 'Ditolak'],
+    extraFields: {
+      movementType: ['Adjustment', 'Koreksi'],
+      warehouse: ['Warehouse Bahan Baku', 'Warehouse Produk Jadi', 'Area QC', 'Gudang Retur'],
+      sourceModule: ['Manual'],
+    },
+  },
   production: {
     label: 'Produksi',
     model: ErpProduction,
@@ -195,6 +222,27 @@ const MODULES = {
       paymentStatus: ['Belum Bayar', 'DP', 'Lunas', 'Refund', 'Batal'],
       paymentMethod: ['Tunai', 'Transfer Bank', 'QRIS', 'E-Wallet', 'Marketplace', 'Tempo'],
       warehouse: ['Warehouse Produk Jadi', 'Warehouse Bahan Baku', 'Area QC', 'Gudang Retur'],
+    },
+  },
+  returnrefund: {
+    label: 'Return & Refund',
+    model: ErpReturnRefund,
+    titleField: 'name',
+    defaultStatus: 'Pengajuan',
+    statuses: ['Pengajuan', 'Diterima', 'QC Retur', 'Refund Diproses', 'Selesai', 'Ditolak'],
+    extraFields: {
+      refundMethod: ['Transfer Bank', 'Marketplace', 'E-Wallet', 'Cash', 'Saldo Toko'],
+      warehouse: ['Gudang Retur', 'Area QC', 'Warehouse Produk Jadi'],
+    },
+  },
+  settlement: {
+    label: 'Marketplace Settlement',
+    model: ErpMarketplaceSettlement,
+    titleField: 'name',
+    defaultStatus: 'Menunggu Cair',
+    statuses: ['Menunggu Cair', 'Cair', 'Selisih', 'Rekonsiliasi', 'Batal'],
+    extraFields: {
+      marketplace: ['Shopee', 'Tokopedia', 'TikTok Shop', 'Lazada', 'Blibli', 'Manual'],
     },
   },
   cashflow: {
@@ -322,6 +370,13 @@ const buildFilter = (module, partnerId, params = {}) => {
     'cashflow_reference',
     'vendor',
     'employee',
+    'role',
+    'department',
+    'movement_type',
+    'return_no',
+    'settlement_no',
+    'marketplace',
+    'approval_status',
   ].forEach((key) => {
     if (params[key]) filter[key] = params[key];
   });
@@ -356,6 +411,10 @@ const baseRelations = (data) => {
   if (data.channel) relations.push(`Channel: ${data.channel}`);
   if (data.source_module) relations.push(`Sumber: ${data.source_module}`);
   if (data.source_reference) relations.push(`Ref Sumber: ${data.source_reference}`);
+  if (data.return_no) relations.push(`Retur: ${data.return_no}`);
+  if (data.settlement_no) relations.push(`Settlement: ${data.settlement_no}`);
+  if (data.cashflow_reference) relations.push(`Cash Flow: ${data.cashflow_reference}`);
+  if (data.approval_status) relations.push(`Approval: ${data.approval_status}`);
   if (data.relation) relations.push(data.relation);
   return relations;
 };
@@ -394,6 +453,11 @@ const baseFlowFlags = (data) => {
   if (data.item) flags.push({ label: 'Barang', value: data.item });
   if (data.expected_date) flags.push({ label: 'Estimasi Datang', value: data.expected_date });
   if (data.received_quantity) flags.push({ label: 'Diterima', value: `${data.received_quantity} ${data.unit || ''}`.trim() });
+  if (data.movement_type) flags.push({ label: 'Mutasi', value: data.movement_type });
+  if (data.approval_status) flags.push({ label: 'Approval', value: data.approval_status });
+  if (data.return_no) flags.push({ label: 'No Retur', value: data.return_no });
+  if (data.settlement_no) flags.push({ label: 'No Settlement', value: data.settlement_no });
+  if (data.marketplace) flags.push({ label: 'Marketplace', value: data.marketplace });
   return flags;
 };
 
@@ -446,6 +510,19 @@ const normalize = (module, row) => {
     expenseDate: data.expense_date,
     productionBatch: data.production_batch,
     cashflowReference: data.cashflow_reference,
+    approvalStatus: data.approval_status,
+    approvalId: data.approval_id,
+    role: data.role,
+    department: data.department,
+    movementType: data.movement_type,
+    returnNo: data.return_no,
+    refundAmount: data.refund_amount,
+    refundMethod: data.refund_method,
+    settlementNo: data.settlement_no,
+    marketplace: data.marketplace,
+    grossSales: data.gross_sales,
+    marketplaceFee: data.marketplace_fee,
+    netPayout: data.net_payout,
     details,
     relations,
     flow_flags: flowFlags,
@@ -477,6 +554,17 @@ const payloadByModule = (module, body) => {
     });
   }
 
+  if (module === 'employeerole') {
+    Object.assign(common, {
+      email: pickFirst(body.email, body.Email),
+      phone: pickFirst(body.phone, body.Phone),
+      role: pickFirst(body.role, body.Role),
+      department: pickFirst(body.department, body.Department),
+      permissions: stringifyArray(pickFirst(body.permissions, body.Permissions)),
+      note: pickFirst(body.note, body.Note),
+    });
+  }
+
   if (module === 'warehouse') {
     Object.assign(common, {
       contact: pickFirst(body.contact, body.Contact),
@@ -498,6 +586,31 @@ const payloadByModule = (module, body) => {
       added_at: pickFirst(body.added_at, body.addedAt, body.AddedAt),
       reference: pickFirst(body.reference, body.Reference),
       relation: pickFirst(body.relation, body.Relation),
+      approval_status: pickFirst(body.approval_status, body.approvalStatus, body.ApprovalStatus),
+      approval_id: pickFirst(body.approval_id, body.approvalId, body.ApprovalId),
+    });
+  }
+
+  if (module === 'stockledger') {
+    const quantityIn = toNumber(pickFirst(body.quantity_in, body.quantityIn, body.QuantityIn), 0);
+    const quantityOut = toNumber(pickFirst(body.quantity_out, body.quantityOut, body.QuantityOut), 0);
+    Object.assign(common, {
+      sku: pickFirst(body.sku, body.Sku),
+      movement_type: pickFirst(body.movement_type, body.movementType, body.MovementType),
+      quantity_in: quantityIn,
+      quantity_out: quantityOut,
+      balance_after: toNumber(pickFirst(body.balance_after, body.balanceAfter, body.BalanceAfter), quantityIn - quantityOut),
+      unit: pickFirst(body.unit, body.Unit),
+      warehouse: pickFirst(body.warehouse, body.Warehouse),
+      source_module: pickFirst(body.source_module, body.sourceModule, body.SourceModule),
+      source_reference: pickFirst(body.source_reference, body.sourceReference, body.SourceReference),
+      supplier: pickFirst(body.supplier, body.Supplier),
+      production_batch: pickFirst(body.production_batch, body.productionBatch, body.ProductionBatch),
+      product: pickFirst(body.product, body.Product),
+      approval_status: pickFirst(body.approval_status, body.approvalStatus, body.ApprovalStatus),
+      approval_id: pickFirst(body.approval_id, body.approvalId, body.ApprovalId),
+      reason: pickFirst(body.reason, body.Reason),
+      note: pickFirst(body.note, body.Note),
     });
   }
 
@@ -513,6 +626,8 @@ const payloadByModule = (module, body) => {
       failed_quantity: toNumber(pickFirst(body.failed_quantity, body.failedQuantity, body.FailedQuantity), 0),
       qc_pass_quantity: toNumber(pickFirst(body.qc_pass_quantity, body.qcPassQuantity, body.QcPassQuantity), 0),
       relation: pickFirst(body.relation, body.Relation),
+      approval_status: pickFirst(body.approval_status, body.approvalStatus, body.ApprovalStatus),
+      approval_id: pickFirst(body.approval_id, body.approvalId, body.ApprovalId),
     });
   }
 
@@ -536,6 +651,8 @@ const payloadByModule = (module, body) => {
       source_module: pickFirst(body.source_module, body.sourceModule, body.SourceModule),
       source_reference: pickFirst(body.source_reference, body.sourceReference, body.SourceReference),
       reference: pickFirst(body.reference, body.Reference),
+      approval_status: pickFirst(body.approval_status, body.approvalStatus, body.ApprovalStatus),
+      approval_id: pickFirst(body.approval_id, body.approvalId, body.ApprovalId),
       note: pickFirst(body.note, body.Note),
     });
   }
@@ -563,6 +680,8 @@ const payloadByModule = (module, body) => {
       source_module: pickFirst(body.source_module, body.sourceModule, body.SourceModule),
       source_reference: pickFirst(body.source_reference, body.sourceReference, body.SourceReference),
       reference: pickFirst(body.reference, body.Reference),
+      approval_status: pickFirst(body.approval_status, body.approvalStatus, body.ApprovalStatus),
+      approval_id: pickFirst(body.approval_id, body.approvalId, body.ApprovalId),
       note: pickFirst(body.note, body.Note),
     });
   }
@@ -600,6 +719,28 @@ const payloadByModule = (module, body) => {
     });
   }
 
+  if (module === 'returnrefund') {
+    const refundAmount = toNumber(pickFirst(body.refund_amount, body.refundAmount, body.RefundAmount, body.total, body.Total), 0);
+    Object.assign(common, {
+      return_no: pickFirst(body.return_no, body.returnNo, body.ReturnNo),
+      customer: pickFirst(body.customer, body.Customer),
+      product: pickFirst(body.product, body.Product),
+      quantity: toNumber(pickFirst(body.quantity, body.Quantity), 0),
+      unit: pickFirst(body.unit, body.Unit),
+      transaction_no: pickFirst(body.transaction_no, body.transactionNo, body.TransactionNo),
+      invoice_no: pickFirst(body.invoice_no, body.invoiceNo, body.InvoiceNo),
+      warehouse: pickFirst(body.warehouse, body.Warehouse),
+      refund_amount: refundAmount,
+      amount: common.amount || `Rp${refundAmount.toLocaleString('id-ID')}`,
+      refund_method: pickFirst(body.refund_method, body.refundMethod, body.RefundMethod),
+      reason: pickFirst(body.reason, body.Reason),
+      cashflow_reference: pickFirst(body.cashflow_reference, body.cashflowReference, body.CashflowReference),
+      approval_status: pickFirst(body.approval_status, body.approvalStatus, body.ApprovalStatus),
+      approval_id: pickFirst(body.approval_id, body.approvalId, body.ApprovalId),
+      note: pickFirst(body.note, body.Note),
+    });
+  }
+
   if (module === 'purchaseorder') {
     const subtotal = toNumber(pickFirst(body.subtotal, body.Subtotal, body.total, body.Total, body.amount, body.Amount), 0);
     const discount = toNumber(pickFirst(body.discount, body.Discount), 0);
@@ -627,6 +768,33 @@ const payloadByModule = (module, body) => {
       amount: common.amount || `Rp${total.toLocaleString('id-ID')}`,
       source_reference: pickFirst(body.source_reference, body.sourceReference, body.SourceReference),
       reference: pickFirst(body.reference, body.Reference),
+      approval_status: pickFirst(body.approval_status, body.approvalStatus, body.ApprovalStatus),
+      approval_id: pickFirst(body.approval_id, body.approvalId, body.ApprovalId),
+      note: pickFirst(body.note, body.Note),
+    });
+  }
+
+  if (module === 'settlement') {
+    const grossSales = toNumber(pickFirst(body.gross_sales, body.grossSales, body.GrossSales), 0);
+    const marketplaceFee = toNumber(pickFirst(body.marketplace_fee, body.marketplaceFee, body.MarketplaceFee), 0);
+    const shippingFee = toNumber(pickFirst(body.shipping_fee, body.shippingFee, body.ShippingFee), 0);
+    const discount = toNumber(pickFirst(body.discount, body.Discount), 0);
+    const refundAmount = toNumber(pickFirst(body.refund_amount, body.refundAmount, body.RefundAmount), 0);
+    const netPayout = toNumber(pickFirst(body.net_payout, body.netPayout, body.NetPayout), grossSales - marketplaceFee - shippingFee - discount - refundAmount);
+    Object.assign(common, {
+      settlement_no: pickFirst(body.settlement_no, body.settlementNo, body.SettlementNo),
+      marketplace: pickFirst(body.marketplace, body.Marketplace),
+      gross_sales: grossSales,
+      marketplace_fee: marketplaceFee,
+      shipping_fee: shippingFee,
+      discount,
+      refund_amount: refundAmount,
+      net_payout: netPayout,
+      amount: common.amount || `Rp${netPayout.toLocaleString('id-ID')}`,
+      payout_date: pickFirst(body.payout_date, body.payoutDate, body.PayoutDate),
+      transaction_no: pickFirst(body.transaction_no, body.transactionNo, body.TransactionNo),
+      invoice_no: pickFirst(body.invoice_no, body.invoiceNo, body.InvoiceNo),
+      cashflow_reference: pickFirst(body.cashflow_reference, body.cashflowReference, body.CashflowReference),
       note: pickFirst(body.note, body.Note),
     });
   }
@@ -662,6 +830,8 @@ const payloadByModule = (module, body) => {
       source_module: pickFirst(body.source_module, body.sourceModule, body.SourceModule),
       source_reference: pickFirst(body.source_reference, body.sourceReference, body.SourceReference),
       reference: pickFirst(body.reference, body.Reference),
+      approval_status: pickFirst(body.approval_status, body.approvalStatus, body.ApprovalStatus),
+      approval_id: pickFirst(body.approval_id, body.approvalId, body.ApprovalId),
       note: pickFirst(body.note, body.Note),
     });
   }
@@ -694,6 +864,15 @@ const buildMetrics = async (module, partnerId) => {
     ];
   }
 
+  if (module === 'employeerole') {
+    return [
+      metric('Karyawan Aktif', await config.model.count({ where: { ...where, status: 'Aktif' } })),
+      metric('Owner', await config.model.count({ where: { ...where, role: 'Owner' } })),
+      metric('Supervisor', await config.model.count({ where: { ...where, role: 'Supervisor' } })),
+      metric('Total Role', total),
+    ];
+  }
+
   if (module === 'warehouse') {
     const warehouses = await config.model.findAll({ where, attributes: ['capacity'] });
     const capacities = warehouses.map((item) => toNumber(item.capacity)).filter((item) => item > 0);
@@ -703,6 +882,18 @@ const buildMetrics = async (module, partnerId) => {
       metric('Aktif', await config.model.count({ where: { ...where, status: 'Aktif' } })),
       metric('Maintenance', await config.model.count({ where: { ...where, status: 'Maintenance' } })),
       metric('Kapasitas Terpakai', `${avg}%`),
+    ];
+  }
+
+  if (module === 'stockledger') {
+    const rows = await config.model.findAll({ where, attributes: ['quantity_in', 'quantity_out', 'approval_status'] });
+    const inQty = rows.reduce((sum, item) => sum + toNumber(item.quantity_in), 0);
+    const outQty = rows.reduce((sum, item) => sum + toNumber(item.quantity_out), 0);
+    return [
+      metric('Mutasi Masuk', inQty),
+      metric('Mutasi Keluar', outQty),
+      metric('Pending Approval', rows.filter((item) => item.approval_status === 'Menunggu Approval').length),
+      metric('Saldo Mutasi', inQty - outQty),
     ];
   }
 
@@ -784,6 +975,30 @@ const buildMetrics = async (module, partnerId) => {
       metric('Omzet Selesai', rupiah(omzet)),
       metric('Order Diproses', pending),
       metric('Item Terjual', qty || paid),
+    ];
+  }
+
+  if (module === 'returnrefund') {
+    const rows = await config.model.findAll({ where, attributes: ['refund_amount', 'status'] });
+    const refundTotal = rows.reduce((sum, item) => sum + toNumber(item.refund_amount), 0);
+    return [
+      metric('Pengajuan Retur', await config.model.count({ where: { ...where, status: 'Pengajuan' } })),
+      metric('Refund Diproses', await config.model.count({ where: { ...where, status: 'Refund Diproses' } })),
+      metric('Nilai Refund', rupiah(refundTotal)),
+      metric('Selesai', await config.model.count({ where: { ...where, status: 'Selesai' } })),
+    ];
+  }
+
+  if (module === 'settlement') {
+    const rows = await config.model.findAll({ where, attributes: ['gross_sales', 'marketplace_fee', 'net_payout', 'status'] });
+    const gross = rows.reduce((sum, item) => sum + toNumber(item.gross_sales), 0);
+    const fee = rows.reduce((sum, item) => sum + toNumber(item.marketplace_fee), 0);
+    const payout = rows.reduce((sum, item) => sum + toNumber(item.net_payout), 0);
+    return [
+      metric('Gross Sales', rupiah(gross)),
+      metric('Fee Marketplace', rupiah(fee)),
+      metric('Dana Cair', rupiah(payout)),
+      metric('Menunggu Cair', await config.model.count({ where: { ...where, status: 'Menunggu Cair' } })),
     ];
   }
 
@@ -896,6 +1111,21 @@ const approvalRuleFor = (module, payload = {}) => {
     };
   }
 
+  if (module === 'stockledger') {
+    const movementType = String(payload.movement_type || payload.movementType || '');
+    const quantityOut = toNumber(payload.quantity_out || payload.quantityOut);
+    const isManualCorrection = ['Adjustment', 'Koreksi'].includes(movementType);
+    if (isManualCorrection && quantityOut > 0) {
+      return {
+        action: 'Koreksi Stok Keluar',
+        approverRole: 'Supervisor',
+        riskLevel: 'Medium',
+        threshold: 0,
+        reason: 'Koreksi stok yang mengurangi stok perlu approval supervisor.',
+      };
+    }
+  }
+
   if (['cashflow', 'expense', 'purchaseorder', 'invoice'].includes(module) && amount >= APPROVAL_THRESHOLD) {
     return {
       action: 'Pembayaran Besar',
@@ -962,6 +1192,85 @@ const maybeCreateApproval = async ({ module, partnerId, payload, row, actor }) =
     });
 
     return approval;
+  } catch (error) {
+    return null;
+  }
+};
+
+const autoCreateStockLedger = async ({ module, partnerId, payload, row, actor }) => {
+  if (!['inventory', 'transaction', 'returnrefund', 'production', 'purchaseorder'].includes(module)) return null;
+  const title = payload.name || payload.product || payload.item || payload.output_product || titleFromPayload(module, payload, row);
+  const quantity = toNumber(payload.quantity || payload.received_quantity || payload.qc_pass_quantity);
+  if (!title || quantity <= 0) return null;
+
+  const outStatuses = ['Dipakai Produksi', 'Transfer', 'Selesai', 'Dikirim'];
+  const isOut = module === 'transaction' || outStatuses.includes(payload.status);
+  const isReturn = module === 'returnrefund';
+  const movementType = isReturn ? 'Retur' : module === 'production' ? 'Produksi' : isOut ? 'Keluar' : 'Masuk';
+
+  try {
+    return await ErpStockLedger.create({
+      partner_id: partnerId,
+      name: title,
+      movement_type: movementType,
+      status: payload.approval_status === 'Menunggu Approval' ? 'Menunggu Approval' : 'Tercatat',
+      quantity_in: isOut ? 0 : quantity,
+      quantity_out: isOut ? quantity : 0,
+      balance_after: 0,
+      unit: payload.unit,
+      warehouse: payload.warehouse || payload.destination_warehouse || payload.source_warehouse,
+      source_module: module,
+      source_reference: payload.reference || payload.transaction_no || payload.po_no || payload.return_no || payload.source_reference,
+      supplier: payload.supplier,
+      production_batch: payload.production_batch || payload.output_product,
+      product: payload.product || payload.output_product || payload.item,
+      approval_status: payload.approval_status || 'Tidak Perlu Approval',
+      approval_id: payload.approval_id,
+      note: `Auto ledger dari ${module}`,
+      created_by: actor,
+    });
+  } catch (error) {
+    return null;
+  }
+};
+
+const autoCreateCashFlow = async ({ module, partnerId, payload, row, actor }) => {
+  if (module === 'cashflow') return null;
+  const isPaid = ['Lunas', 'Dibayar', 'Cair', 'Selesai'].includes(String(payload.payment_status || payload.status));
+  if (!isPaid) return null;
+
+  const isCashIn = ['invoice', 'transaction', 'settlement'].includes(module);
+  const isCashOut = ['expense', 'purchaseorder', 'returnrefund'].includes(module);
+  if (!isCashIn && !isCashOut) return null;
+
+  const nominal = toNumber(payload.net_payout || payload.refund_amount || payload.total || payload.nominal || payload.amount);
+  if (nominal <= 0) return null;
+  const sourceReference = payload.reference || payload.invoice_no || payload.transaction_no || payload.po_no || payload.return_no || payload.settlement_no;
+
+  try {
+    if (sourceReference) {
+      const existing = await ErpCashFlow.findOne({
+        where: { partner_id: partnerId, source_module: module, source_reference: sourceReference, active: true },
+      });
+      if (existing) return existing;
+    }
+    return await ErpCashFlow.create({
+      partner_id: partnerId,
+      name: `Auto ${isCashIn ? 'Cash In' : 'Cash Out'} - ${titleFromPayload(module, payload, row)}`,
+      description: `Dibuat otomatis dari modul ${module}`,
+      status: 'Tercatat',
+      meta: module,
+      amount: `Rp${nominal.toLocaleString('id-ID')}`,
+      nominal,
+      cash_type: isCashIn ? 'Uang Masuk' : 'Uang Keluar',
+      category: module === 'returnrefund' ? 'Refund/Retur' : module === 'purchaseorder' ? 'Pembelian Supplier' : module === 'expense' ? 'Operasional' : 'Penjualan Produk',
+      payment_method: payload.payment_method || payload.refund_method || 'Auto',
+      transaction_date: new Date(),
+      source_module: module,
+      source_reference: sourceReference,
+      reference: `AUTO-${module}-${row && row.id ? row.id : Date.now()}`,
+      created_by: actor,
+    });
   } catch (error) {
     return null;
   }
@@ -1256,6 +1565,14 @@ const decideApproval = async ({ partnerId, id, status, note, actor, actorRole })
   }, { where: { id, partner_id: partnerId } });
 
   const updated = await ErpApproval.findOne({ where: { id, partner_id: partnerId } });
+  const referenceConfig = MODULES[updated.module];
+  if (referenceConfig && referenceConfig.model.rawAttributes.approval_status && updated.reference_id) {
+    await referenceConfig.model.update({
+      approval_status: status,
+      approved_by: actor,
+      approved_at: new Date(),
+    }, { where: { id: updated.reference_id, partner_id: partnerId } });
+  }
   await writeAuditLog({
     partnerId,
     module: 'approval',
@@ -1288,7 +1605,7 @@ module.exports = {
     const config = getConfig(module);
     return {
       success: true,
-      message: `Opsi ${config.label} Berhasil Diambil`,
+      message: `Pilihan ${config.label} berhasil dimuat`,
       data: {
         module,
         title: config.label,
@@ -1316,7 +1633,7 @@ module.exports = {
 
     return {
       success: true,
-      message: rows.rows.length > 0 ? `Daftar ${config.label} Berhasil Diambil` : `Data ${config.label} Kosong`,
+      message: rows.rows.length > 0 ? `Daftar ${config.label} berhasil dimuat` : `${config.label} masih kosong`,
       data: rows.rows.map((row) => normalize(module, row)),
       page,
       count: Math.ceil(rows.count / limit),
@@ -1328,8 +1645,8 @@ module.exports = {
     const config = getConfig(module);
     const row = await config.model.findOne({ where: { id, partner_id: partnerId, active: true } });
     return row
-      ? { success: true, message: `${config.label} Berhasil Diambil`, data: normalize(module, row) }
-      : { success: false, message: `${config.label} Tidak Ditemukan`, data: {} };
+      ? { success: true, message: `Detail ${config.label} berhasil dimuat`, data: normalize(module, row) }
+      : { success: false, message: `${config.label} tidak ditemukan`, data: {} };
   },
 
   create: async (module, partnerId, body, createdBy, actorRole = 'Staff') => {
@@ -1342,6 +1659,9 @@ module.exports = {
     const title = payload[config.titleField];
     if (!title || title.trim() === '') {
       return { success: false, message: `Nama/Judul ${config.label} wajib diisi`, data: {} };
+    }
+    if (module === 'stockledger' && !payload.reason && !payload.note) {
+      return { success: false, message: 'Alasan koreksi stok wajib diisi', data: {} };
     }
 
     const row = await config.model.create(sanitizePayload(config.model, payload));
@@ -1356,20 +1676,35 @@ module.exports = {
       afterData: row.dataValues,
       note: `${config.label} dibuat`,
     });
-    await maybeCreateApproval({ module, partnerId, payload: { ...payload, requesterRole: body.requesterRole || body.requester_role || actorRole }, row, actor: createdBy });
-    return { success: true, message: `${config.label} Berhasil Dibuat`, data: normalize(module, row) };
+    const approval = await maybeCreateApproval({ module, partnerId, payload: { ...payload, requesterRole: body.requesterRole || body.requester_role || actorRole }, row, actor: createdBy });
+    if (approval && config.model.rawAttributes.approval_status) {
+      await config.model.update({
+        approval_status: 'Menunggu Approval',
+        approval_id: approval.id,
+      }, { where: { id: row.id, partner_id: partnerId } });
+      row.approval_status = 'Menunggu Approval';
+      row.approval_id = approval.id;
+      payload.approval_status = 'Menunggu Approval';
+      payload.approval_id = approval.id;
+    }
+    await autoCreateStockLedger({ module, partnerId, payload, row, actor: createdBy });
+    await autoCreateCashFlow({ module, partnerId, payload, row, actor: createdBy });
+    return { success: true, message: approval ? `${config.label} berhasil disimpan dan menunggu approval` : `${config.label} berhasil disimpan`, data: normalize(module, row) };
   },
 
   update: async (module, partnerId, id, body, updatedBy, actorRole = 'Staff') => {
     const config = getConfig(module);
     const current = await config.model.findOne({ where: { id, partner_id: partnerId } });
     if (!current) {
-      return { success: false, message: `${config.label} Tidak Ditemukan`, data: {} };
+      return { success: false, message: `${config.label} tidak ditemukan`, data: {} };
     }
 
     const beforeData = { ...current.dataValues };
     const payload = payloadByModule(module, { ...current.dataValues, ...body });
     payload.updated_by = updatedBy;
+    if (module === 'stockledger' && !payload.reason && !payload.note) {
+      return { success: false, message: 'Alasan koreksi stok wajib diisi', data: {} };
+    }
 
     await config.model.update(sanitizePayload(config.model, payload), { where: { id, partner_id: partnerId } });
 
@@ -1386,8 +1721,19 @@ module.exports = {
       afterData: updated.dataValues,
       note: `${config.label} diubah`,
     });
-    await maybeCreateApproval({ module, partnerId, payload: { ...payload, requesterRole: body.requesterRole || body.requester_role || actorRole }, row: updated, actor: updatedBy });
-    return { success: true, message: `${config.label} Berhasil Diubah`, data: normalize(module, updated) };
+    const approval = await maybeCreateApproval({ module, partnerId, payload: { ...payload, requesterRole: body.requesterRole || body.requester_role || actorRole }, row: updated, actor: updatedBy });
+    if (approval && config.model.rawAttributes.approval_status) {
+      await config.model.update({
+        approval_status: 'Menunggu Approval',
+        approval_id: approval.id,
+      }, { where: { id: updated.id, partner_id: partnerId } });
+      updated.approval_status = 'Menunggu Approval';
+      updated.approval_id = approval.id;
+      payload.approval_status = 'Menunggu Approval';
+      payload.approval_id = approval.id;
+    }
+    await autoCreateCashFlow({ module, partnerId, payload, row: updated, actor: updatedBy });
+    return { success: true, message: approval ? `${config.label} berhasil diperbarui dan menunggu approval` : `${config.label} berhasil diperbarui`, data: normalize(module, updated) };
   },
 
   delete: async (module, partnerId, id, deletedBy, actorRole = 'Staff') => {
@@ -1408,25 +1754,25 @@ module.exports = {
       });
     }
     return deleted
-      ? { success: true, message: `${config.label} Berhasil Dihapus`, data: [] }
-      : { success: false, message: `${config.label} Tidak Ditemukan`, data: {} };
+      ? { success: true, message: `${config.label} berhasil dihapus`, data: [] }
+      : { success: false, message: `${config.label} tidak ditemukan`, data: {} };
   },
 
   getMetrics: async (module, partnerId) => {
     const config = getConfig(module);
     const metrics = await buildMetrics(module, partnerId);
-    return { success: true, message: `Metrik ${config.label} Berhasil Diambil`, data: metrics };
+    return { success: true, message: `Ringkasan ${config.label} berhasil dimuat`, data: metrics };
   },
 
   getOwnerDashboard: async (partnerId) => ({
     success: true,
-    message: 'Ringkasan Owner Dashboard Berhasil Diambil',
+    message: 'Ringkasan owner berhasil dimuat',
     data: await buildOwnerDashboard(partnerId),
   }),
 
   getRoleApprovalDashboard: async (partnerId) => ({
     success: true,
-    message: 'Role & Approval Berhasil Diambil',
+    message: 'Role dan approval berhasil dimuat',
     data: await buildRoleApprovalDashboard(partnerId),
   }),
 
@@ -1452,7 +1798,7 @@ module.exports = {
     const config = getConfig(module);
     return {
       success: true,
-      message: `Barcode ${config.label} Berhasil Diambil`,
+      message: `Pengaturan barcode ${config.label} berhasil dimuat`,
       data: config.barcode || {},
     };
   },
@@ -1487,7 +1833,7 @@ module.exports = {
     });
     return {
       success: true,
-      message: `Scan ${config.label} Berhasil Dicatat`,
+      message: `Scan ${config.label} berhasil dicatat`,
       data: {
         id: row.id,
         code: payload.code,

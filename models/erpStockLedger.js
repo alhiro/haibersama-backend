@@ -2,30 +2,28 @@ var dbSeq = require('../config/sequelize')
 var Sequelize = require('sequelize')
 var HaiUser = require('./haiuser')
 
-const ErpCashFlow = dbSeq.define('erp_cash_flow', {
+const ErpStockLedger = dbSeq.define('erp_stock_ledger', {
   id: { type: Sequelize.INTEGER, allowNull: false, primaryKey: true, autoIncrement: true },
-  partner_id: {
-    type: Sequelize.INTEGER,
-    allowNull: false,
-    references: { model: 'hai_user', key: 'id' }
-  },
+  partner_id: { type: Sequelize.INTEGER, allowNull: false, references: { model: 'hai_user', key: 'id' } },
   name: { type: Sequelize.STRING(150), allowNull: false },
-  description: { type: Sequelize.STRING(1000), allowNull: true },
-  status: { type: Sequelize.STRING(30), allowNull: false, defaultValue: 'Tercatat' },
-  meta: { type: Sequelize.STRING(200), allowNull: true },
-  amount: { type: Sequelize.STRING(100), allowNull: true },
-  nominal: { type: Sequelize.DECIMAL(18, 2), allowNull: false, defaultValue: 0 },
-  cash_type: { type: Sequelize.STRING(30), allowNull: false, defaultValue: 'Uang Masuk' },
-  category: { type: Sequelize.STRING(100), allowNull: true },
-  payment_method: { type: Sequelize.STRING(80), allowNull: true },
-  transaction_date: { type: Sequelize.DATE, allowNull: true },
+  sku: { type: Sequelize.STRING(80), allowNull: true },
+  movement_type: { type: Sequelize.STRING(60), allowNull: false, defaultValue: 'Masuk' },
+  status: { type: Sequelize.STRING(40), allowNull: false, defaultValue: 'Tercatat' },
+  quantity_in: { type: Sequelize.DECIMAL(18, 2), allowNull: false, defaultValue: 0 },
+  quantity_out: { type: Sequelize.DECIMAL(18, 2), allowNull: false, defaultValue: 0 },
+  balance_after: { type: Sequelize.DECIMAL(18, 2), allowNull: false, defaultValue: 0 },
+  unit: { type: Sequelize.STRING(40), allowNull: true },
+  warehouse: { type: Sequelize.STRING(150), allowNull: true },
   source_module: { type: Sequelize.STRING(80), allowNull: true },
   source_reference: { type: Sequelize.STRING(150), allowNull: true },
-  reference: { type: Sequelize.STRING(150), allowNull: true },
+  supplier: { type: Sequelize.STRING(150), allowNull: true },
+  production_batch: { type: Sequelize.STRING(120), allowNull: true },
+  product: { type: Sequelize.STRING(150), allowNull: true },
   approval_status: { type: Sequelize.STRING(40), allowNull: false, defaultValue: 'Tidak Perlu Approval' },
   approval_id: { type: Sequelize.INTEGER, allowNull: true },
   approved_by: { type: Sequelize.STRING(120), allowNull: true },
   approved_at: { type: Sequelize.DATE, allowNull: true },
+  reason: { type: Sequelize.STRING(500), allowNull: true },
   note: { type: Sequelize.STRING(1000), allowNull: true },
   details: { type: Sequelize.TEXT, allowNull: true },
   relations: { type: Sequelize.TEXT, allowNull: true },
@@ -36,14 +34,14 @@ const ErpCashFlow = dbSeq.define('erp_cash_flow', {
   updated_at: { type: Sequelize.DATE, allowNull: true },
   updated_by: { type: Sequelize.STRING(50), allowNull: true },
 }, {
-  tableName: 'erp_cash_flow',
+  tableName: 'erp_stock_ledger',
   freezeTableName: true,
   timestamps: true,
   paranoid: false,
   underscored: true
 });
 
-ErpCashFlow.belongsTo(HaiUser, { foreignKey: "partner_id" });
-HaiUser.hasMany(ErpCashFlow, { foreignKey: "partner_id" });
+ErpStockLedger.belongsTo(HaiUser, { foreignKey: "partner_id" });
+HaiUser.hasMany(ErpStockLedger, { foreignKey: "partner_id" });
 
-module.exports = ErpCashFlow
+module.exports = ErpStockLedger

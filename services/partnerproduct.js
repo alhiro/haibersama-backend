@@ -1,17 +1,16 @@
 const Sequelize = require('sequelize');
 const PartnerProduct = require('../models/partnerProduct');
+const ErpWarehouse = require('../models/erpWarehouse');
+const ErpProduction = require('../models/erpProduction');
+const ErpAuditLog = require('../models/erpAuditLog');
 
 const Op = Sequelize.Op;
 
 const DEFAULT_STATUSES = ['Publish', 'Draft', 'Perlu Foto'];
-const DEFAULT_WAREHOUSES = ['Warehouse Produk Jadi', 'Area QC', 'Gudang Retur'];
-const DEFAULT_PRODUCTION_BATCHES = ['Batch OUT-2405', 'Batch KMJ-1182', 'Batch DRS-2109'];
-const DEFAULT_TITLE_OPTIONS = ['Outer Linen Oversize', 'Kemeja Basic Twill', 'Dress Rayon Premium'];
-const DEFAULT_TITLE_OPTIONS_BY_WAREHOUSE = {
-  'Warehouse Produk Jadi': ['Outer Linen Oversize', 'Kemeja Basic Twill'],
-  'Area QC': ['Dress Rayon Premium'],
-  'Gudang Retur': [],
-};
+const DEFAULT_WAREHOUSES = [];
+const DEFAULT_PRODUCTION_BATCHES = [];
+const DEFAULT_TITLE_OPTIONS = [];
+const DEFAULT_TITLE_OPTIONS_BY_WAREHOUSE = {};
 
 const parseJsonArray = (value) => {
   if (!value) return [];
@@ -132,6 +131,28 @@ const removeUndefined = (data) => Object.keys(data).reduce((result, key) => {
   return result;
 }, {});
 
+const unique = (items) => [...new Set(items.filter((item) => item !== undefined && item !== null && String(item).trim() !== ''))];
+
+const writeProductAudit = async ({ partnerId, action, entityId, entityTitle, actor, actorRole, beforeData, afterData, note }) => {
+  try {
+    await ErpAuditLog.create({
+      partner_id: partnerId,
+      module: 'product',
+      action,
+      entity_id: entityId,
+      entity_title: entityTitle,
+      actor,
+      actor_role: actorRole,
+      before_data: beforeData ? JSON.stringify(beforeData) : null,
+      after_data: afterData ? JSON.stringify(afterData) : null,
+      note,
+      created_by: actor,
+    });
+  } catch (error) {
+    console.error('Gagal mencatat audit produk', error.message);
+  }
+};
+
 const buildListFilter = (params, partnerId, onlyPublic = false) => {
   const filter = { active: true };
 
@@ -165,19 +186,42 @@ const buildListFilter = (params, partnerId, onlyPublic = false) => {
 };
 
 module.exports = {
-  getOptions: async () => ({
-    success: true,
-    message: 'Opsi Produk Berhasil Diambil',
-    data: {
-      statuses: DEFAULT_STATUSES,
-      warehouses: DEFAULT_WAREHOUSES,
-      production_batches: DEFAULT_PRODUCTION_BATCHES,
-      title_options: DEFAULT_TITLE_OPTIONS,
-      title_depends_on_field_key: 'warehouse',
-      title_options_by_warehouse: DEFAULT_TITLE_OPTIONS_BY_WAREHOUSE,
-      units: ['pcs', 'set', 'pack', 'lusin'],
-    },
-  }),
+  getOptions: async (partnerId) => {
+    const baseWhere = partnerId ? { partner_id: partnerId, active: true } : { partner_id: -1, active: true };
+    const [warehouses, productions] = await Promise.all([
+      ErpWarehouse.findAll({ where: baseWhere, attributes: ['name'], order: [['created_at', 'DESC']] }),
+      ErpProduction.findAll({
+        where: baseWhere,
+        attributes: ['name', 'output_product', 'destination_warehouse'],
+        order: [['created_at', 'DESC']],
+      }),
+    ]);
+
+    const warehouseNames = unique(warehouses.map((item) => item.name));
+    const productionBatches = unique(productions.map((item) => item.name));
+    const titleOptions = unique(productions.map((item) => item.output_product));
+    const titleOptionsByWarehouse = productions.reduce((result, item) => {
+      const warehouse = item.destination_warehouse;
+      const product = item.output_product;
+      if (!warehouse || !product) return result;
+      result[warehouse] = unique([...(result[warehouse] || []), product]);
+      return result;
+    }, {});
+
+    return {
+      success: true,
+      message: 'Pilihan produk berhasil dimuat',
+      data: {
+        statuses: DEFAULT_STATUSES,
+        warehouses: warehouseNames.length ? warehouseNames : DEFAULT_WAREHOUSES,
+        production_batches: productionBatches.length ? productionBatches : DEFAULT_PRODUCTION_BATCHES,
+        title_options: titleOptions.length ? titleOptions : DEFAULT_TITLE_OPTIONS,
+        title_depends_on_field_key: 'warehouse',
+        title_options_by_warehouse: Object.keys(titleOptionsByWarehouse).length ? titleOptionsByWarehouse : DEFAULT_TITLE_OPTIONS_BY_WAREHOUSE,
+        units: ['pcs', 'set', 'pack', 'lusin'],
+      },
+    };
+  },
 
   getList: async (partnerId, params = {}, onlyPublic = false) => {
     const page = parseInt(params.page || 1);
@@ -192,7 +236,7 @@ module.exports = {
       distinct: true,
     }).then((resp) => ({
       success: true,
-      message: resp.rows.length > 0 ? 'Daftar Produk Berhasil Diambil' : 'Data Produk Kosong',
+      message: resp.rows.length > 0 ? 'Daftar produk berhasil dimuat' : 'Produk masih kosong',
       data: resp.rows.map(normalizeProduct),
       page,
       count: Math.ceil(resp.count / limit),
@@ -211,8 +255,8 @@ module.exports = {
 
     return PartnerProduct.findOne({ where: filter })
       .then((data) => (!data
-        ? { success: false, message: 'Produk Tidak Ditemukan', data: {} }
-        : { success: true, message: 'Produk Berhasil Diambil', data: normalizeProduct(data) }));
+        ? { success: false, message: 'Produk tidak ditemukan', data: {} }
+        : { success: true, message: 'Detail produk berhasil dimuat', data: normalizeProduct(data) }));
   },
 
   create: async (data) => {
@@ -233,10 +277,21 @@ module.exports = {
 
     const product = await PartnerProduct.findOrCreate({ where, defaults: payload });
     if (!product[1]) {
-      return { success: false, message: 'Produk Sudah Ada', data: normalizeProduct(product[0]) };
+      return { success: false, message: 'Produk sudah ada', data: normalizeProduct(product[0]) };
     }
 
-    return { success: true, message: 'Produk Berhasil Dibuat', data: normalizeProduct(product[0]) };
+    await writeProductAudit({
+      partnerId: payload.partner_id,
+      action: 'CREATE',
+      entityId: product[0].id,
+      entityTitle: payload.name,
+      actor: data.created_by,
+      actorRole: data.actor_role,
+      afterData: product[0].dataValues,
+      note: 'Produk dibuat',
+    });
+
+    return { success: true, message: 'Produk berhasil disimpan', data: normalizeProduct(product[0]) };
   },
 
   update: async (data) => {
@@ -244,7 +299,7 @@ module.exports = {
     const current = await PartnerProduct.findOne({ where: filter });
 
     if (!current) {
-      return { success: false, message: 'Produk Tidak Ditemukan', data: {} };
+      return { success: false, message: 'Produk tidak ditemukan', data: {} };
     }
 
     const cleanData = removeUndefined(data);
@@ -269,10 +324,27 @@ module.exports = {
     await PartnerProduct.update(payload, { where: filter });
 
     const updated = await PartnerProduct.findOne({ where: filter });
-    return { success: true, message: 'Produk Berhasil Diubah', data: normalizeProduct(updated) };
+    await writeProductAudit({
+      partnerId: data.partner_id,
+      action: 'UPDATE',
+      entityId: updated.id,
+      entityTitle: updated.name,
+      actor: data.updated_by,
+      actorRole: data.actor_role,
+      beforeData: current.dataValues,
+      afterData: updated.dataValues,
+      note: 'Produk diperbarui',
+    });
+    return { success: true, message: 'Produk berhasil diperbarui', data: normalizeProduct(updated) };
   },
 
   delete: async (data) => {
+    const current = await PartnerProduct.findOne({
+      where: {
+        id: data.id,
+        partner_id: data.partner_id,
+      },
+    });
     const deleted = await PartnerProduct.destroy({
       where: {
         id: data.id,
@@ -280,9 +352,21 @@ module.exports = {
       },
     });
 
-    return deleted
-      ? { success: true, message: 'Produk Berhasil Dihapus', data: [] }
-      : { success: false, message: 'Produk Tidak Ditemukan', data: {} };
+    if (deleted) {
+      await writeProductAudit({
+        partnerId: data.partner_id,
+        action: 'DELETE',
+        entityId: data.id,
+        entityTitle: current ? current.name : null,
+        actor: data.deleted_by,
+        actorRole: data.actor_role,
+        beforeData: current ? current.dataValues : null,
+        note: 'Produk dihapus',
+      });
+      return { success: true, message: 'Produk berhasil dihapus', data: [] };
+    }
+
+    return { success: false, message: 'Produk tidak ditemukan', data: {} };
   },
 
   getMetrics: async (partnerId) => {
@@ -300,7 +384,7 @@ module.exports = {
 
     return {
       success: true,
-      message: 'Metrik Produk Berhasil Diambil',
+      message: 'Ringkasan produk berhasil dimuat',
       data: {
         total_sku: totalSku,
         publish,
@@ -320,7 +404,7 @@ module.exports = {
       order: [['stock_quantity', 'DESC'], ['created_at', 'DESC']],
     }).then((rows) => ({
       success: true,
-      message: rows.length > 0 ? 'Produk Marketplace Berhasil Diambil' : 'Produk Marketplace Kosong',
+      message: rows.length > 0 ? 'Produk marketplace berhasil dimuat' : 'Produk marketplace masih kosong',
       data: rows.map((row) => {
         const product = normalizeProduct(row);
         return {
