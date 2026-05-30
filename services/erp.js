@@ -18,6 +18,7 @@ const ErpStockLedger = require('../models/erpStockLedger');
 const ErpReturnRefund = require('../models/erpReturnRefund');
 const ErpMarketplaceSettlement = require('../models/erpMarketplaceSettlement');
 const HaiUser = require('../models/haiuser');
+const emailTransporter = require('../config/email');
 
 const Op = Sequelize.Op;
 
@@ -514,6 +515,9 @@ const normalize = (module, row) => {
     approvalStatus: data.approval_status,
     approvalId: data.approval_id,
     userId: data.user_id,
+    inviteStatus: data.invite_status,
+    inviteSentAt: data.invite_sent_at,
+    inviteError: data.invite_error,
     role: data.role,
     department: data.department,
     movementType: data.movement_type,
@@ -567,6 +571,9 @@ const payloadByModule = (module, body) => {
       invited_by: pickFirst(body.invited_by, body.invitedBy, body.InvitedBy),
       invited_at: pickFirst(body.invited_at, body.invitedAt, body.InvitedAt),
       joined_at: pickFirst(body.joined_at, body.joinedAt, body.JoinedAt),
+      invite_status: pickFirst(body.invite_status, body.inviteStatus, body.InviteStatus),
+      invite_sent_at: pickFirst(body.invite_sent_at, body.inviteSentAt, body.InviteSentAt),
+      invite_error: pickFirst(body.invite_error, body.inviteError, body.InviteError),
       note: pickFirst(body.note, body.Note),
     });
   }
@@ -1289,6 +1296,7 @@ const prepareEmployeeRolePayload = async ({ partnerId, payload, actor }) => {
   payload.email = email;
   payload.invited_by = payload.invited_by || actor;
   payload.invited_at = payload.invited_at || new Date();
+  payload.invite_status = payload.invite_status || 'Belum Dikirim';
 
   const user = await HaiUser.findOne({
     where: { email },
@@ -1306,11 +1314,79 @@ const prepareEmployeeRolePayload = async ({ partnerId, payload, actor }) => {
     where: { partner_id: partnerId, email, active: true },
   }).catch(() => null);
 
-  if (existing && (!payload.id || existing.id !== payload.id)) {
+  if (existing && (!payload.id || Number(existing.id) !== Number(payload.id))) {
     throw new Error('Email karyawan sudah terdaftar di role ERP partner ini');
   }
 
   return payload;
+};
+
+const escapeHtml = (value) => String(value || '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#039;');
+
+const employeeInviteHtml = ({ employeeName, partnerName, role, accountExists, appUrl }) => `
+  <div style="font-family:Arial,sans-serif;line-height:1.6;color:#233044;max-width:560px;margin:auto;padding:24px">
+    <h2 style="margin:0 0 12px;color:#0f6bff">Undangan Tim HaiBersama ERP</h2>
+    <p>Halo ${escapeHtml(employeeName)},</p>
+    <p>Kamu ditambahkan ke tim <strong>${escapeHtml(partnerName)}</strong> sebagai <strong>${escapeHtml(role)}</strong>.</p>
+    <p>${accountExists
+      ? 'Akun HaiBersama dengan email ini sudah terdaftar. Silakan login untuk mulai mengakses menu ERP sesuai role kamu.'
+      : 'Silakan buat akun HaiBersama dengan email ini terlebih dahulu. Setelah akun dibuat, akses ERP kamu akan aktif otomatis.'}</p>
+    <p style="margin:24px 0">
+      <a href="${escapeHtml(appUrl)}" style="background:#0f6bff;color:white;text-decoration:none;padding:12px 18px;border-radius:8px;display:inline-block">
+        ${accountExists ? 'Buka HaiBersama' : 'Daftar / Buka HaiBersama'}
+      </a>
+    </p>
+    <p style="font-size:13px;color:#667085">Gunakan email yang sama dengan undangan ini agar akses ERP terhubung otomatis.</p>
+  </div>
+`;
+
+const sendEmployeeRoleInvite = async ({ partnerId, payload, row, actor }) => {
+  if (!payload.email) return { status: 'Email Kosong', error: null };
+
+  const partner = await HaiUser.findOne({
+    where: { id: partnerId },
+    attributes: ['name', 'title', 'email'],
+  }).catch(() => null);
+
+  const accountExists = Boolean(payload.user_id);
+  const partnerName = (partner && (partner.title || partner.name || partner.email)) || 'Partner HaiBersama';
+  const employeeName = payload.name || payload.email;
+  const role = payload.role || 'Karyawan';
+  const appUrl = process.env.APP_URL || process.env.FRONTEND_URL || process.env.VERIFY_URL || process.env.API_URL || 'https://haibersama.com';
+
+  try {
+    await emailTransporter.transporterSmtp.sendMail({
+      from: `"HaiBersama ERP" <${process.env.EMAIL_USERNAME || 'notify@haibersama.com'}>`,
+      to: payload.email,
+      subject: `Undangan akses ERP ${partnerName}`,
+      html: employeeInviteHtml({ employeeName, partnerName, role, accountExists, appUrl }),
+    });
+
+    await ErpEmployeeRole.update({
+      invite_status: accountExists ? 'Terkirim - Akun Terhubung' : 'Terkirim - Menunggu Daftar',
+      invite_sent_at: new Date(),
+      invite_error: null,
+      updated_by: actor,
+    }, { where: { id: row.id, partner_id: partnerId } });
+
+    return {
+      status: accountExists ? 'Terkirim - Akun Terhubung' : 'Terkirim - Menunggu Daftar',
+      error: null,
+    };
+  } catch (error) {
+    await ErpEmployeeRole.update({
+      invite_status: 'Gagal Dikirim',
+      invite_error: error.message,
+      updated_by: actor,
+    }, { where: { id: row.id, partner_id: partnerId } }).catch(() => null);
+
+    return { status: 'Gagal Dikirim', error: error.message };
+  }
 };
 
 const todayRange = () => {
@@ -1729,6 +1805,16 @@ module.exports = {
     }
     await autoCreateStockLedger({ module, partnerId, payload, row, actor: createdBy });
     await autoCreateCashFlow({ module, partnerId, payload, row, actor: createdBy });
+    if (module === 'employeerole') {
+      const invite = await sendEmployeeRoleInvite({ partnerId, payload, row, actor: createdBy });
+      const freshRow = await config.model.findOne({ where: { id: row.id, partner_id: partnerId } });
+      const inviteMessage = invite.error
+        ? 'Role karyawan berhasil disimpan, tetapi email undangan gagal dikirim. Owner bisa menghubungi karyawan secara manual atau kirim ulang nanti.'
+        : payload.user_id
+          ? 'Role karyawan berhasil disimpan. Undangan dikirim dan akun karyawan sudah terhubung.'
+          : 'Role karyawan berhasil disimpan. Undangan dikirim, karyawan perlu daftar dengan email yang sama.';
+      return { success: true, message: inviteMessage, data: normalize(module, freshRow || row) };
+    }
     return { success: true, message: approval ? `${config.label} berhasil disimpan dan menunggu approval` : `${config.label} berhasil disimpan`, data: normalize(module, row) };
   },
 
@@ -1777,6 +1863,14 @@ module.exports = {
       payload.approval_id = approval.id;
     }
     await autoCreateCashFlow({ module, partnerId, payload, row: updated, actor: updatedBy });
+    if (module === 'employeerole' && (body.resendInvite || (body.email && String(body.email).toLowerCase() !== String(beforeData.email || '').toLowerCase()))) {
+      const invite = await sendEmployeeRoleInvite({ partnerId, payload, row: updated, actor: updatedBy });
+      const freshRow = await config.model.findOne({ where: { id: updated.id, partner_id: partnerId } });
+      const inviteMessage = invite.error
+        ? 'Role karyawan berhasil diperbarui, tetapi email undangan gagal dikirim.'
+        : 'Role karyawan berhasil diperbarui dan undangan email dikirim.';
+      return { success: true, message: inviteMessage, data: normalize(module, freshRow || updated) };
+    }
     return { success: true, message: approval ? `${config.label} berhasil diperbarui dan menunggu approval` : `${config.label} berhasil diperbarui`, data: normalize(module, updated) };
   },
 

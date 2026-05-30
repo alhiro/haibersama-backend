@@ -382,6 +382,9 @@ CREATE TABLE IF NOT EXISTS public.erp_employee_role (
   invited_by VARCHAR(120),
   invited_at TIMESTAMP WITH TIME ZONE,
   joined_at TIMESTAMP WITH TIME ZONE,
+  invite_status VARCHAR(40) NOT NULL DEFAULT 'Belum Dikirim',
+  invite_sent_at TIMESTAMP WITH TIME ZONE,
+  invite_error VARCHAR(500),
   note VARCHAR(1000),
   active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMP WITH TIME ZONE,
@@ -953,6 +956,9 @@ ALTER TABLE public.erp_employee_role ADD COLUMN IF NOT EXISTS user_id INTEGER RE
 ALTER TABLE public.erp_employee_role ADD COLUMN IF NOT EXISTS invited_by VARCHAR(120);
 ALTER TABLE public.erp_employee_role ADD COLUMN IF NOT EXISTS invited_at TIMESTAMP WITH TIME ZONE;
 ALTER TABLE public.erp_employee_role ADD COLUMN IF NOT EXISTS joined_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE public.erp_employee_role ADD COLUMN IF NOT EXISTS invite_status VARCHAR(40) NOT NULL DEFAULT 'Belum Dikirim';
+ALTER TABLE public.erp_employee_role ADD COLUMN IF NOT EXISTS invite_sent_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE public.erp_employee_role ADD COLUMN IF NOT EXISTS invite_error VARCHAR(500);
 
 CREATE INDEX IF NOT EXISTS idx_erp_employee_role_user
   ON public.erp_employee_role (user_id);

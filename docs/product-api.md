@@ -1,6 +1,6 @@
 # Partner Product API
 
-Backend module untuk menu ERP Produk di mobile:
+Modul sistem untuk menu ERP Produk di mobile:
 `Profile > ERP Produk > Produk`.
 
 Base path mengikuti `APP_API_PREFIX`, contoh: `/api/product`.
@@ -126,5 +126,5 @@ partner_product
 
 Project ini belum memakai folder migration formal. Untuk membuat tabel,
 aktifkan sementara blok sync `PartnerProduct.sequelize.sync({ alter: true })`
-di `models/index.js`, jalankan sesuai workflow backend, lalu comment kembali
+di `models/index.js`, jalankan sesuai workflow sistem, lalu comment kembali
 setelah tabel terbentuk.

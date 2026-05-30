@@ -1,6 +1,6 @@
 # ERP Produk API
 
-Backend API untuk menu mobile:
+API sistem untuk menu mobile:
 `Profile > ERP Produk`.
 
 Base path mengikuti `APP_API_PREFIX`, contoh: `/api/erp`.
@@ -44,11 +44,11 @@ hanya partner `type = 2` yang bisa mengelola datanya.
 Untuk modul ERP, akun login tetap memakai tabel utama `hai_user`.
 `erp_employee_role` adalah mapping role karyawan per partner/perusahaan:
 
-- Owner daftar dari `/auth/registerPartner`; backend otomatis membuat role
+- Owner daftar dari `/auth/registerPartner`; sistem otomatis membuat role
   `Owner` di `erp_employee_role`.
 - Karyawan bisa daftar dari `/auth/register` seperti user biasa, lalu owner
   menambahkan email karyawan di menu `Role`.
-- Jika email karyawan sudah ada di `hai_user`, backend mengisi `user_id` dan
+- Jika email karyawan sudah ada di `hai_user`, sistem mengisi `user_id` dan
   karyawan bisa akses ERP memakai `partnerId` perusahaan.
 - Jika email belum terdaftar, data role tersimpan sebagai undangan/pending dan
   akan otomatis terhubung saat email itu mendaftar.
@@ -163,8 +163,8 @@ Rule otomatis:
 - Semua create, update, delete, scan, approve, dan reject dicatat di audit log.
 - Data yang butuh approval akan diberi `approvalStatus = Menunggu Approval`
   agar mobile bisa menampilkan penanda sebelum supervisor/owner menyetujui.
-- Backend membuat Stock Ledger otomatis dari inventory, produksi, PO,
-  transaksi, dan retur. Backend juga membuat Cash Flow otomatis dari invoice,
+- Sistem membuat Stock Ledger otomatis dari inventory, produksi, PO,
+  transaksi, dan retur. Sistem juga membuat Cash Flow otomatis dari invoice,
   transaksi lunas, settlement marketplace cair, PO/expense dibayar, dan refund.
 
 Payload approve/reject:
@@ -220,7 +220,7 @@ Payload approve/reject:
   "total": 7400000,
   "sourceReference": "REQ-PROD-OUT-2405",
   "reference": "Bahan untuk batch OUT-2405",
-  "note": "Saat barang diterima, backend dapat membuat mutasi inventory barang masuk."
+  "note": "Saat barang diterima, sistem dapat membuat mutasi inventory barang masuk."
 }
 ```
 
@@ -257,7 +257,7 @@ Payload approve/reject:
   "sourceReference": "BATCH-OUT-2405",
   "cashflowReference": "CF-OUT-2405-EXP",
   "reference": "Jahit 320 pcs Outer Linen Oversize",
-  "note": "Saat expense dibayar, backend dapat membuat Cash Flow uang keluar."
+  "note": "Saat expense dibayar, sistem dapat membuat Cash Flow uang keluar."
 }
 ```
 
@@ -272,7 +272,6 @@ refund, marketplace fee, dan biaya lain yang nantinya masuk Cash Flow sebagai
 ```json
 {
   "name": "Rani Admin Gudang",
-  "userId": 12,
   "email": "rani@gudang.co.id",
   "phone": "0812-7788-8899",
   "role": "Warehouse Staff",
@@ -283,12 +282,21 @@ refund, marketplace fee, dan biaya lain yang nantinya masuk Cash Flow sebagai
 }
 ```
 
+Saat owner menambahkan karyawan, sistem otomatis mengirim email undangan:
+- Jika email sudah ada di `hai_user`, `userId` langsung terisi dan email berisi
+  instruksi login.
+- Jika email belum ada di `hai_user`, role tersimpan dengan status undangan
+  menunggu daftar. Karyawan perlu daftar dengan email yang sama, lalu sistem
+  otomatis menghubungkan `userId`.
+- Jika email gagal dikirim, data role tetap tersimpan dengan `inviteStatus =
+  Gagal Dikirim` agar owner bisa follow up manual atau kirim ulang.
+
 Gunakan header `x-erp-role` saat request dari mobile, misalnya `Owner`,
 `Supervisor`, `Warehouse Staff`, `Admin`, `Kasir`, atau `Marketplace Admin`.
 
 ## Payload Stock Ledger
 
-Normalnya Stock Ledger dibuat otomatis oleh backend dari PO, inventory,
+Normalnya Stock Ledger dibuat otomatis oleh sistem dari PO, inventory,
 produksi, transaksi, dan retur. Endpoint add/update untuk `stockledger`
 dipakai hanya untuk **Koreksi Stok** manual, misalnya selisih opname, barang
 rusak/hilang, stok awal, atau migrasi data.
@@ -314,7 +322,7 @@ rusak/hilang, stok awal, atau migrasi data.
 }
 ```
 
-Jika `movementType = Koreksi/Adjustment` dan `quantityOut > 0`, backend membuat
+Jika `movementType = Koreksi/Adjustment` dan `quantityOut > 0`, sistem membuat
 approval supervisor. Field `reason` atau `note` wajib diisi untuk koreksi
 manual.
 
@@ -359,7 +367,7 @@ manual.
   "transactionNo": "TRX-MP-2405-018",
   "invoiceNo": "INV-MP-2405-018",
   "cashflowReference": "CF-SET-SHP-2405-020",
-  "note": "Saat status Cair, backend membuat cash in otomatis sesuai net payout."
+  "note": "Saat status Cair, sistem membuat cash in otomatis sesuai net payout."
 }
 ```
 
@@ -451,7 +459,7 @@ manual.
   "dueDate": "2026-05-27T10:30:00.000Z",
   "sourceReference": "ORD-SHP-2405-018",
   "reference": "Siap dibuatkan invoice",
-  "note": "Stok akan berkurang dari warehouse produk jadi saat transaksi diproses backend."
+  "note": "Stok akan berkurang dari warehouse produk jadi saat transaksi diproses sistem."
 }
 ```
 
@@ -521,7 +529,7 @@ manual.
 
 `cashType = Uang Masuk` menambah saldo kas, sedangkan `Uang Keluar`
 mengurangi saldo. Nanti invoice, transaksi customer, pembelian supplier, dan
-biaya produksi bisa membuat data cash flow otomatis dari backend.
+biaya produksi bisa membuat data cash flow otomatis dari sistem.
 
 ## Payload Scan
 
@@ -583,4 +591,4 @@ partner_product
 
 Project ini belum memakai migration formal. Untuk membuat tabel, aktifkan
 sementara blok sync model terkait di `models/index.js`, jalankan workflow
-backend, lalu comment kembali setelah tabel terbentuk.
+sistem, lalu comment kembali setelah tabel terbentuk.
