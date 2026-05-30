@@ -79,9 +79,10 @@ const resolveAuthContext = async (decodedStore, req) => {
         attributes: ['id', 'partner_status'],
       }).catch(() => null)
     : null;
+  const ownPartnerStatus = (user && user.partner_status) || (userType == 2 ? 'pending' : 'none');
   const partnerStatus = employeeRole
-    ? ((partnerUser && partnerUser.partner_status) || 'pending')
-    : ((user && user.partner_status) || (userType == 2 ? 'pending' : 'none'));
+    ? ((partnerUser && partnerUser.partner_status) || ownPartnerStatus)
+    : ownPartnerStatus;
 
   const erpRole = employeeRole ? employeeRole.role : null;
 

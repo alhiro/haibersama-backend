@@ -1332,7 +1332,7 @@ const employeeInviteHtml = ({ employeeName, partnerName, role, accountExists, ap
   <div style="font-family:Arial,sans-serif;line-height:1.6;color:#233044;max-width:560px;margin:auto;padding:24px">
     <h2 style="margin:0 0 12px;color:#0f6bff">Undangan Tim HaiBersama ERP</h2>
     <p>Halo ${escapeHtml(employeeName)},</p>
-    <p>Kamu ditambahkan ke tim <strong>${escapeHtml(partnerName)}</strong> sebagai <strong>${escapeHtml(role)}</strong>.</p>
+    <p>Kamu ditambahkan ke tim oleh <strong>${escapeHtml(partnerName)}</strong> sebagai <strong>${escapeHtml(role)}</strong>.</p>
     <p>${accountExists
       ? 'Akun HaiBersama dengan email ini sudah terdaftar. Silakan login untuk mulai mengakses menu ERP sesuai role kamu.'
       : 'Silakan buat akun HaiBersama dengan email ini terlebih dahulu. Setelah akun dibuat, akses ERP kamu akan aktif otomatis.'}</p>
@@ -1363,7 +1363,7 @@ const sendEmployeeRoleInvite = async ({ partnerId, payload, row, actor }) => {
     await emailTransporter.transporterSmtp.sendMail({
       from: `"HaiBersama ERP" <${process.env.EMAIL_USERNAME || 'notify@haibersama.com'}>`,
       to: payload.email,
-      subject: `Undangan akses ERP ${partnerName}`,
+      subject: `Undangan akses HaiBersama ERP `,
       html: employeeInviteHtml({ employeeName, partnerName, role, accountExists, appUrl }),
     });
 
