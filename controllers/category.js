@@ -21,10 +21,7 @@ exports.addCategory = async function (req, res, next) {
     console.log("controller addCategory")
     const params = { name: req.body.name };
 
-    const email = res.locals.auth.email;
-    console.log("email auth", email);
-
-    if (email != "haieventorganizer@gmail.com") {
+    if (!res.locals.auth.isAdmin) {
       return res.status(500).send({ success: false, message: "User Tidak Punya Otoritas Membuat Kategori", data: {} })
     } else {
       let insertCategory = await cat.findOrCreateCategory(params, req);

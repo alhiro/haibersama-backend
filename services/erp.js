@@ -17,6 +17,7 @@ const ErpEmployeeRole = require('../models/erpEmployeeRole');
 const ErpStockLedger = require('../models/erpStockLedger');
 const ErpReturnRefund = require('../models/erpReturnRefund');
 const ErpMarketplaceSettlement = require('../models/erpMarketplaceSettlement');
+const HaiUser = require('../models/haiuser');
 
 const Op = Sequelize.Op;
 
@@ -512,6 +513,7 @@ const normalize = (module, row) => {
     cashflowReference: data.cashflow_reference,
     approvalStatus: data.approval_status,
     approvalId: data.approval_id,
+    userId: data.user_id,
     role: data.role,
     department: data.department,
     movementType: data.movement_type,
@@ -556,11 +558,15 @@ const payloadByModule = (module, body) => {
 
   if (module === 'employeerole') {
     Object.assign(common, {
+      user_id: pickFirst(body.user_id, body.userId, body.UserId),
       email: pickFirst(body.email, body.Email),
       phone: pickFirst(body.phone, body.Phone),
       role: pickFirst(body.role, body.Role),
       department: pickFirst(body.department, body.Department),
       permissions: stringifyArray(pickFirst(body.permissions, body.Permissions)),
+      invited_by: pickFirst(body.invited_by, body.invitedBy, body.InvitedBy),
+      invited_at: pickFirst(body.invited_at, body.invitedAt, body.InvitedAt),
+      joined_at: pickFirst(body.joined_at, body.joinedAt, body.JoinedAt),
       note: pickFirst(body.note, body.Note),
     });
   }
@@ -1276,6 +1282,37 @@ const autoCreateCashFlow = async ({ module, partnerId, payload, row, actor }) =>
   }
 };
 
+const prepareEmployeeRolePayload = async ({ partnerId, payload, actor }) => {
+  if (!payload.email) return payload;
+
+  const email = String(payload.email).trim().toLowerCase();
+  payload.email = email;
+  payload.invited_by = payload.invited_by || actor;
+  payload.invited_at = payload.invited_at || new Date();
+
+  const user = await HaiUser.findOne({
+    where: { email },
+    attributes: ['id', 'name', 'email', 'phone_number'],
+  }).catch(() => null);
+
+  if (user) {
+    payload.user_id = payload.user_id || user.id;
+    payload.name = payload.name || user.name || email;
+    payload.phone = payload.phone || user.phone_number;
+    payload.joined_at = payload.joined_at || new Date();
+  }
+
+  const existing = await ErpEmployeeRole.findOne({
+    where: { partner_id: partnerId, email, active: true },
+  }).catch(() => null);
+
+  if (existing && (!payload.id || existing.id !== payload.id)) {
+    throw new Error('Email karyawan sudah terdaftar di role ERP partner ini');
+  }
+
+  return payload;
+};
+
 const todayRange = () => {
   const start = new Date();
   start.setHours(0, 0, 0, 0);
@@ -1655,6 +1692,9 @@ module.exports = {
     payload.partner_id = partnerId;
     payload.created_by = createdBy;
     payload.status = payload.status || config.defaultStatus;
+    if (module === 'employeerole') {
+      await prepareEmployeeRolePayload({ partnerId, payload, actor: createdBy });
+    }
 
     const title = payload[config.titleField];
     if (!title || title.trim() === '') {
@@ -1701,7 +1741,11 @@ module.exports = {
 
     const beforeData = { ...current.dataValues };
     const payload = payloadByModule(module, { ...current.dataValues, ...body });
+    payload.id = id;
     payload.updated_by = updatedBy;
+    if (module === 'employeerole') {
+      await prepareEmployeeRolePayload({ partnerId, payload, actor: updatedBy });
+    }
     if (module === 'stockledger' && !payload.reason && !payload.note) {
       return { success: false, message: 'Alasan koreksi stok wajib diisi', data: {} };
     }

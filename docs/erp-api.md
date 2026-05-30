@@ -41,6 +41,20 @@ Authorization: <jwt-token>
 Endpoint read/write data partner memakai `isPartnerAuthenticated`, sehingga
 hanya partner `type = 2` yang bisa mengelola datanya.
 
+Untuk modul ERP, akun login tetap memakai tabel utama `hai_user`.
+`erp_employee_role` adalah mapping role karyawan per partner/perusahaan:
+
+- Owner daftar dari `/auth/registerPartner`; backend otomatis membuat role
+  `Owner` di `erp_employee_role`.
+- Karyawan bisa daftar dari `/auth/register` seperti user biasa, lalu owner
+  menambahkan email karyawan di menu `Role`.
+- Jika email karyawan sudah ada di `hai_user`, backend mengisi `user_id` dan
+  karyawan bisa akses ERP memakai `partnerId` perusahaan.
+- Jika email belum terdaftar, data role tersimpan sebagai undangan/pending dan
+  akan otomatis terhubung saat email itu mendaftar.
+- Admin aplikasi memakai `hai_user.is_admin` dan `hai_user.admin_role`, bukan
+  pengecekan email di mobile.
+
 ## Endpoint Umum
 
 Ganti `:module` dengan salah satu modul di atas.
@@ -258,6 +272,7 @@ refund, marketplace fee, dan biaya lain yang nantinya masuk Cash Flow sebagai
 ```json
 {
   "name": "Rani Admin Gudang",
+  "userId": 12,
   "email": "rani@gudang.co.id",
   "phone": "0812-7788-8899",
   "role": "Warehouse Staff",

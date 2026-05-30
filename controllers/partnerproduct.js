@@ -22,7 +22,7 @@ const sendListResponse = (res, result) => res.status(200).json({
 
 exports.getOptions = async (req, res) => {
   try {
-    const partnerId = res.locals.auth && parseInt(res.locals.auth.type) === 2 ? res.locals.auth.id : null;
+    const partnerId = res.locals.auth ? (res.locals.auth.partnerId || (parseInt(res.locals.auth.type) === 2 ? res.locals.auth.id : null)) : null;
     const result = await partnerProductService.getOptions(partnerId);
     return res.status(200).send(result);
   } catch (err) {
@@ -32,7 +32,7 @@ exports.getOptions = async (req, res) => {
 
 exports.getAll = async (req, res) => {
   try {
-    const partnerId = res.locals.auth.id;
+    const partnerId = res.locals.auth.partnerId || res.locals.auth.id;
     const result = await partnerProductService.getList(partnerId, getQueryParams(req));
     return sendListResponse(res, result);
   } catch (err) {
@@ -52,7 +52,7 @@ exports.getPublicList = async (req, res) => {
 
 exports.getDetail = async (req, res) => {
   try {
-    const result = await partnerProductService.getDetail(req.query.id, res.locals.auth.id);
+    const result = await partnerProductService.getDetail(req.query.id, res.locals.auth.partnerId || res.locals.auth.id);
     return res.status(result.success ? 200 : 404).send(result);
   } catch (err) {
     return res.status(500).send({ code: 500, success: false, message: err.message, data: { err } });
@@ -97,7 +97,7 @@ exports.delete = async (data, res) => {
 
 exports.getMetrics = async (req, res) => {
   try {
-    const result = await partnerProductService.getMetrics(res.locals.auth.id);
+    const result = await partnerProductService.getMetrics(res.locals.auth.partnerId || res.locals.auth.id);
     return res.status(200).send(result);
   } catch (err) {
     return res.status(500).send({ code: 500, success: false, message: err.message, data: { err } });

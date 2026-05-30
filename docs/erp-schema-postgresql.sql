@@ -23,6 +23,15 @@
 
 BEGIN;
 
+ALTER TABLE public.hai_user ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE public.hai_user ADD COLUMN IF NOT EXISTS admin_role VARCHAR(50);
+
+-- Jalankan sekali untuk memindahkan admin lama dari hardcoded email ke role database.
+-- Setelah ini aplikasi membaca admin dari hai_user.is_admin/admin_role, bukan dari email di mobile.
+-- UPDATE public.hai_user
+-- SET is_admin = TRUE, admin_role = 'Super Admin'
+-- WHERE email = 'haieventorganizer@gmail.com';
+
 CREATE TABLE IF NOT EXISTS public.partner_product (
   id SERIAL PRIMARY KEY,
   partner_id INTEGER NOT NULL REFERENCES public.hai_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
@@ -362,6 +371,7 @@ CREATE INDEX IF NOT EXISTS idx_erp_audit_log_created_at
 CREATE TABLE IF NOT EXISTS public.erp_employee_role (
   id SERIAL PRIMARY KEY,
   partner_id INTEGER NOT NULL REFERENCES public.hai_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  user_id INTEGER REFERENCES public.hai_user(id) ON UPDATE CASCADE ON DELETE SET NULL,
   name VARCHAR(150) NOT NULL,
   email VARCHAR(120),
   phone VARCHAR(50),
@@ -369,6 +379,9 @@ CREATE TABLE IF NOT EXISTS public.erp_employee_role (
   department VARCHAR(100),
   status VARCHAR(40) NOT NULL DEFAULT 'Aktif',
   permissions TEXT,
+  invited_by VARCHAR(120),
+  invited_at TIMESTAMP WITH TIME ZONE,
+  joined_at TIMESTAMP WITH TIME ZONE,
   note VARCHAR(1000),
   active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMP WITH TIME ZONE,
@@ -378,8 +391,12 @@ CREATE TABLE IF NOT EXISTS public.erp_employee_role (
 );
 
 CREATE INDEX IF NOT EXISTS idx_erp_employee_role_partner ON public.erp_employee_role (partner_id);
+CREATE INDEX IF NOT EXISTS idx_erp_employee_role_user ON public.erp_employee_role (user_id);
 CREATE INDEX IF NOT EXISTS idx_erp_employee_role_role ON public.erp_employee_role (role);
 CREATE INDEX IF NOT EXISTS idx_erp_employee_role_email ON public.erp_employee_role (email);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_erp_employee_role_partner_email
+  ON public.erp_employee_role (partner_id, email)
+  WHERE email IS NOT NULL AND active = TRUE;
 
 CREATE TABLE IF NOT EXISTS public.erp_stock_ledger (
   id SERIAL PRIMARY KEY,
@@ -931,6 +948,14 @@ ALTER TABLE public.erp_stock_ledger ADD COLUMN IF NOT EXISTS reason VARCHAR(500)
 
 ALTER TABLE public.erp_return_refund ADD COLUMN IF NOT EXISTS approved_by VARCHAR(120);
 ALTER TABLE public.erp_return_refund ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP WITH TIME ZONE;
+
+ALTER TABLE public.erp_employee_role ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES public.hai_user(id) ON UPDATE CASCADE ON DELETE SET NULL;
+ALTER TABLE public.erp_employee_role ADD COLUMN IF NOT EXISTS invited_by VARCHAR(120);
+ALTER TABLE public.erp_employee_role ADD COLUMN IF NOT EXISTS invited_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE public.erp_employee_role ADD COLUMN IF NOT EXISTS joined_at TIMESTAMP WITH TIME ZONE;
+
+CREATE INDEX IF NOT EXISTS idx_erp_employee_role_user
+  ON public.erp_employee_role (user_id);
 
 CREATE INDEX IF NOT EXISTS idx_erp_purchase_order_approval_status
   ON public.erp_purchase_order (approval_status);

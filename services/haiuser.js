@@ -6,6 +6,7 @@ const PartnerExperience = require('../models/partnerexperience');
 const PartnerPortfolio = require('../models/partnerportfolio');
 const PartnerPackage = require('../models/partnerPackageHeader');
 const PartnerFollower = require("../models/partnerFollower");
+const ErpEmployeeRole = require('../models/erpEmployeeRole');
 const { VERIFY_URL, EMAIL_PASSWORD, EMAIL_USERNAME } = process.env;
 const nodemailer = require("nodemailer");
 //const Otp = require('../models/otp');
@@ -37,6 +38,22 @@ const {check, validationResult} = require('express-validator');
 const {generateFirebaseToken} = require('../helpers/firebaseAuth');
 const sequelize = require("../config/sequelize");
 const Sequelizes = require('sequelize');
+
+const linkPendingEmployeeRole = async (user, actor = 'system', transaction = null) => {
+  if (!user || !user.email) return;
+  await ErpEmployeeRole.update({
+    user_id: user.id,
+    joined_at: new Date(),
+    updated_by: actor,
+  }, {
+    where: {
+      email: user.email,
+      user_id: null,
+      active: true,
+    },
+    transaction,
+  }).catch(() => null);
+};
 
 module.exports = {
   login: async (users, revoke) => {
@@ -71,6 +88,9 @@ module.exports = {
           message: "Berhasil Login",
           data: {
             type: user.type == 1 ? "user" : "partner",
+            is_admin: Boolean(user.is_admin),
+            admin_role: user.admin_role,
+            erp_role: user.type == 2 ? 'Owner' : null,
             active: user.active,
             phone: user.phone_number,
             name: user.name,
@@ -342,6 +362,8 @@ module.exports = {
           "city",
           "postalcode",
           "type",
+          "is_admin",
+          "admin_role",
           "title",
           "description",
           "longitude",
@@ -430,6 +452,8 @@ module.exports = {
               city: users.city,
               postalcode: users.postalcode,
               type: users.type,
+              is_admin: users.is_admin,
+              admin_role: users.admin_role,
               title: users.title,
               description: users.description,
               longitude: users.longitude,
@@ -590,6 +614,7 @@ module.exports = {
       if (!insertUser) {
         throw { success: false, message: "Gagal Daftar User", data: {} };
       } else {
+        await linkPendingEmployeeRole(insertUser.dataValues, email, transaction);
         transaction.commit();
         delete insertUser.dataValues.password;
 
@@ -633,6 +658,7 @@ module.exports = {
       if (!insertUser) {
         throw { success: false, message: "Gagal Daftar User", data: {} };
       } else {
+        await linkPendingEmployeeRole(insertUser.dataValues, email, transaction);
         transaction.commit();
         delete insertUser.dataValues.password;
 
@@ -990,6 +1016,26 @@ module.exports = {
       if (!insertUser) {
         throw { success: false, message: "Gagal Daftar User", data: {} };
       } else {
+        await ErpEmployeeRole.findOrCreate({
+          where: { partner_id: insertUser.dataValues.id, email },
+          defaults: {
+            partner_id: insertUser.dataValues.id,
+            user_id: insertUser.dataValues.id,
+            name,
+            email,
+            phone,
+            role: 'Owner',
+            department: 'Owner',
+            status: 'Aktif',
+            permissions: JSON.stringify(['ALL']),
+            invited_by: email,
+            invited_at: new Date(),
+            joined_at: new Date(),
+            active: true,
+            created_by: email,
+          },
+          transaction,
+        });
         transaction.commit();
         delete insertUser.dataValues.password;
 

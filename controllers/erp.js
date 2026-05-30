@@ -54,6 +54,8 @@ const handleError = (res, err) => {
 });
 };
 
+const partnerId = (res) => res.locals.auth.partnerId || res.locals.auth.id;
+
 exports.getModules = async (req, res) => {
   try {
     return res.status(200).send({
@@ -68,7 +70,7 @@ exports.getModules = async (req, res) => {
 
 exports.getOwnerDashboard = async (req, res) => {
   try {
-    const result = await erpService.getOwnerDashboard(res.locals.auth.id);
+    const result = await erpService.getOwnerDashboard(partnerId(res));
     return res.status(200).send(result);
   } catch (err) {
     return handleError(res, err);
@@ -77,7 +79,7 @@ exports.getOwnerDashboard = async (req, res) => {
 
 exports.getRoleApprovalDashboard = async (req, res) => {
   try {
-    const result = await erpService.getRoleApprovalDashboard(res.locals.auth.id);
+    const result = await erpService.getRoleApprovalDashboard(partnerId(res));
     return res.status(200).send(result);
   } catch (err) {
     return handleError(res, err);
@@ -87,7 +89,7 @@ exports.getRoleApprovalDashboard = async (req, res) => {
 exports.approveRequest = async (req, res) => {
   try {
     const id = req.body.id || req.query.id;
-    const result = await erpService.approveRequest(res.locals.auth.id, id, req.body, res.locals.auth.email, res.locals.auth.erpRole);
+    const result = await erpService.approveRequest(partnerId(res), id, req.body, res.locals.auth.email, res.locals.auth.erpRole);
     return res.status(result.success ? 200 : 404).send(result);
   } catch (err) {
     return handleError(res, err);
@@ -97,7 +99,7 @@ exports.approveRequest = async (req, res) => {
 exports.rejectRequest = async (req, res) => {
   try {
     const id = req.body.id || req.query.id;
-    const result = await erpService.rejectRequest(res.locals.auth.id, id, req.body, res.locals.auth.email, res.locals.auth.erpRole);
+    const result = await erpService.rejectRequest(partnerId(res), id, req.body, res.locals.auth.email, res.locals.auth.erpRole);
     return res.status(result.success ? 200 : 404).send(result);
   } catch (err) {
     return handleError(res, err);
@@ -115,7 +117,7 @@ exports.getOptions = async (req, res) => {
 
 exports.getList = async (req, res) => {
   try {
-    const result = await erpService.getList(req.params.module, res.locals.auth.id, listParams(req));
+    const result = await erpService.getList(req.params.module, partnerId(res), listParams(req));
     return sendList(res, result);
   } catch (err) {
     return handleError(res, err);
@@ -124,7 +126,7 @@ exports.getList = async (req, res) => {
 
 exports.getDetail = async (req, res) => {
   try {
-    const result = await erpService.getDetail(req.params.module, res.locals.auth.id, req.query.id);
+    const result = await erpService.getDetail(req.params.module, partnerId(res), req.query.id);
     return res.status(result.success ? 200 : 404).send(result);
   } catch (err) {
     return handleError(res, err);
@@ -133,7 +135,7 @@ exports.getDetail = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const result = await erpService.create(req.params.module, res.locals.auth.id, req.body, res.locals.auth.email, res.locals.auth.erpRole);
+    const result = await erpService.create(req.params.module, partnerId(res), req.body, res.locals.auth.email, res.locals.auth.erpRole);
     return res.status(result.success ? 200 : 400).send(result);
   } catch (err) {
     return handleError(res, err);
@@ -143,7 +145,7 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const id = req.body.id || req.query.id;
-    const result = await erpService.update(req.params.module, res.locals.auth.id, id, req.body, res.locals.auth.email, res.locals.auth.erpRole);
+    const result = await erpService.update(req.params.module, partnerId(res), id, req.body, res.locals.auth.email, res.locals.auth.erpRole);
     return res.status(result.success ? 200 : 404).send(result);
   } catch (err) {
     return handleError(res, err);
@@ -153,7 +155,7 @@ exports.update = async (req, res) => {
 exports.delete = async (req, res) => {
   try {
     const id = req.body.id || req.query.id;
-    const result = await erpService.delete(req.params.module, res.locals.auth.id, id, res.locals.auth.email, res.locals.auth.erpRole);
+    const result = await erpService.delete(req.params.module, partnerId(res), id, res.locals.auth.email, res.locals.auth.erpRole);
     return res.status(result.success ? 200 : 404).send(result);
   } catch (err) {
     return handleError(res, err);
@@ -162,7 +164,7 @@ exports.delete = async (req, res) => {
 
 exports.getMetrics = async (req, res) => {
   try {
-    const result = await erpService.getMetrics(req.params.module, res.locals.auth.id);
+    const result = await erpService.getMetrics(req.params.module, partnerId(res));
     return res.status(200).send(result);
   } catch (err) {
     return handleError(res, err);
@@ -180,7 +182,7 @@ exports.getBarcodeConfig = async (req, res) => {
 
 exports.scan = async (req, res) => {
   try {
-    const result = await erpService.scan(req.params.module, res.locals.auth.id, req.body, res.locals.auth.email, res.locals.auth.erpRole);
+    const result = await erpService.scan(req.params.module, partnerId(res), req.body, res.locals.auth.email, res.locals.auth.erpRole);
     return res.status(200).send(result);
   } catch (err) {
     return handleError(res, err);

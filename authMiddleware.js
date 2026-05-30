@@ -1,9 +1,68 @@
 var jwt = require("./lib/jwt");
 var admin = require('firebase-admin');
 const HaiUser = require('./models/haiuser');
+const ErpEmployeeRole = require('./models/erpEmployeeRole');
 
 const Redis = require("ioredis");
 const rateLimit = require("express-rate-limit");
+
+const adminRoles = ['Super Admin', 'Admin', 'Finance Admin', 'Support Admin'];
+const configuredAdminEmails = (process.env.ADMIN_EMAILS || '')
+  .split(',')
+  .map((email) => email.trim().toLowerCase())
+  .filter(Boolean);
+
+const resolveAuthContext = async (decodedStore, req) => {
+  const { email, name, id, type, erp_role, is_admin, admin_role } = decodedStore;
+  const user = await HaiUser.findOne({
+    where: { id },
+    attributes: ['id', 'email', 'name', 'type', 'is_admin', 'admin_role'],
+  }).catch(() => null);
+
+  const userEmail = (user && user.email) || email;
+  const userType = (user && user.type) || type;
+  const userName = (user && user.name) || name;
+  const adminRole = (user && user.admin_role) || admin_role || null;
+  const isAdmin = Boolean((user && user.is_admin) || is_admin || adminRoles.includes(adminRole) || configuredAdminEmails.includes(String(userEmail).toLowerCase()));
+
+  let employeeRole = await ErpEmployeeRole.findOne({
+    where: { user_id: id, active: true, status: 'Aktif' },
+    order: [['updated_at', 'DESC']],
+  }).catch(() => null);
+
+  if (!employeeRole && userEmail) {
+    employeeRole = await ErpEmployeeRole.findOne({
+      where: { email: userEmail, active: true, status: 'Aktif' },
+      order: [['updated_at', 'DESC']],
+    }).catch(() => null);
+
+    if (employeeRole && !employeeRole.user_id) {
+      await ErpEmployeeRole.update({
+        user_id: id,
+        joined_at: new Date(),
+        updated_by: userEmail,
+      }, { where: { id: employeeRole.id } }).catch(() => null);
+      employeeRole.user_id = id;
+    }
+  }
+
+  const headerRole = req.headers['x-erp-role'];
+  const erpRole = employeeRole
+    ? employeeRole.role
+    : headerRole || erp_role || (userType == 2 ? 'Owner' : 'Customer');
+
+  return {
+    name: userName,
+    email: userEmail,
+    id,
+    type: userType,
+    partnerId: employeeRole ? employeeRole.partner_id : id,
+    erpRole,
+    erpEmployeeRoleId: employeeRole ? employeeRole.id : null,
+    isAdmin,
+    adminRole,
+  };
+};
 
 module.exports = {
   isUserAuthenticated: async (req, res, next) => {
@@ -23,21 +82,9 @@ module.exports = {
           .then(() => {
             return jwt
               .decode(token)
-              .then(decodedStore => {
-                // ------------------------------------
-                // HI I'M THE UPDATED CODE BLOCK, LOOK AT ME
-                // ------------------------------------
+              .then(async decodedStore => {
                 console.log("decodedStore : " + JSON.stringify(decodedStore));
-                const { email, name, id, type, erp_role } = decodedStore;
-                const erpRole = req.headers['x-erp-role'] || erp_role || (type == 2 ? 'Owner' : 'Customer');
-
-                res.locals.auth = {
-                  name,
-                  email,
-                  id,
-                  type,
-                  erpRole
-                };
+                res.locals.auth = await resolveAuthContext(decodedStore, req);
                 next();
               })
               .catch(err => {
@@ -87,21 +134,10 @@ module.exports = {
           .then(() => {
             return jwt
               .decode(token)
-              .then(decodedStore => {
-                // ------------------------------------
-                // HI I'M THE UPDATED CODE BLOCK, LOOK AT ME
-                // ------------------------------------
+              .then(async decodedStore => {
                 console.log("decodedStore : " + JSON.stringify(decodedStore));
-                const { email, name, id, type, erp_role } = decodedStore;
-                const erpRole = req.headers['x-erp-role'] || erp_role || (type == 2 ? 'Owner' : 'Customer');
-
-                res.locals.auth = {
-                  name,
-                  email,
-                  id,
-                  type,
-                  erpRole
-                };
+                res.locals.auth = await resolveAuthContext(decodedStore, req);
+                const { type } = res.locals.auth;
 
                 if(type != 2){
                   return res.status(401).json({
@@ -142,6 +178,43 @@ module.exports = {
     }
   },
 
+  isErpAuthenticated: async (req, res, next) => {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+      return res.status(403).json({
+        status: 403,
+        message: "FORBIDDEN"
+      });
+    }
+
+    const token = authHeader;
+    if (!token) {
+      return res.status(403).json({
+        status: 403,
+        message: "FORBIDDEN"
+      });
+    }
+
+    try {
+      await jwt.verify(token);
+      const decodedStore = await jwt.decode(token);
+      res.locals.auth = await resolveAuthContext(decodedStore, req);
+      if (res.locals.auth.type != 2 && !res.locals.auth.erpEmployeeRoleId) {
+        return res.status(401).json({
+          status: 401,
+          message: "UNAUTHORIZED"
+        });
+      }
+      return next();
+    } catch (err) {
+      return res.status(401).json({
+        status: 401,
+        message: "UNAUTHORIZED"
+      });
+    }
+  },
+
   requireErpRoles: (roles = []) => (req, res, next) => {
     const currentRole = res.locals.auth && res.locals.auth.erpRole;
     if (!currentRole || !roles.includes(currentRole)) {
@@ -171,21 +244,11 @@ module.exports = {
           .then(() => {
             return jwt
               .decode(token)
-              .then(decodedStore => {
-                // ------------------------------------
-                // HI I'M THE UPDATED CODE BLOCK, LOOK AT ME
-                // ------------------------------------
+              .then(async decodedStore => {
                 console.log("decodedStore : " + JSON.stringify(decodedStore));
-                const { email, name, id, type } = decodedStore;
+                res.locals.auth = await resolveAuthContext(decodedStore, req);
 
-                res.locals.auth = {
-                  name,
-                  email,
-                  id,
-                  type
-                };
-
-                if(email != 'haieventorganizer@gmail.com'){
+                if(!res.locals.auth.isAdmin){
                   return res.status(401).json({
                     status: 401,
                     message: "UNAUTHORIZED"

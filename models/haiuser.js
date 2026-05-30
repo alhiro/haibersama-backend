@@ -83,6 +83,15 @@ const HaiUser = dbSeq.define('hai_user', {
     allowNull: true,
     defaultValue: '1'
   },
+  is_admin: {
+    type: Sequelize.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  admin_role: {
+    type: Sequelize.STRING(50),
+    allowNull: true
+  },
   title: {
     type: Sequelize.STRING(50),
     allowNull: true
@@ -173,4 +182,3 @@ HaiUser.hasMany(PartnerFollower, {foreignKey: 'partner_id'});
 PartnerFollower.belongsTo(HaiUser, {foreignKey: 'partner_id'});
 
 module.exports = HaiUser
-

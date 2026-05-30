@@ -7,19 +7,19 @@ erpRouter.get("/modules", headerAuth.isUserAuthenticated, (req, res, next) => {
   controller.getModules(req, res);
 });
 
-erpRouter.get("/owner-dashboard/summary", headerAuth.isPartnerAuthenticated, headerAuth.requireErpRoles(['Owner']), (req, res, next) => {
+erpRouter.get("/owner-dashboard/summary", headerAuth.isErpAuthenticated, headerAuth.requireErpRoles(['Owner']), (req, res, next) => {
   controller.getOwnerDashboard(req, res);
 });
 
-erpRouter.get("/role-approval/summary", headerAuth.isPartnerAuthenticated, headerAuth.requireErpRoles(['Owner', 'Supervisor']), (req, res, next) => {
+erpRouter.get("/role-approval/summary", headerAuth.isErpAuthenticated, headerAuth.requireErpRoles(['Owner', 'Supervisor']), (req, res, next) => {
   controller.getRoleApprovalDashboard(req, res);
 });
 
-erpRouter.post("/approval/approve", headerAuth.isPartnerAuthenticated, headerAuth.requireErpRoles(['Owner', 'Supervisor']), (req, res, next) => {
+erpRouter.post("/approval/approve", headerAuth.isErpAuthenticated, headerAuth.requireErpRoles(['Owner', 'Supervisor']), (req, res, next) => {
   controller.approveRequest(req, res);
 });
 
-erpRouter.post("/approval/reject", headerAuth.isPartnerAuthenticated, headerAuth.requireErpRoles(['Owner', 'Supervisor']), (req, res, next) => {
+erpRouter.post("/approval/reject", headerAuth.isErpAuthenticated, headerAuth.requireErpRoles(['Owner', 'Supervisor']), (req, res, next) => {
   controller.rejectRequest(req, res);
 });
 
@@ -27,39 +27,39 @@ erpRouter.get("/:module/options", headerAuth.isUserAuthenticated, (req, res, nex
   controller.getOptions(req, res);
 });
 
-erpRouter.get("/:module/getall", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+erpRouter.get("/:module/getall", headerAuth.isErpAuthenticated, (req, res, next) => {
   controller.getList(req, res);
 });
 
-erpRouter.get("/:module/get", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+erpRouter.get("/:module/get", headerAuth.isErpAuthenticated, (req, res, next) => {
   controller.getDetail(req, res);
 });
 
-erpRouter.get("/:module/metrics", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+erpRouter.get("/:module/metrics", headerAuth.isErpAuthenticated, (req, res, next) => {
   controller.getMetrics(req, res);
 });
 
-erpRouter.get("/:module/barcode", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+erpRouter.get("/:module/barcode", headerAuth.isErpAuthenticated, (req, res, next) => {
   controller.getBarcodeConfig(req, res);
 });
 
-erpRouter.post("/:module/scan", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+erpRouter.post("/:module/scan", headerAuth.isErpAuthenticated, (req, res, next) => {
   controller.scan(req, res);
 });
 
-erpRouter.post("/:module/add", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+erpRouter.post("/:module/add", headerAuth.isErpAuthenticated, (req, res, next) => {
   controller.create(req, res);
 });
 
-erpRouter.post("/:module/update", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+erpRouter.post("/:module/update", headerAuth.isErpAuthenticated, (req, res, next) => {
   controller.update(req, res);
 });
 
-erpRouter.patch("/:module/update", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+erpRouter.patch("/:module/update", headerAuth.isErpAuthenticated, (req, res, next) => {
   controller.update(req, res);
 });
 
-erpRouter.delete("/:module/delete", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+erpRouter.delete("/:module/delete", headerAuth.isErpAuthenticated, (req, res, next) => {
   controller.delete(req, res);
 });
 

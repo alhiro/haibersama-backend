@@ -42,7 +42,7 @@ const pickFirst = (...values) => values.find((value) => value !== undefined && v
 const buildPayload = (req, res) => {
   const productImage = req.file;
   const data = {
-    partner_id: res.locals.auth.id,
+    partner_id: res.locals.auth.partnerId || res.locals.auth.id,
     name: pickFirst(req.body.name, req.body.title, req.body.Name),
     sku: pickFirst(req.body.sku, req.body.SKU),
     description: pickFirst(req.body.description, req.body.subtitle, req.body.Description),
@@ -74,7 +74,7 @@ partnerProductRouter.get("/options", headerAuth.isUserAuthenticated, (req, res, 
   controller.getOptions(req, res);
 });
 
-partnerProductRouter.get("/getall", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+partnerProductRouter.get("/getall", headerAuth.isErpAuthenticated, (req, res, next) => {
   controller.getAll(req, res);
 });
 
@@ -82,7 +82,7 @@ partnerProductRouter.get("/listpublic", headerAuth.isUserAuthenticated, (req, re
   controller.getPublicList(req, res);
 });
 
-partnerProductRouter.get("/get", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+partnerProductRouter.get("/get", headerAuth.isErpAuthenticated, (req, res, next) => {
   controller.getDetail(req, res);
 });
 
@@ -90,7 +90,7 @@ partnerProductRouter.get("/getpublic", headerAuth.isUserAuthenticated, (req, res
   controller.getPublicDetail(req, res);
 });
 
-partnerProductRouter.get("/metrics", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+partnerProductRouter.get("/metrics", headerAuth.isErpAuthenticated, (req, res, next) => {
   controller.getMetrics(req, res);
 });
 
@@ -98,7 +98,7 @@ partnerProductRouter.get("/marketplace", headerAuth.isUserAuthenticated, (req, r
   controller.getMarketplaceList(req, res);
 });
 
-partnerProductRouter.post("/add", headerAuth.isPartnerAuthenticated, upload.single('product'), (req, res, next) => {
+partnerProductRouter.post("/add", headerAuth.isErpAuthenticated, upload.single('product'), (req, res, next) => {
   if (req.fileValidationError) {
     return res.status(400).json({ success: false, message: "Invalid file type", data: {} });
   }
@@ -109,7 +109,7 @@ partnerProductRouter.post("/add", headerAuth.isPartnerAuthenticated, upload.sing
   controller.create(data, res);
 });
 
-partnerProductRouter.post("/update", headerAuth.isPartnerAuthenticated, upload.single('product'), (req, res, next) => {
+partnerProductRouter.post("/update", headerAuth.isErpAuthenticated, upload.single('product'), (req, res, next) => {
   if (req.fileValidationError) {
     return res.status(400).json({ success: false, message: "Invalid file type", data: {} });
   }
@@ -121,7 +121,7 @@ partnerProductRouter.post("/update", headerAuth.isPartnerAuthenticated, upload.s
   controller.update(data, res);
 });
 
-partnerProductRouter.patch("/update", headerAuth.isPartnerAuthenticated, upload.single('product'), (req, res, next) => {
+partnerProductRouter.patch("/update", headerAuth.isErpAuthenticated, upload.single('product'), (req, res, next) => {
   if (req.fileValidationError) {
     return res.status(400).json({ success: false, message: "Invalid file type", data: {} });
   }
@@ -133,9 +133,9 @@ partnerProductRouter.patch("/update", headerAuth.isPartnerAuthenticated, upload.
   controller.update(data, res);
 });
 
-partnerProductRouter.delete("/delete", headerAuth.isPartnerAuthenticated, (req, res, next) => {
+partnerProductRouter.delete("/delete", headerAuth.isErpAuthenticated, (req, res, next) => {
   const data = {
-    partner_id: res.locals.auth.id,
+    partner_id: res.locals.auth.partnerId || res.locals.auth.id,
     id: parseInt(req.body.id || req.query.id),
     deleted_by: res.locals.auth.email,
     actor_role: res.locals.auth.erpRole,
