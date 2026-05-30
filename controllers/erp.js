@@ -135,7 +135,27 @@ exports.getDetail = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const result = await erpService.create(req.params.module, partnerId(res), req.body, res.locals.auth.email, res.locals.auth.erpRole);
+    const body = { ...req.body };
+    if (String(req.params.module || '').toLowerCase() === 'attendance') {
+      const now = new Date();
+      const isCheckOut = body.attendanceAction === 'Check Out' ||
+        body.checkOutMode === true ||
+        body.check_out ||
+        body.checkOut;
+      body.name = body.name || res.locals.auth.name || res.locals.auth.email || 'Absensi Karyawan';
+      body.employee = body.employee || res.locals.auth.name || res.locals.auth.email;
+      body.employeeEmail = body.employeeEmail || res.locals.auth.email;
+      body.employeeRole = body.employeeRole || res.locals.auth.erpRole;
+      body.department = body.department || res.locals.auth.erpDepartment;
+      body.workDate = body.workDate || now;
+      if (isCheckOut) {
+        body.checkOut = body.checkOut || body.check_out || now;
+      } else {
+        body.checkIn = body.checkIn || body.check_in || now;
+      }
+      body.attendanceType = body.attendanceType || 'Mobile';
+    }
+    const result = await erpService.create(req.params.module, partnerId(res), body, res.locals.auth.email, res.locals.auth.erpRole);
     return res.status(result.success ? 200 : 400).send(result);
   } catch (err) {
     return handleError(res, err);

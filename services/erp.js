@@ -17,6 +17,13 @@ const ErpEmployeeRole = require('../models/erpEmployeeRole');
 const ErpStockLedger = require('../models/erpStockLedger');
 const ErpReturnRefund = require('../models/erpReturnRefund');
 const ErpMarketplaceSettlement = require('../models/erpMarketplaceSettlement');
+const ErpAttendance = require('../models/erpAttendance');
+const ErpLeaveRequest = require('../models/erpLeaveRequest');
+const ErpOvertimeRequest = require('../models/erpOvertimeRequest');
+const ErpEmployeeTask = require('../models/erpEmployeeTask');
+const ErpWorkSchedule = require('../models/erpWorkSchedule');
+const ErpAnnouncement = require('../models/erpAnnouncement');
+const ErpPayslip = require('../models/erpPayslip');
 const HaiUser = require('../models/haiuser');
 const emailTransporter = require('../config/email');
 
@@ -42,6 +49,85 @@ const MODULES = {
     extraFields: {
       role: ['Owner', 'Karyawan', 'Supervisor', 'Warehouse Staff', 'Admin', 'Penjahit', 'Kasir', 'Driver', 'Marketplace Admin'],
       department: ['Owner', 'Warehouse', 'Produksi', 'Finance', 'Toko', 'Marketplace', 'Operasional'],
+    },
+  },
+  attendance: {
+    label: 'Absensi',
+    model: ErpAttendance,
+    titleField: 'name',
+    defaultStatus: 'Hadir',
+    statuses: ['Hadir', 'Terlambat', 'Pulang', 'Pulang Cepat', 'Lembur', 'Izin', 'Sakit'],
+    extraFields: {
+      attendanceType: ['Masuk', 'Pulang', 'Kunjungan', 'Lembur'],
+      shift: ['Pagi', 'Siang', 'Malam', 'Flexible'],
+      department: ['Warehouse', 'Produksi', 'Finance', 'Toko', 'Marketplace', 'Operasional'],
+    },
+  },
+  leaverequest: {
+    label: 'Cuti / Izin',
+    model: ErpLeaveRequest,
+    titleField: 'name',
+    defaultStatus: 'Diajukan',
+    statuses: ['Diajukan', 'Menunggu Approval', 'Disetujui', 'Ditolak', 'Dibatalkan'],
+    extraFields: {
+      leaveType: ['Cuti Tahunan', 'Sakit', 'Izin Pribadi', 'Izin Telat', 'Pulang Cepat', 'Lainnya'],
+      department: ['Warehouse', 'Produksi', 'Finance', 'Toko', 'Marketplace', 'Operasional'],
+    },
+  },
+  overtime: {
+    label: 'Lembur',
+    model: ErpOvertimeRequest,
+    titleField: 'name',
+    defaultStatus: 'Diajukan',
+    statuses: ['Diajukan', 'Menunggu Approval', 'Disetujui', 'Ditolak', 'Dibayar'],
+    extraFields: {
+      department: ['Warehouse', 'Produksi', 'Finance', 'Toko', 'Marketplace', 'Operasional'],
+      priority: ['Normal', 'Mendesak', 'Produksi Kejar Deadline', 'Order Marketplace'],
+    },
+  },
+  employeetask: {
+    label: 'Tugas Saya',
+    model: ErpEmployeeTask,
+    titleField: 'name',
+    defaultStatus: 'To Do',
+    statuses: ['To Do', 'Berjalan', 'Menunggu QC', 'Selesai', 'Revisi'],
+    extraFields: {
+      priority: ['Rendah', 'Normal', 'Tinggi', 'Urgent'],
+      department: ['Warehouse', 'Produksi', 'Finance', 'Toko', 'Marketplace', 'Operasional'],
+    },
+  },
+  workschedule: {
+    label: 'Jadwal Kerja',
+    model: ErpWorkSchedule,
+    titleField: 'name',
+    defaultStatus: 'Aktif',
+    statuses: ['Aktif', 'Tukar Shift', 'Libur', 'Dibatalkan'],
+    extraFields: {
+      shift: ['Pagi', 'Siang', 'Malam', 'Flexible'],
+      department: ['Warehouse', 'Produksi', 'Finance', 'Toko', 'Marketplace', 'Operasional'],
+    },
+  },
+  announcement: {
+    label: 'Pengumuman / SOP',
+    model: ErpAnnouncement,
+    titleField: 'name',
+    defaultStatus: 'Publish',
+    statuses: ['Publish', 'Draft', 'Arsip'],
+    extraFields: {
+      announcementType: ['Pengumuman', 'SOP', 'Instruksi Kerja', 'Kebijakan HR'],
+      department: ['Semua', 'Warehouse', 'Produksi', 'Finance', 'Toko', 'Marketplace', 'Operasional'],
+    },
+  },
+  payslip: {
+    label: 'Slip Gaji',
+    model: ErpPayslip,
+    titleField: 'name',
+    defaultStatus: 'Draft',
+    statuses: ['Draft', 'Review', 'Siap Dibayar', 'Dibayar'],
+    extraFields: {
+      period: ['Mingguan', 'Bulanan', 'Custom'],
+      department: ['Warehouse', 'Produksi', 'Finance', 'Toko', 'Marketplace', 'Operasional'],
+      paymentMethod: ['Transfer Bank', 'Tunai', 'E-Wallet'],
     },
   },
   purchaseorder: {
@@ -408,6 +494,12 @@ const baseRelations = (data) => {
   if (data.cashflow_reference) relations.push(`Cash Flow: ${data.cashflow_reference}`);
   if (data.vendor) relations.push(`Vendor: ${data.vendor}`);
   if (data.employee) relations.push(`Karyawan: ${data.employee}`);
+  if (data.employee_role) relations.push(`Role: ${data.employee_role}`);
+  if (data.department) relations.push(`Divisi: ${data.department}`);
+  if (data.location) relations.push(`Lokasi: ${data.location}`);
+  if (data.leave_type) relations.push(`Jenis Izin: ${data.leave_type}`);
+  if (data.attendance_type) relations.push(`Tipe Absensi: ${data.attendance_type}`);
+  if (data.shift) relations.push(`Shift: ${data.shift}`);
   if (data.product) relations.push(`Produk/Jasa: ${data.product}`);
   if (data.item) relations.push(`Barang: ${data.item}`);
   if (data.channel) relations.push(`Channel: ${data.channel}`);
@@ -452,6 +544,23 @@ const baseFlowFlags = (data) => {
   if (data.cashflow_reference) flags.push({ label: 'Cash Flow', value: data.cashflow_reference });
   if (data.vendor) flags.push({ label: 'Vendor', value: data.vendor });
   if (data.employee) flags.push({ label: 'Karyawan', value: data.employee });
+  if (data.department) flags.push({ label: 'Divisi', value: data.department });
+  if (data.work_date) flags.push({ label: 'Tanggal Kerja', value: data.work_date });
+  if (data.check_in) flags.push({ label: 'Check In', value: data.check_in });
+  if (data.check_out) flags.push({ label: 'Check Out', value: data.check_out });
+  if (data.location) flags.push({ label: 'Lokasi', value: data.location });
+  if (data.latitude && data.longitude) flags.push({ label: 'Koordinat', value: `${data.latitude}, ${data.longitude}` });
+  if (data.leave_type) flags.push({ label: 'Jenis Izin', value: data.leave_type });
+  if (data.start_date) flags.push({ label: 'Tanggal Mulai', value: data.start_date });
+  if (data.end_date) flags.push({ label: 'Tanggal Selesai', value: data.end_date });
+  if (data.total_days) flags.push({ label: 'Total Hari', value: data.total_days });
+  if (data.overtime_date) flags.push({ label: 'Tanggal Lembur', value: data.overtime_date });
+  if (data.total_hours) flags.push({ label: 'Total Jam', value: data.total_hours });
+  if (data.priority) flags.push({ label: 'Prioritas', value: data.priority });
+  if (data.due_date) flags.push({ label: 'Deadline', value: data.due_date });
+  if (data.schedule_date) flags.push({ label: 'Tanggal Jadwal', value: data.schedule_date });
+  if (data.announcement_type) flags.push({ label: 'Jenis Info', value: data.announcement_type });
+  if (data.period) flags.push({ label: 'Periode', value: data.period });
   if (data.item) flags.push({ label: 'Barang', value: data.item });
   if (data.expected_date) flags.push({ label: 'Estimasi Datang', value: data.expected_date });
   if (data.received_quantity) flags.push({ label: 'Diterima', value: `${data.received_quantity} ${data.unit || ''}`.trim() });
@@ -498,6 +607,31 @@ const normalize = (module, row) => {
     issueDate: data.issue_date,
     dueDate: data.due_date,
     paidAmount: data.paid_amount,
+    employeeEmail: data.employee_email,
+    employeeRole: data.employee_role,
+    workDate: data.work_date,
+    checkIn: data.check_in,
+    checkOut: data.check_out,
+    attendanceType: data.attendance_type,
+    latitude: data.latitude,
+    longitude: data.longitude,
+    mapUrl: data.map_url,
+    leaveType: data.leave_type,
+    startDate: data.start_date,
+    endDate: data.end_date,
+    totalDays: data.total_days,
+    overtimeDate: data.overtime_date,
+    startTime: data.start_time,
+    endTime: data.end_time,
+    totalHours: data.total_hours,
+    taskNo: data.task_no,
+    dueDate: data.due_date,
+    scheduleDate: data.schedule_date,
+    announcementType: data.announcement_type,
+    publishDate: data.publish_date,
+    grossSalary: data.gross_salary,
+    netSalary: data.net_salary,
+    paymentDate: data.payment_date,
     transactionNo: data.transaction_no,
     transactionType: data.transaction_type,
     paymentStatus: data.payment_status,
@@ -574,6 +708,48 @@ const payloadByModule = (module, body) => {
       invite_status: pickFirst(body.invite_status, body.inviteStatus, body.InviteStatus),
       invite_sent_at: pickFirst(body.invite_sent_at, body.inviteSentAt, body.InviteSentAt),
       invite_error: pickFirst(body.invite_error, body.inviteError, body.InviteError),
+      note: pickFirst(body.note, body.Note),
+    });
+  }
+
+  if (['attendance', 'leaverequest', 'overtime', 'employeetask', 'workschedule', 'announcement', 'payslip'].includes(module)) {
+    Object.assign(common, {
+      employee: pickFirst(body.employee, body.Employee),
+      employee_email: pickFirst(body.employee_email, body.employeeEmail, body.EmployeeEmail),
+      employee_role: pickFirst(body.employee_role, body.employeeRole, body.EmployeeRole),
+      department: pickFirst(body.department, body.Department),
+      work_date: pickFirst(body.work_date, body.workDate, body.WorkDate),
+      check_in: pickFirst(body.check_in, body.checkIn, body.CheckIn),
+      check_out: pickFirst(body.check_out, body.checkOut, body.CheckOut),
+      shift: pickFirst(body.shift, body.Shift),
+      location: pickFirst(body.location, body.Location),
+      latitude: pickFirst(body.latitude, body.Latitude),
+      longitude: pickFirst(body.longitude, body.Longitude),
+      map_url: pickFirst(body.map_url, body.mapUrl, body.MapUrl),
+      attendance_type: pickFirst(body.attendance_type, body.attendanceType, body.AttendanceType),
+      leave_type: pickFirst(body.leave_type, body.leaveType, body.LeaveType),
+      start_date: pickFirst(body.start_date, body.startDate, body.StartDate),
+      end_date: pickFirst(body.end_date, body.endDate, body.EndDate),
+      total_days: toNumber(pickFirst(body.total_days, body.totalDays, body.TotalDays), 0),
+      overtime_date: pickFirst(body.overtime_date, body.overtimeDate, body.OvertimeDate),
+      start_time: pickFirst(body.start_time, body.startTime, body.StartTime),
+      end_time: pickFirst(body.end_time, body.endTime, body.EndTime),
+      total_hours: toNumber(pickFirst(body.total_hours, body.totalHours, body.TotalHours), 0),
+      task_no: pickFirst(body.task_no, body.taskNo, body.TaskNo),
+      priority: pickFirst(body.priority, body.Priority),
+      due_date: pickFirst(body.due_date, body.dueDate, body.DueDate),
+      schedule_date: pickFirst(body.schedule_date, body.scheduleDate, body.ScheduleDate),
+      announcement_type: pickFirst(body.announcement_type, body.announcementType, body.AnnouncementType),
+      publish_date: pickFirst(body.publish_date, body.publishDate, body.PublishDate),
+      period: pickFirst(body.period, body.Period),
+      gross_salary: toNumber(pickFirst(body.gross_salary, body.grossSalary, body.GrossSalary), 0),
+      deductions: toNumber(pickFirst(body.deductions, body.Deductions), 0),
+      net_salary: toNumber(pickFirst(body.net_salary, body.netSalary, body.NetSalary), 0),
+      payment_date: pickFirst(body.payment_date, body.paymentDate, body.PaymentDate),
+      payment_method: pickFirst(body.payment_method, body.paymentMethod, body.PaymentMethod),
+      reference: pickFirst(body.reference, body.Reference),
+      approval_status: pickFirst(body.approval_status, body.approvalStatus, body.ApprovalStatus),
+      approval_id: pickFirst(body.approval_id, body.approvalId, body.ApprovalId),
       note: pickFirst(body.note, body.Note),
     });
   }
@@ -863,6 +1039,15 @@ const sanitizePayload = (model, payload) => Object.keys(payload).reduce((result,
   return result;
 }, {});
 
+const dayRange = (value = new Date()) => {
+  const date = value instanceof Date ? value : new Date(value);
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+  return { start, end };
+};
+
 const buildMetrics = async (module, partnerId) => {
   const config = getConfig(module);
   const where = { partner_id: partnerId, active: true };
@@ -883,6 +1068,15 @@ const buildMetrics = async (module, partnerId) => {
       metric('Owner', await config.model.count({ where: { ...where, role: 'Owner' } })),
       metric('Supervisor', await config.model.count({ where: { ...where, role: 'Supervisor' } })),
       metric('Total Role', total),
+    ];
+  }
+
+  if (['attendance', 'leaverequest', 'overtime', 'employeetask', 'workschedule', 'announcement', 'payslip'].includes(module)) {
+    return [
+      metric('Total Data', total),
+      metric('Menunggu Approval', await config.model.count({ where: { ...where, status: 'Menunggu Approval' } })),
+      metric('Disetujui', await config.model.count({ where: { ...where, status: 'Disetujui' } })),
+      metric('Aktif / Berjalan', await config.model.count({ where: { ...where, status: { [Op.in]: ['Aktif', 'Hadir', 'Berjalan', 'Publish'] } } })),
     ];
   }
 
@@ -1121,6 +1315,38 @@ const approvalRuleFor = (module, payload = {}) => {
       riskLevel: 'Medium',
       threshold: 0,
       reason: 'Perubahan status produksi perlu approval supervisor.',
+    };
+  }
+
+  if (module === 'attendance' && status === 'Pulang Cepat') {
+    return {
+      action: 'Approval Pulang Cepat',
+      approverRole: 'Supervisor',
+      riskLevel: 'Low',
+      threshold: 0,
+      reason: 'Pulang cepat perlu catatan dan approval supervisor atau owner.',
+    };
+  }
+
+  if (['leaverequest', 'overtime'].includes(module) && ['Diajukan', 'Menunggu Approval'].includes(status)) {
+    return {
+      action: module === 'overtime' ? 'Approval Lembur' : 'Approval Cuti/Izin',
+      approverRole: 'Supervisor',
+      riskLevel: 'Medium',
+      threshold: 0,
+      reason: module === 'overtime'
+        ? 'Pengajuan lembur perlu approval supervisor atau owner.'
+        : 'Pengajuan cuti/izin perlu approval supervisor atau owner.',
+    };
+  }
+
+  if (module === 'payslip' && ['Siap Dibayar', 'Dibayar'].includes(status)) {
+    return {
+      action: 'Approval Slip Gaji',
+      approverRole: 'Owner',
+      riskLevel: 'High',
+      threshold: 0,
+      reason: 'Slip gaji yang siap dibayar perlu approval owner.',
     };
   }
 
@@ -1778,6 +2004,108 @@ module.exports = {
     }
     if (module === 'stockledger' && !payload.reason && !payload.note) {
       return { success: false, message: 'Alasan koreksi stok wajib diisi', data: {} };
+    }
+
+    if (module === 'attendance' && ['Terlambat', 'Izin', 'Sakit', 'Pulang Cepat'].includes(payload.status) && !payload.note) {
+      return {
+        success: false,
+        message: `Catatan wajib diisi untuk status ${payload.status}.`,
+        data: {},
+      };
+    }
+
+    if (module === 'attendance' && payload.check_out) {
+      const { start, end } = dayRange(payload.work_date || payload.check_out);
+      const employeeEmail = payload.employee_email || createdBy;
+      const openAttendance = await config.model.findOne({
+        where: {
+          partner_id: partnerId,
+          active: true,
+          employee_email: employeeEmail,
+          check_in: { [Op.ne]: null },
+          check_out: null,
+          work_date: { [Op.gte]: start, [Op.lt]: end },
+        },
+        order: [['check_in', 'DESC']],
+      });
+
+      if (!openAttendance) {
+        return {
+          success: false,
+          message: 'Check In hari ini belum ditemukan.',
+          data: {},
+        };
+      }
+
+      const beforeData = { ...openAttendance.dataValues };
+      await config.model.update({
+        status: payload.status || 'Pulang',
+        check_out: payload.check_out,
+        location: payload.location || openAttendance.location,
+        latitude: payload.latitude || openAttendance.latitude,
+        longitude: payload.longitude || openAttendance.longitude,
+        map_url: payload.map_url || openAttendance.map_url,
+        note: payload.note || openAttendance.note,
+        details: null,
+        flow_flags: stringifyArray(baseFlowFlags({ ...openAttendance.dataValues, ...payload })),
+        approval_status: payload.status === 'Pulang Cepat'
+          ? 'Menunggu Approval'
+          : (openAttendance.approval_status === 'Menunggu Approval' ? openAttendance.approval_status : 'Tercatat Otomatis'),
+        updated_by: createdBy,
+      }, { where: { id: openAttendance.id, partner_id: partnerId } });
+
+      let updated = await config.model.findOne({ where: { id: openAttendance.id, partner_id: partnerId } });
+      const approval = await maybeCreateApproval({ module, partnerId, payload, row: updated, actor: createdBy });
+      if (approval && config.model.rawAttributes.approval_status) {
+        await config.model.update({
+          approval_status: 'Menunggu Approval',
+          approval_id: approval.id,
+        }, { where: { id: updated.id, partner_id: partnerId } });
+        updated = await config.model.findOne({ where: { id: updated.id, partner_id: partnerId } });
+      }
+
+      await writeAuditLog({
+        partnerId,
+        module,
+        action: 'CHECK_OUT',
+        entityId: updated.id,
+        entityTitle: titleFromPayload(module, payload, updated),
+        actor: createdBy,
+        actorRole: body.requesterRole || body.requester_role || actorRole,
+        beforeData,
+        afterData: updated.dataValues,
+        note: 'Check Out absensi',
+      });
+      return {
+        success: true,
+        message: 'Check Out berhasil disimpan',
+        data: normalize(module, updated),
+      };
+    }
+
+    if (module === 'attendance' && payload.check_in && !payload.check_out) {
+      payload.approval_status = payload.approval_status || 'Tercatat Otomatis';
+      const { start, end } = dayRange(payload.work_date || payload.check_in);
+      const employeeEmail = payload.employee_email || createdBy;
+      const openAttendance = await config.model.findOne({
+        where: {
+          partner_id: partnerId,
+          active: true,
+          employee_email: employeeEmail,
+          check_in: { [Op.ne]: null },
+          check_out: null,
+          work_date: { [Op.gte]: start, [Op.lt]: end },
+        },
+        order: [['check_in', 'DESC']],
+      });
+
+      if (openAttendance) {
+        return {
+          success: true,
+          message: 'Check In hari ini sudah tercatat',
+          data: normalize(module, openAttendance),
+        };
+      }
     }
 
     const row = await config.model.create(sanitizePayload(config.model, payload));
