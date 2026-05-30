@@ -92,6 +92,23 @@ const HaiUser = dbSeq.define('hai_user', {
     type: Sequelize.STRING(50),
     allowNull: true
   },
+  partner_status: {
+    type: Sequelize.STRING(30),
+    allowNull: false,
+    defaultValue: 'none'
+  },
+  partner_status_note: {
+    type: Sequelize.STRING(500),
+    allowNull: true
+  },
+  partner_approved_by: {
+    type: Sequelize.STRING(120),
+    allowNull: true
+  },
+  partner_approved_at: {
+    type: Sequelize.DATE,
+    allowNull: true
+  },
   title: {
     type: Sequelize.STRING(50),
     allowNull: true

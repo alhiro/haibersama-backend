@@ -44,8 +44,17 @@ hanya partner `type = 2` yang bisa mengelola datanya.
 Untuk modul ERP, akun login tetap memakai tabel utama `hai_user`.
 `erp_employee_role` adalah mapping role karyawan per partner/perusahaan:
 
-- Owner daftar dari `/auth/registerPartner`; sistem otomatis membuat role
-  `Owner` di `erp_employee_role`.
+- Customer daftar dari `/auth/register` dan tidak mendapat role ERP.
+- Partner baru daftar dari `/auth/registerPartner`; sistem membuat akun dengan
+  `partner_status = pending` dan **belum membuat role ERP**.
+- Selama status masih `pending`, mobile hanya menampilkan informasi menunggu
+  verifikasi admin dan API modul ERP menolak akses.
+- Role `Owner` untuk satu partner/perusahaan harus diberikan lewat menu Role
+  oleh Owner yang sudah sah atau lewat approval admin awal.
+- Admin platform dapat approve partner lewat `POST /auth/partner/approval`.
+- Role ERP tetap fleksibel dan terpisah dari approval: admin boleh approve
+  tanpa set role, atau role boleh dibuat lebih dulu, tetapi akses ERP baru aktif
+  kalau `partner_status = approved` **dan** role di `erp_employee_role` aktif.
 - Karyawan bisa daftar dari `/auth/register` seperti user biasa, lalu owner
   menambahkan email karyawan di menu `Role`.
 - Jika email karyawan sudah ada di `hai_user`, sistem mengisi `user_id` dan
@@ -291,8 +300,37 @@ Saat owner menambahkan karyawan, sistem otomatis mengirim email undangan:
 - Jika email gagal dikirim, data role tetap tersimpan dengan `inviteStatus =
   Gagal Dikirim` agar owner bisa follow up manual atau kirim ulang.
 
-Gunakan header `x-erp-role` saat request dari mobile, misalnya `Owner`,
-`Supervisor`, `Warehouse Staff`, `Admin`, `Kasir`, atau `Marketplace Admin`.
+Role aktif ditentukan sistem dari tabel `erp_employee_role`. Jika akun partner
+belum disetujui atau belum punya role aktif, mobile menampilkan informasi akses
+belum diatur dan API modul ERP akan menolak request. Dua syarat akses wajib
+terpenuhi bersamaan: partner sudah `approved` dan akun punya role ERP aktif.
+
+## Payload Approval Partner
+
+Endpoint admin:
+
+```http
+POST /auth/partner/approval
+```
+
+```json
+{
+  "id": 12,
+  "status": "approved",
+  "role": "Owner",
+  "note": "Dokumen usaha valid"
+}
+```
+
+Field `role` opsional. Jika kosong, sistem hanya mengubah status partner dan
+menu ERP tetap belum terbuka sampai role diberikan.
+
+Status yang didukung:
+- `pending`: menunggu verifikasi.
+- `approved`: partner disetujui; jika `role` diisi, sistem membuat role awal.
+  Jika `role` tidak diisi, partner tetap belum bisa akses ERP sampai role aktif
+  dibuat.
+- `rejected`: partner ditolak dan akses ERP tetap tertutup.
 
 ## Payload Stock Ledger
 

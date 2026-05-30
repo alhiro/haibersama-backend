@@ -252,6 +252,10 @@ authRouter.get("/user/:id", headerAuth.isUserAuthenticated, headerAuth.updateFcm
   authController.getUser(data, res);
 });
 
+authRouter.post("/partner/approval", headerAuth.isAdminAuthenticated, (req, res, next) => {
+  authController.updatePartnerApproval(req, res);
+});
+
 authRouter.delete("/delete", headerAuth.isPartnerAuthenticated, (req, res, next) => {
   const partner_id = res.locals.auth.id;
   const data = { 

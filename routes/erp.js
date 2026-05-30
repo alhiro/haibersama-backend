@@ -23,43 +23,43 @@ erpRouter.post("/approval/reject", headerAuth.isErpAuthenticated, headerAuth.req
   controller.rejectRequest(req, res);
 });
 
-erpRouter.get("/:module/options", headerAuth.isUserAuthenticated, (req, res, next) => {
+erpRouter.get("/:module/options", headerAuth.isErpAuthenticated, headerAuth.requireErpModuleAccess(), (req, res, next) => {
   controller.getOptions(req, res);
 });
 
-erpRouter.get("/:module/getall", headerAuth.isErpAuthenticated, (req, res, next) => {
+erpRouter.get("/:module/getall", headerAuth.isErpAuthenticated, headerAuth.requireErpModuleAccess(), (req, res, next) => {
   controller.getList(req, res);
 });
 
-erpRouter.get("/:module/get", headerAuth.isErpAuthenticated, (req, res, next) => {
+erpRouter.get("/:module/get", headerAuth.isErpAuthenticated, headerAuth.requireErpModuleAccess(), (req, res, next) => {
   controller.getDetail(req, res);
 });
 
-erpRouter.get("/:module/metrics", headerAuth.isErpAuthenticated, (req, res, next) => {
+erpRouter.get("/:module/metrics", headerAuth.isErpAuthenticated, headerAuth.requireErpModuleAccess(), (req, res, next) => {
   controller.getMetrics(req, res);
 });
 
-erpRouter.get("/:module/barcode", headerAuth.isErpAuthenticated, (req, res, next) => {
+erpRouter.get("/:module/barcode", headerAuth.isErpAuthenticated, headerAuth.requireErpModuleAccess(), (req, res, next) => {
   controller.getBarcodeConfig(req, res);
 });
 
-erpRouter.post("/:module/scan", headerAuth.isErpAuthenticated, (req, res, next) => {
+erpRouter.post("/:module/scan", headerAuth.isErpAuthenticated, headerAuth.requireErpModuleAccess(), (req, res, next) => {
   controller.scan(req, res);
 });
 
-erpRouter.post("/:module/add", headerAuth.isErpAuthenticated, (req, res, next) => {
+erpRouter.post("/:module/add", headerAuth.isErpAuthenticated, headerAuth.requireErpModuleAccess(), (req, res, next) => {
   controller.create(req, res);
 });
 
-erpRouter.post("/:module/update", headerAuth.isErpAuthenticated, (req, res, next) => {
+erpRouter.post("/:module/update", headerAuth.isErpAuthenticated, headerAuth.requireErpModuleAccess(), (req, res, next) => {
   controller.update(req, res);
 });
 
-erpRouter.patch("/:module/update", headerAuth.isErpAuthenticated, (req, res, next) => {
+erpRouter.patch("/:module/update", headerAuth.isErpAuthenticated, headerAuth.requireErpModuleAccess(), (req, res, next) => {
   controller.update(req, res);
 });
 
-erpRouter.delete("/:module/delete", headerAuth.isErpAuthenticated, (req, res, next) => {
+erpRouter.delete("/:module/delete", headerAuth.isErpAuthenticated, headerAuth.requireErpModuleAccess(), (req, res, next) => {
   controller.delete(req, res);
 });
 

@@ -11,12 +11,39 @@ const configuredAdminEmails = (process.env.ADMIN_EMAILS || '')
   .split(',')
   .map((email) => email.trim().toLowerCase())
   .filter(Boolean);
+const normalizeRole = (role) => String(role || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const erpModuleAccess = {
+  supplier: ['Owner', 'Admin', 'Supervisor'],
+  purchaseorder: ['Owner', 'Admin', 'Supervisor', 'Warehouse Staff'],
+  warehouse: ['Owner', 'Admin', 'Supervisor', 'Warehouse Staff', 'Driver', 'Karyawan', 'Staff'],
+  production: ['Owner', 'Admin', 'Supervisor', 'Warehouse Staff', 'Penjahit', 'Karyawan', 'Staff'],
+  inventory: ['Owner', 'Admin', 'Supervisor', 'Warehouse Staff', 'Penjahit', 'Karyawan', 'Staff'],
+  product: ['Owner', 'Admin', 'Supervisor', 'Marketplace Admin', 'Kasir', 'Karyawan', 'Staff'],
+  transaction: ['Owner', 'Admin', 'Supervisor', 'Marketplace Admin', 'Kasir', 'Driver', 'Karyawan', 'Staff'],
+  invoice: ['Owner', 'Admin', 'Supervisor', 'Marketplace Admin', 'Kasir', 'Karyawan', 'Staff'],
+  cashflow: ['Owner', 'Admin'],
+  report: ['Owner', 'Admin', 'Supervisor'],
+  expense: ['Owner', 'Admin', 'Supervisor'],
+  returnrefund: ['Owner', 'Admin', 'Supervisor', 'Warehouse Staff', 'Marketplace Admin', 'Kasir'],
+  settlement: ['Owner', 'Admin', 'Marketplace Admin'],
+  employeerole: ['Owner'],
+  stockledger: ['Owner', 'Supervisor', 'Warehouse Staff'],
+};
+
+const canAccessErpModule = (role, module, isAdmin = false) => {
+  if (isAdmin) return true;
+  const normalizedRole = normalizeRole(role);
+  if (normalizedRole === 'owner') return true;
+  const allowedRoles = erpModuleAccess[String(module || '').toLowerCase()];
+  if (!allowedRoles) return false;
+  return allowedRoles.map(normalizeRole).includes(normalizedRole);
+};
 
 const resolveAuthContext = async (decodedStore, req) => {
-  const { email, name, id, type, erp_role, is_admin, admin_role } = decodedStore;
+  const { email, name, id, type, is_admin, admin_role } = decodedStore;
   const user = await HaiUser.findOne({
     where: { id },
-    attributes: ['id', 'email', 'name', 'type', 'is_admin', 'admin_role'],
+    attributes: ['id', 'email', 'name', 'type', 'is_admin', 'admin_role', 'partner_status'],
   }).catch(() => null);
 
   const userEmail = (user && user.email) || email;
@@ -46,10 +73,17 @@ const resolveAuthContext = async (decodedStore, req) => {
     }
   }
 
-  const headerRole = req.headers['x-erp-role'];
-  const erpRole = employeeRole
-    ? employeeRole.role
-    : headerRole || erp_role || (userType == 2 ? 'Owner' : 'Customer');
+  const partnerUser = employeeRole && employeeRole.partner_id !== id
+    ? await HaiUser.findOne({
+        where: { id: employeeRole.partner_id },
+        attributes: ['id', 'partner_status'],
+      }).catch(() => null)
+    : null;
+  const partnerStatus = employeeRole
+    ? ((partnerUser && partnerUser.partner_status) || 'pending')
+    : ((user && user.partner_status) || (userType == 2 ? 'pending' : 'none'));
+
+  const erpRole = employeeRole ? employeeRole.role : null;
 
   return {
     name: userName,
@@ -57,6 +91,7 @@ const resolveAuthContext = async (decodedStore, req) => {
     id,
     type: userType,
     partnerId: employeeRole ? employeeRole.partner_id : id,
+    partnerStatus,
     erpRole,
     erpEmployeeRoleId: employeeRole ? employeeRole.id : null,
     isAdmin,
@@ -139,7 +174,7 @@ module.exports = {
                 res.locals.auth = await resolveAuthContext(decodedStore, req);
                 const { type } = res.locals.auth;
 
-                if(type != 2){
+                if(type != 2 || res.locals.auth.partnerStatus !== 'approved'){
                   return res.status(401).json({
                     status: 401,
                     message: "UNAUTHORIZED"
@@ -200,7 +235,7 @@ module.exports = {
       await jwt.verify(token);
       const decodedStore = await jwt.decode(token);
       res.locals.auth = await resolveAuthContext(decodedStore, req);
-      if (res.locals.auth.type != 2 && !res.locals.auth.erpEmployeeRoleId) {
+      if (res.locals.auth.partnerStatus !== 'approved' || !res.locals.auth.erpEmployeeRoleId) {
         return res.status(401).json({
           status: 401,
           message: "UNAUTHORIZED"
@@ -218,6 +253,23 @@ module.exports = {
   requireErpRoles: (roles = []) => (req, res, next) => {
     const currentRole = res.locals.auth && res.locals.auth.erpRole;
     if (!currentRole || !roles.includes(currentRole)) {
+      return res.status(403).json({
+        status: 403,
+        success: false,
+        message: "ROLE_NOT_ALLOWED"
+      });
+    }
+    return next();
+  },
+
+  requireErpModuleAccess: (moduleResolver) => (req, res, next) => {
+    const currentRole = res.locals.auth && res.locals.auth.erpRole;
+    const module = typeof moduleResolver === 'function'
+      ? moduleResolver(req)
+      : (moduleResolver || req.params.module);
+    const isAdmin = res.locals.auth && res.locals.auth.isAdmin;
+
+    if (!canAccessErpModule(currentRole, module, isAdmin)) {
       return res.status(403).json({
         status: 403,
         success: false,

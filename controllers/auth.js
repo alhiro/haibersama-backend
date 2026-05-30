@@ -763,6 +763,21 @@ exports.getProfile =  async function(req, res, next) {
   }
 }
 
+exports.updatePartnerApproval = async function(req, res, next) {
+  try {
+    const response = await auth.updatePartnerApproval({
+      ...req.body,
+      approvedBy: res.locals.auth.email,
+    });
+    response.code = response.success ? 200 : 400;
+    return res.status(response.code).send(response);
+  } catch (err) {
+    return res
+      .status(500)
+      .send({ code: 500, success: false, message: err.message, data: { err } });
+  }
+}
+
 exports.getUser = async function(req, res, next) {
   try {
     const params = { 

@@ -915,6 +915,19 @@ CREATE INDEX IF NOT EXISTS idx_erp_scan_history_code
 
 -- Migration helper untuk database yang sudah punya tabel ERP lama.
 -- Jalankan bagian ini jika tabel sudah ada sebelum fitur approval/ledger/retur/settlement ditambahkan.
+ALTER TABLE public.hai_user ADD COLUMN IF NOT EXISTS partner_status VARCHAR(30) NOT NULL DEFAULT 'none';
+ALTER TABLE public.hai_user ADD COLUMN IF NOT EXISTS partner_status_note VARCHAR(500);
+ALTER TABLE public.hai_user ADD COLUMN IF NOT EXISTS partner_approved_by VARCHAR(120);
+ALTER TABLE public.hai_user ADD COLUMN IF NOT EXISTS partner_approved_at TIMESTAMP WITH TIME ZONE;
+
+UPDATE public.hai_user
+SET partner_status = 'pending'
+WHERE type = 2
+  AND COALESCE(partner_status, 'none') = 'none';
+
+CREATE INDEX IF NOT EXISTS idx_hai_user_partner_status
+  ON public.hai_user (partner_status);
+
 ALTER TABLE public.erp_purchase_order ADD COLUMN IF NOT EXISTS approval_status VARCHAR(40) NOT NULL DEFAULT 'Tidak Perlu Approval';
 ALTER TABLE public.erp_purchase_order ADD COLUMN IF NOT EXISTS approval_id INTEGER;
 ALTER TABLE public.erp_purchase_order ADD COLUMN IF NOT EXISTS approved_by VARCHAR(120);

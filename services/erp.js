@@ -40,7 +40,7 @@ const MODULES = {
     defaultStatus: 'Aktif',
     statuses: ['Aktif', 'Nonaktif', 'Review'],
     extraFields: {
-      role: ['Owner', 'Supervisor', 'Warehouse Staff', 'Admin', 'Penjahit', 'Kasir', 'Driver', 'Marketplace Admin'],
+      role: ['Owner', 'Karyawan', 'Supervisor', 'Warehouse Staff', 'Admin', 'Penjahit', 'Kasir', 'Driver', 'Marketplace Admin'],
       department: ['Owner', 'Warehouse', 'Produksi', 'Finance', 'Toko', 'Marketplace', 'Operasional'],
     },
   },
@@ -1597,7 +1597,7 @@ const normalizeAuditLog = (row) => {
 
 const roleRules = [
   {
-    role: 'Staff',
+    role: 'Karyawan',
     scope: 'Input data operasional',
     approval: 'Tidak bisa approve',
     examples: ['Input supplier', 'Input transaksi', 'Input inventory masuk'],

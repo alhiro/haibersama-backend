@@ -79,8 +79,39 @@ module.exports = {
       returning: true,
       plain: true,
     })
-      .then((updated) => {
+      .then(async (updated) => {
         const user = updated[1].dataValues;
+        const employeeRole = await ErpEmployeeRole.findOne({
+          where: {
+            [Sequelizes.Op.or]: [
+              { user_id: user.id },
+              { email: user.email },
+            ],
+            active: true,
+            status: 'Aktif',
+          },
+          order: [['updated_at', 'DESC']],
+        }).catch(() => null);
+        if (employeeRole && !employeeRole.user_id) {
+          await ErpEmployeeRole.update({
+            user_id: user.id,
+            joined_at: new Date(),
+            updated_by: user.email,
+          }, { where: { id: employeeRole.id } }).catch(() => null);
+        }
+        const partnerUser = employeeRole && employeeRole.partner_id !== user.id
+          ? await User.findOne({
+              where: { id: employeeRole.partner_id },
+              attributes: ['id', 'partner_status'],
+            }).catch(() => null)
+          : null;
+        const ownPartnerStatus = user.partner_status || (user.type == 2 ? 'pending' : 'none');
+        const partnerStatus = employeeRole
+          ? ((partnerUser && partnerUser.partner_status) || ownPartnerStatus)
+          : ownPartnerStatus;
+        const activeErpRole = partnerStatus === 'approved' && employeeRole
+          ? employeeRole.role
+          : null;
         // console.log("updated : ", user)
 
         return {
@@ -90,7 +121,8 @@ module.exports = {
             type: user.type == 1 ? "user" : "partner",
             is_admin: Boolean(user.is_admin),
             admin_role: user.admin_role,
-            erp_role: user.type == 2 ? 'Owner' : null,
+            partner_status: partnerStatus,
+            erp_role: activeErpRole,
             active: user.active,
             phone: user.phone_number,
             name: user.name,
@@ -364,6 +396,10 @@ module.exports = {
           "type",
           "is_admin",
           "admin_role",
+          "partner_status",
+          "partner_status_note",
+          "partner_approved_by",
+          "partner_approved_at",
           "title",
           "description",
           "longitude",
@@ -426,6 +462,30 @@ module.exports = {
         return { success: false, message: "User Tidak Ditemukan", data: {} };
       } else {
         const { cart_length } = users.get();
+        const employeeRole = await ErpEmployeeRole.findOne({
+          where: {
+            [Sequelizes.Op.or]: [
+              { user_id: users.id },
+              { email: users.email },
+            ],
+            active: true,
+            status: 'Aktif',
+          },
+          order: [['updated_at', 'DESC']],
+        }).catch(() => null);
+        const partnerUser = employeeRole && employeeRole.partner_id !== users.id
+          ? await User.findOne({
+              where: { id: employeeRole.partner_id },
+              attributes: ['id', 'partner_status'],
+            }).catch(() => null)
+          : null;
+        const ownPartnerStatus = users.partner_status || (users.type == 2 ? 'pending' : 'none');
+        const partnerStatus = employeeRole
+          ? ((partnerUser && partnerUser.partner_status) || ownPartnerStatus)
+          : ownPartnerStatus;
+        const activeErpRole = partnerStatus === 'approved' && employeeRole
+          ? employeeRole.role
+          : null;
         console.log("users.type");
         console.log(users.type);
         if (users.type == "2") {
@@ -454,6 +514,11 @@ module.exports = {
               type: users.type,
               is_admin: users.is_admin,
               admin_role: users.admin_role,
+              partner_status: partnerStatus,
+              partner_status_note: users.partner_status_note,
+              partner_approved_by: users.partner_approved_by,
+              partner_approved_at: users.partner_approved_at,
+              erp_role: activeErpRole,
               title: users.title,
               description: users.description,
               longitude: users.longitude,
@@ -486,7 +551,10 @@ module.exports = {
             return { success: true, message: "User Ditemukan", data: users };
           }
         } else {
-          return { success: true, message: "User Ditemukan", data: users };
+          const data = users.toJSON ? users.toJSON() : users;
+          data.partner_status = partnerStatus;
+          data.erp_role = activeErpRole;
+          return { success: true, message: "User Ditemukan", data };
         }
       }
     } catch (error) {
@@ -1008,6 +1076,10 @@ module.exports = {
         uid_firebase: firebaseUid,
         active: 0,
         type: 2,
+        partner_status: 'pending',
+        partner_status_note: 'Menunggu verifikasi admin',
+        is_verified: false,
+        process_verified: 0,
       };
 
       const insertUser = await User.create(objHaiUser, transaction);
@@ -1016,26 +1088,6 @@ module.exports = {
       if (!insertUser) {
         throw { success: false, message: "Gagal Daftar User", data: {} };
       } else {
-        await ErpEmployeeRole.findOrCreate({
-          where: { partner_id: insertUser.dataValues.id, email },
-          defaults: {
-            partner_id: insertUser.dataValues.id,
-            user_id: insertUser.dataValues.id,
-            name,
-            email,
-            phone,
-            role: 'Owner',
-            department: 'Owner',
-            status: 'Aktif',
-            permissions: JSON.stringify(['ALL']),
-            invited_by: email,
-            invited_at: new Date(),
-            joined_at: new Date(),
-            active: true,
-            created_by: email,
-          },
-          transaction,
-        });
         transaction.commit();
         delete insertUser.dataValues.password;
 
@@ -1069,6 +1121,104 @@ module.exports = {
       transaction.rollback();
       throw error;
     }
+  },
+
+  updatePartnerApproval: async (params) => {
+    const {
+      id,
+      email,
+      partner_id,
+      partnerId,
+      status,
+      role,
+      note,
+      approvedBy,
+    } = params;
+    const targetWhere = id || partner_id || partnerId
+      ? { id: id || partner_id || partnerId }
+      : { email };
+    const partner = await User.findOne({ where: targetWhere });
+
+    if (!partner || partner.type != 2) {
+      return { success: false, message: 'Partner tidak ditemukan', data: {} };
+    }
+
+    const nextStatus = status || 'approved';
+    if (!['pending', 'approved', 'rejected'].includes(nextStatus)) {
+      return { success: false, message: 'Status partner tidak valid', data: {} };
+    }
+
+    await User.update({
+      partner_status: nextStatus,
+      partner_status_note: note || null,
+      partner_approved_by: nextStatus === 'approved' ? approvedBy : null,
+      partner_approved_at: nextStatus === 'approved' ? new Date() : null,
+      is_verified: nextStatus === 'approved',
+      process_verified: nextStatus === 'approved' ? 1 : nextStatus === 'rejected' ? 2 : 0,
+      updated_by: approvedBy,
+    }, { where: { id: partner.id } });
+
+    if (nextStatus === 'approved' && role) {
+      const [employeeRole, created] = await ErpEmployeeRole.findOrCreate({
+        where: { partner_id: partner.id, email: partner.email },
+        defaults: {
+          partner_id: partner.id,
+          user_id: partner.id,
+          name: partner.name,
+          email: partner.email,
+          phone: partner.phone_number,
+          role,
+          department: role === 'Owner' ? 'Owner' : 'Operasional',
+          status: 'Aktif',
+          permissions: role === 'Owner'
+            ? JSON.stringify(['ALL'])
+            : JSON.stringify([
+                'Warehouse: read',
+                'Inventory: read',
+                'Product: read',
+                'Transaction: read',
+                'Invoice: read',
+              ]),
+          invited_by: approvedBy,
+          invited_at: new Date(),
+          joined_at: new Date(),
+          invite_status: 'Akun Terhubung',
+          active: true,
+          created_by: approvedBy,
+          updated_by: approvedBy,
+        },
+      });
+
+      if (!created) {
+        await ErpEmployeeRole.update({
+          user_id: partner.id,
+          name: partner.name,
+          phone: partner.phone_number,
+          role,
+          department: role === 'Owner' ? 'Owner' : 'Operasional',
+          status: 'Aktif',
+          joined_at: employeeRole.joined_at || new Date(),
+          invite_status: 'Akun Terhubung',
+          active: true,
+          updated_by: approvedBy,
+        }, { where: { id: employeeRole.id } });
+      }
+    }
+
+    const updated = await User.findOne({
+      where: { id: partner.id },
+      attributes: ['id', 'email', 'name', 'type', 'partner_status', 'partner_status_note', 'is_verified', 'process_verified'],
+    });
+
+    return {
+      success: true,
+      message: nextStatus === 'approved'
+        ? 'Partner berhasil disetujui'
+        : nextStatus === 'rejected'
+          ? 'Partner ditolak'
+          : 'Partner dikembalikan ke status menunggu',
+      data: updated,
+    };
   },
 
   delete: async (data) => {
