@@ -15,6 +15,10 @@ erpRouter.get("/role-approval/summary", headerAuth.isErpAuthenticated, headerAut
   controller.getRoleApprovalDashboard(req, res);
 });
 
+erpRouter.get("/role-approval/audit-logs", headerAuth.isErpAuthenticated, headerAuth.requireErpRoles(['Owner', 'Supervisor']), (req, res, next) => {
+  controller.getRoleApprovalAuditLogs(req, res);
+});
+
 erpRouter.post("/approval/approve", headerAuth.isErpAuthenticated, headerAuth.requireErpRoles(['Owner', 'Supervisor']), (req, res, next) => {
   controller.approveRequest(req, res);
 });

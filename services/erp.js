@@ -31,8 +31,13 @@ const Op = Sequelize.Op;
 const normalizeRole = (role) => String(role || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 const isErpManagerRole = (role) => ['owner', 'admin', 'supervisor'].includes(normalizeRole(role));
 const normalizeText = (value) => String(value || '').trim().toLowerCase();
+const employeeEmailCondition = (email) => Sequelize.where(
+  Sequelize.fn('lower', Sequelize.col('employee_email')),
+  normalizeText(email),
+);
 const shouldScopeToEmployee = (module, actorRole) =>
-  ['payslip'].includes(String(module || '').toLowerCase()) && !isErpManagerRole(actorRole);
+  ['payslip', 'workschedule'].includes(String(module || '').toLowerCase()) && !isErpManagerRole(actorRole);
+const modulesWithEmployeeDirectory = new Set(['employeetask', 'workschedule', 'payslip']);
 const employeeTaskProgressFields = new Set([
   'id',
   'status',
@@ -1348,6 +1353,7 @@ const buildMetrics = async (module, partnerId, params = {}) => {
     { partner_id: partnerId, active: true },
     params.actorEmail,
     params.actorRole,
+    params.actorDepartment,
   );
   const total = await config.model.count({ where });
 
@@ -1550,11 +1556,22 @@ const buildMetrics = async (module, partnerId, params = {}) => {
   ];
 };
 
-const scopedEmployeeWhere = (module, where, actorEmail, actorRole) => {
+const scopedEmployeeWhere = (module, where, actorEmail, actorRole, actorDepartment) => {
   if (!shouldScopeToEmployee(module, actorRole)) return where;
+  if (String(module || '').toLowerCase() === 'workschedule') {
+    const email = normalizeText(actorEmail);
+    const department = String(actorDepartment || '').trim();
+    const orConditions = [];
+    if (email) orConditions.push(employeeEmailCondition(email));
+    if (department) orConditions.push({ department });
+    orConditions.push({ department: 'Semua' }, { department: 'Semua Divisi' });
+    return orConditions.length
+      ? { ...where, [Op.or]: orConditions }
+      : { ...where, employee_email: '__NO_EMPLOYEE_EMAIL__' };
+  }
   const email = normalizeText(actorEmail);
   if (!email) return { ...where, employee_email: '__NO_EMPLOYEE_EMAIL__' };
-  return { ...where, employee_email: email };
+  return { ...where, [Op.and]: [employeeEmailCondition(email)] };
 };
 
 const rupiah = (value) => `Rp${Number(value || 0).toLocaleString('id-ID')}`;
@@ -2130,6 +2147,25 @@ const normalizeAuditLog = (row) => {
   };
 };
 
+const employeeDirectoryFor = async (partnerId) => {
+  if (!partnerId) return [];
+  const rows = await safeFindAll(ErpEmployeeRole, {
+    where: { partner_id: partnerId, active: true, status: 'Aktif' },
+    order: [['name', 'ASC']],
+    attributes: ['id', 'name', 'email', 'role', 'department'],
+  });
+  return rows.map((row) => {
+    const data = row && row.dataValues ? row.dataValues : row;
+    return {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      role: data.role,
+      department: data.department,
+    };
+  }).filter((item) => item.name || item.email);
+};
+
 const roleRules = [
   {
     role: 'Karyawan',
@@ -2187,6 +2223,27 @@ const buildRoleApprovalDashboard = async (partnerId) => {
     recentApprovals: approvals.slice(0, 10).map(normalizeApproval),
     auditLogs: auditLogs.map(normalizeAuditLog),
     roleRules,
+  };
+};
+
+const getRoleApprovalAuditLogs = async (partnerId, params = {}) => {
+  const page = parseInt(params.page || 1);
+  const limit = parseInt(params.limit || 20);
+  const rows = await ErpAuditLog.findAndCountAll({
+    where: { partner_id: partnerId },
+    order: [['created_at', 'DESC']],
+    limit,
+    offset: (page - 1) * limit,
+    distinct: true,
+  });
+
+  return {
+    success: true,
+    message: rows.rows.length > 0 ? 'Riwayat perubahan berhasil dimuat' : 'Riwayat perubahan masih kosong',
+    data: rows.rows.map(normalizeAuditLog),
+    page,
+    count: Math.ceil(rows.count / limit),
+    length: rows.count,
   };
 };
 
@@ -2260,19 +2317,30 @@ module.exports = {
     defaultStatus: MODULES[key].defaultStatus,
   })),
 
-  getOptions: (module) => {
+  getOptions: async (module, partnerId) => {
     const config = getConfig(module);
+    const data = {
+      module,
+      title: config.label,
+      statuses: config.statuses,
+      defaultStatus: config.defaultStatus,
+      extraFields: { ...(config.extraFields || {}) },
+      barcodeConfig: config.barcode || null,
+    };
+
+    if (modulesWithEmployeeDirectory.has(String(module || '').toLowerCase())) {
+      const employees = await employeeDirectoryFor(partnerId);
+      const names = employees.map((item) => item.name).filter(Boolean);
+      const emails = employees.map((item) => item.email).filter(Boolean);
+      data.employeeOptions = employees;
+      data.extraFields.employee = names;
+      data.extraFields.employeeEmail = emails;
+    }
+
     return {
       success: true,
       message: `Pilihan ${config.label} berhasil dimuat`,
-      data: {
-        module,
-        title: config.label,
-        statuses: config.statuses,
-        defaultStatus: config.defaultStatus,
-        extraFields: config.extraFields || {},
-        barcodeConfig: config.barcode || null,
-      },
+      data,
     };
   },
 
@@ -2285,6 +2353,7 @@ module.exports = {
       buildFilter(module, partnerId, params),
       params.actorEmail,
       params.actorRole,
+      params.actorDepartment,
     );
 
     const rows = await config.model.findAndCountAll({
@@ -2305,13 +2374,14 @@ module.exports = {
     };
   },
 
-  getDetail: async (module, partnerId, id, actorEmail, actorRole = 'Staff') => {
+  getDetail: async (module, partnerId, id, actorEmail, actorRole = 'Staff', actorDepartment) => {
     const config = getConfig(module);
     const where = scopedEmployeeWhere(
       module,
       { id, partner_id: partnerId, active: true },
       actorEmail,
       actorRole,
+      actorDepartment,
     );
     const row = await config.model.findOne({ where });
     return row
@@ -2704,9 +2774,9 @@ module.exports = {
       : { success: false, message: `${config.label} tidak ditemukan`, data: {} };
   },
 
-  getMetrics: async (module, partnerId, actorEmail, actorRole = 'Staff') => {
+  getMetrics: async (module, partnerId, actorEmail, actorRole = 'Staff', actorDepartment) => {
     const config = getConfig(module);
-    const metrics = await buildMetrics(module, partnerId, { actorEmail, actorRole });
+    const metrics = await buildMetrics(module, partnerId, { actorEmail, actorRole, actorDepartment });
     return { success: true, message: `Ringkasan ${config.label} berhasil dimuat`, data: metrics };
   },
 
@@ -2721,6 +2791,8 @@ module.exports = {
     message: 'Role dan approval berhasil dimuat',
     data: await buildRoleApprovalDashboard(partnerId),
   }),
+
+  getRoleApprovalAuditLogs,
 
   approveRequest: async (partnerId, id, body, actor, actorRole) => decideApproval({
     partnerId,

@@ -35,6 +35,7 @@ const listParams = (req) => ({
   employee: req.query.employee,
   actorEmail: resSafeAuth(req).email,
   actorRole: resSafeAuth(req).erpRole,
+  actorDepartment: resSafeAuth(req).erpDepartment,
 });
 
 const resSafeAuth = (req) => (req.res && req.res.locals && req.res.locals.auth) || {};
@@ -90,6 +91,15 @@ exports.getRoleApprovalDashboard = async (req, res) => {
   }
 };
 
+exports.getRoleApprovalAuditLogs = async (req, res) => {
+  try {
+    const result = await erpService.getRoleApprovalAuditLogs(partnerId(res), listParams(req));
+    return sendList(res, result);
+  } catch (err) {
+    return handleError(res, err);
+  }
+};
+
 exports.approveRequest = async (req, res) => {
   try {
     const id = req.body.id || req.query.id;
@@ -112,7 +122,7 @@ exports.rejectRequest = async (req, res) => {
 
 exports.getOptions = async (req, res) => {
   try {
-    const result = erpService.getOptions(req.params.module);
+    const result = await erpService.getOptions(req.params.module, partnerId(res));
     return res.status(200).send(result);
   } catch (err) {
     return handleError(res, err);
@@ -130,7 +140,14 @@ exports.getList = async (req, res) => {
 
 exports.getDetail = async (req, res) => {
   try {
-    const result = await erpService.getDetail(req.params.module, partnerId(res), req.query.id, res.locals.auth.email, res.locals.auth.erpRole);
+    const result = await erpService.getDetail(
+      req.params.module,
+      partnerId(res),
+      req.query.id,
+      res.locals.auth.email,
+      res.locals.auth.erpRole,
+      res.locals.auth.erpDepartment,
+    );
     return res.status(result.success ? 200 : 404).send(result);
   } catch (err) {
     return handleError(res, err);
@@ -188,7 +205,13 @@ exports.delete = async (req, res) => {
 
 exports.getMetrics = async (req, res) => {
   try {
-    const result = await erpService.getMetrics(req.params.module, partnerId(res), res.locals.auth.email, res.locals.auth.erpRole);
+    const result = await erpService.getMetrics(
+      req.params.module,
+      partnerId(res),
+      res.locals.auth.email,
+      res.locals.auth.erpRole,
+      res.locals.auth.erpDepartment,
+    );
     return res.status(200).send(result);
   } catch (err) {
     return handleError(res, err);
