@@ -33,7 +33,11 @@ const listParams = (req) => ({
   cashflow_reference: req.query.cashflow_reference || req.query.cashflowReference,
   vendor: req.query.vendor,
   employee: req.query.employee,
+  actorEmail: resSafeAuth(req).email,
+  actorRole: resSafeAuth(req).erpRole,
 });
+
+const resSafeAuth = (req) => (req.res && req.res.locals && req.res.locals.auth) || {};
 
 const sendList = (res, result) => res.status(200).json({
   success: result.success,
@@ -126,7 +130,7 @@ exports.getList = async (req, res) => {
 
 exports.getDetail = async (req, res) => {
   try {
-    const result = await erpService.getDetail(req.params.module, partnerId(res), req.query.id);
+    const result = await erpService.getDetail(req.params.module, partnerId(res), req.query.id, res.locals.auth.email, res.locals.auth.erpRole);
     return res.status(result.success ? 200 : 404).send(result);
   } catch (err) {
     return handleError(res, err);
@@ -184,7 +188,7 @@ exports.delete = async (req, res) => {
 
 exports.getMetrics = async (req, res) => {
   try {
-    const result = await erpService.getMetrics(req.params.module, partnerId(res));
+    const result = await erpService.getMetrics(req.params.module, partnerId(res), res.locals.auth.email, res.locals.auth.erpRole);
     return res.status(200).send(result);
   } catch (err) {
     return handleError(res, err);

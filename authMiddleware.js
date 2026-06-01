@@ -46,6 +46,21 @@ const canAccessErpModule = (role, module, isAdmin = false) => {
   return allowedRoles.map(normalizeRole).includes(normalizedRole);
 };
 
+const erpModuleWriteAccess = {
+  employeetask: ['Owner', 'Admin', 'Supervisor'],
+  workschedule: ['Owner', 'Admin', 'Supervisor'],
+  announcement: ['Owner', 'Admin', 'Supervisor'],
+  payslip: ['Owner', 'Admin', 'Supervisor'],
+};
+
+const canWriteErpModule = (role, module, isAdmin = false) => {
+  if (isAdmin) return true;
+  const writeRoles = erpModuleWriteAccess[String(module || '').toLowerCase()];
+  if (!writeRoles) return canAccessErpModule(role, module, isAdmin);
+  const normalizedRole = normalizeRole(role);
+  return writeRoles.map(normalizeRole).includes(normalizedRole);
+};
+
 const resolveAuthContext = async (decodedStore, req) => {
   const { email, name, id, type, is_admin, admin_role } = decodedStore;
   const user = await HaiUser.findOne({
@@ -279,6 +294,32 @@ module.exports = {
     const isAdmin = res.locals.auth && res.locals.auth.isAdmin;
 
     if (!canAccessErpModule(currentRole, module, isAdmin)) {
+      return res.status(403).json({
+        status: 403,
+        success: false,
+        message: "ROLE_NOT_ALLOWED"
+      });
+    }
+    return next();
+  },
+
+  requireErpModuleWriteAccess: (moduleResolver) => (req, res, next) => {
+    const currentRole = res.locals.auth && res.locals.auth.erpRole;
+    const module = typeof moduleResolver === 'function'
+      ? moduleResolver(req)
+      : (moduleResolver || req.params.module);
+    const isAdmin = res.locals.auth && res.locals.auth.isAdmin;
+    const normalizedModule = String(module || '').toLowerCase();
+    const isTaskProgressUpdate =
+      normalizedModule === 'employeetask' &&
+      ['POST', 'PATCH'].includes(req.method) &&
+      String(req.path || '').toLowerCase().includes('/update');
+
+    if (isTaskProgressUpdate && canAccessErpModule(currentRole, module, isAdmin)) {
+      return next();
+    }
+
+    if (!canWriteErpModule(currentRole, module, isAdmin)) {
       return res.status(403).json({
         status: 403,
         success: false,

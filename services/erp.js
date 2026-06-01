@@ -28,6 +28,22 @@ const HaiUser = require('../models/haiuser');
 const emailTransporter = require('../config/email');
 
 const Op = Sequelize.Op;
+const normalizeRole = (role) => String(role || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const isErpManagerRole = (role) => ['owner', 'admin', 'supervisor'].includes(normalizeRole(role));
+const normalizeText = (value) => String(value || '').trim().toLowerCase();
+const shouldScopeToEmployee = (module, actorRole) =>
+  ['payslip'].includes(String(module || '').toLowerCase()) && !isErpManagerRole(actorRole);
+const employeeTaskProgressFields = new Set([
+  'id',
+  'status',
+  'Status',
+  'note',
+  'Note',
+  'description',
+  'Description',
+  'requesterRole',
+  'requester_role',
+]);
 
 const MODULES = {
   supplier: {
@@ -56,7 +72,7 @@ const MODULES = {
     model: ErpAttendance,
     titleField: 'name',
     defaultStatus: 'Hadir',
-    statuses: ['Hadir', 'Terlambat', 'Pulang', 'Pulang Cepat', 'Lembur', 'Izin', 'Sakit'],
+    statuses: ['Hadir', 'Terlambat', 'Pulang', 'Pulang Cepat', 'Lembur'],
     extraFields: {
       attendanceType: ['Masuk', 'Pulang', 'Kunjungan', 'Lembur'],
       shift: ['Pagi', 'Siang', 'Malam', 'Flexible'],
@@ -1048,9 +1064,291 @@ const dayRange = (value = new Date()) => {
   return { start, end };
 };
 
-const buildMetrics = async (module, partnerId) => {
+const calculateAttendanceDuration = (checkInValue, checkOutValue) => {
+  const checkIn = checkInValue instanceof Date ? checkInValue : new Date(checkInValue);
+  const checkOut = checkOutValue instanceof Date ? checkOutValue : new Date(checkOutValue);
+  if (Number.isNaN(checkIn.getTime()) || Number.isNaN(checkOut.getTime()) || checkOut <= checkIn) {
+    return { total_days: 0, total_hours: 0, work_duration_minutes: 0 };
+  }
+
+  const workDurationMinutes = Math.max(0, Math.round((checkOut.getTime() - checkIn.getTime()) / 60000));
+  const totalHours = Number((workDurationMinutes / 60).toFixed(2));
+  const totalDays = workDurationMinutes > 0 ? Number((Math.max(totalHours / 8, 1)).toFixed(2)) : 0;
+  return {
+    total_days: totalDays,
+    total_hours: totalHours,
+    work_duration_minutes: workDurationMinutes,
+  };
+};
+
+const minutesFromTime = (value, fallback = 0) => {
+  const match = String(value || '').match(/(\d{1,2}):(\d{2})/);
+  if (!match) return fallback;
+  return Number(match[1]) * 60 + Number(match[2]);
+};
+
+const timeFromMinutes = (minutes) => {
+  const normalized = ((Math.round(minutes) % 1440) + 1440) % 1440;
+  const hour = Math.floor(normalized / 60);
+  const minute = normalized % 60;
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+};
+
+const getWorkPolicy = async (partnerId) => {
+  const schedule = await MODULES.workschedule.model.findOne({
+    where: { partner_id: partnerId, active: true, status: 'Aktif' },
+    order: [['updated_at', 'DESC']],
+  });
+  const startTime = schedule?.start_time || '09:00';
+  const workHours = toNumber(schedule?.total_hours, 8) || 8;
+  const breakMinutes = toNumber(schedule?.reference, 60);
+  const startMinutes = minutesFromTime(startTime, 9 * 60);
+  const checkoutMinutes = startMinutes + (workHours * 60) + breakMinutes;
+  return {
+    start_time: timeFromMinutes(startMinutes),
+    start_minutes: startMinutes,
+    work_hours: workHours,
+    break_minutes: breakMinutes,
+    checkout_time: timeFromMinutes(checkoutMinutes),
+    checkout_minutes: checkoutMinutes,
+  };
+};
+
+const calculateOvertimeHours = (startTime, endTime) => {
+  const start = minutesFromTime(startTime, null);
+  const end = minutesFromTime(endTime, null);
+  if (start === null || end === null) return 0;
+  const duration = end >= start ? end - start : (end + 1440) - start;
+  return Number((duration / 60).toFixed(2));
+};
+
+const calculateLeaveDays = (startValue, endValue, leaveType = '') => {
+  const start = startValue instanceof Date ? startValue : new Date(startValue);
+  const end = endValue instanceof Date ? endValue : new Date(endValue || startValue);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return 0;
+
+  const startDay = new Date(start);
+  startDay.setHours(0, 0, 0, 0);
+  const endDay = new Date(end);
+  endDay.setHours(0, 0, 0, 0);
+  const days = Math.floor((endDay.getTime() - startDay.getTime()) / 86400000) + 1;
+  const type = String(leaveType || '').toLowerCase();
+  if (type.includes('setengah')) return Number((days * 0.5).toFixed(2));
+  return Number(days.toFixed(2));
+};
+
+const leaveStatusForAttendance = (leaveType = '') => {
+  const type = String(leaveType || '').toLowerCase();
+  if (type.includes('sakit')) return 'Sakit';
+  if (type.includes('cuti')) return 'Cuti';
+  return 'Izin';
+};
+
+const prepareLeaveRequestPayload = (payload) => {
+  const totalDays = calculateLeaveDays(payload.start_date, payload.end_date, payload.leave_type);
+  if (totalDays > 0) payload.total_days = totalDays;
+  if (['Diajukan', 'Menunggu Approval'].includes(payload.status || '')) {
+    payload.approval_status = 'Menunggu Approval';
+  }
+  payload.relations = stringifyArray([
+    ...parseJsonArray(payload.relations),
+    `Employee Role: ${payload.employee_email || payload.employee || '-'}`,
+    `Payroll: ${payload.leave_type || 'Cuti/Izin'} ${payload.total_days || 0} hari`,
+    'Absensi: Dibuat otomatis setelah disetujui',
+  ]);
+};
+
+const prepareOvertimePayload = (payload) => {
+  if (payload.start_time && payload.end_time) {
+    payload.total_hours = calculateOvertimeHours(payload.start_time, payload.end_time);
+  }
+  if (['Diajukan', 'Menunggu Approval'].includes(payload.status || '')) {
+    payload.approval_status = 'Menunggu Approval';
+  }
+  payload.relations = stringifyArray([
+    ...parseJsonArray(payload.relations),
+    `Employee Role: ${payload.employee_email || payload.employee || '-'}`,
+    `Payroll: Lembur ${payload.total_hours || 0} jam`,
+    'Approval: Supervisor',
+  ]);
+};
+
+const leaveDates = (startValue, endValue) => {
+  const start = startValue instanceof Date ? startValue : new Date(startValue);
+  const end = endValue instanceof Date ? endValue : new Date(endValue || startValue);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return [];
+  const dates = [];
+  const cursor = new Date(start);
+  cursor.setHours(0, 0, 0, 0);
+  const last = new Date(end);
+  last.setHours(0, 0, 0, 0);
+  while (cursor <= last) {
+    dates.push(new Date(cursor));
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return dates;
+};
+
+const syncLeaveRequestToAttendance = async ({ partnerId, leaveRequest, status, actor }) => {
+  if (!leaveRequest || !leaveRequest.employee_email) return;
+  const reference = `LEAVE-${leaveRequest.id}`;
+  const attendanceStatus = leaveStatusForAttendance(leaveRequest.leave_type);
+
+  if (status !== 'Disetujui') {
+    await MODULES.attendance.model.update({
+      active: false,
+      approval_status: status,
+      updated_by: actor,
+    }, { where: { partner_id: partnerId, reference } });
+    return;
+  }
+
+  const dates = leaveDates(leaveRequest.start_date, leaveRequest.end_date);
+  for (const workDate of dates) {
+    const { start, end } = dayRange(workDate);
+    const existing = await MODULES.attendance.model.findOne({
+      where: {
+        partner_id: partnerId,
+        employee_email: leaveRequest.employee_email,
+        reference,
+        work_date: { [Op.gte]: start, [Op.lt]: end },
+      },
+    });
+    const attendancePayload = {
+      partner_id: partnerId,
+      name: `${attendanceStatus} - ${leaveRequest.employee || leaveRequest.name}`,
+      description: leaveRequest.description,
+      status: attendanceStatus,
+      meta: 'Dari pengajuan cuti/izin',
+      employee: leaveRequest.employee,
+      employee_email: leaveRequest.employee_email,
+      employee_role: leaveRequest.employee_role,
+      department: leaveRequest.department,
+      work_date: workDate,
+      attendance_type: 'Cuti/Izin',
+      leave_type: leaveRequest.leave_type,
+      start_date: leaveRequest.start_date,
+      end_date: leaveRequest.end_date,
+      total_days: attendanceStatus === 'Cuti' && String(leaveRequest.leave_type || '').toLowerCase().includes('setengah') ? 0.5 : 1,
+      total_hours: 0,
+      reference,
+      approval_status: 'Disetujui',
+      approved_by: leaveRequest.approved_by || actor,
+      approved_at: leaveRequest.approved_at || new Date(),
+      note: leaveRequest.note,
+      relations: stringifyArray([
+        `Cuti/Izin: ${leaveRequest.name}`,
+        `Pengajuan: ${reference}`,
+        'Payroll: masuk rekap slip gaji',
+      ]),
+      flow_flags: stringifyArray([
+        { label: 'Cuti/Izin', value: leaveRequest.leave_type || attendanceStatus },
+        { label: 'Approval', value: 'Disetujui' },
+        { label: 'Payroll', value: 'Terhubung ke slip gaji' },
+      ]),
+      active: true,
+      created_by: actor,
+      updated_by: actor,
+    };
+
+    if (existing) {
+      await MODULES.attendance.model.update(
+        sanitizePayload(MODULES.attendance.model, attendancePayload),
+        { where: { id: existing.id, partner_id: partnerId } },
+      );
+    } else {
+      await MODULES.attendance.model.create(sanitizePayload(MODULES.attendance.model, attendancePayload));
+    }
+  }
+};
+
+const payrollPeriodRange = (period) => {
+  const text = String(period || '').trim();
+  const monthMatch = text.match(/^(\d{4})-(\d{1,2})$/);
+  if (monthMatch) {
+    const year = Number(monthMatch[1]);
+    const month = Number(monthMatch[2]) - 1;
+    const start = new Date(year, month, 1);
+    const end = new Date(year, month + 1, 1);
+    return { start, end };
+  }
+
+  const date = text ? new Date(text) : new Date();
+  if (Number.isNaN(date.getTime())) return dayRange(new Date());
+  const start = new Date(date.getFullYear(), date.getMonth(), 1);
+  const end = new Date(date.getFullYear(), date.getMonth() + 1, 1);
+  return { start, end };
+};
+
+const enrichPayslipFromAttendance = async ({ partnerId, payload }) => {
+  const employeeEmail = payload.employee_email;
+  if (!employeeEmail) return;
+
+  const { start, end } = payrollPeriodRange(payload.period);
+  const rows = await MODULES.attendance.model.findAll({
+    where: {
+      partner_id: partnerId,
+      active: true,
+      employee_email: employeeEmail,
+      work_date: { [Op.gte]: start, [Op.lt]: end },
+      status: { [Op.notIn]: ['Ditolak', 'Dibatalkan'] },
+    },
+  });
+
+  const approvedRows = rows.filter((row) => row.approval_status !== 'Ditolak');
+  const workRows = approvedRows.filter((row) => !['Cuti', 'Izin', 'Sakit'].includes(String(row.status || '')));
+  const totalHours = workRows.reduce((sum, row) => sum + toNumber(row.total_hours), 0);
+  const totalDays = workRows.reduce((sum, row) => sum + toNumber(row.total_days), 0);
+  const leaveRows = await MODULES.leaverequest.model.findAll({
+    where: {
+      partner_id: partnerId,
+      active: true,
+      employee_email: employeeEmail,
+      approval_status: 'Disetujui',
+      start_date: { [Op.lt]: end },
+      end_date: { [Op.gte]: start },
+    },
+  });
+  const overtimeRows = await MODULES.overtime.model.findAll({
+    where: {
+      partner_id: partnerId,
+      active: true,
+      employee_email: employeeEmail,
+      approval_status: 'Disetujui',
+      overtime_date: { [Op.gte]: start, [Op.lt]: end },
+    },
+  });
+  const overtimeHours = overtimeRows.reduce((sum, row) => sum + toNumber(row.total_hours), 0);
+  const leaveDays = leaveRows.reduce((sum, row) => sum + toNumber(row.total_days || calculateLeaveDays(row.start_date, row.end_date, row.leave_type)), 0);
+  const sickDays = leaveRows
+    .filter((row) => String(row.leave_type || '').toLowerCase().includes('sakit'))
+    .reduce((sum, row) => sum + toNumber(row.total_days || calculateLeaveDays(row.start_date, row.end_date, row.leave_type)), 0);
+  const permissionDays = leaveRows
+    .filter((row) => !String(row.leave_type || '').toLowerCase().includes('sakit'))
+    .reduce((sum, row) => sum + toNumber(row.total_days || calculateLeaveDays(row.start_date, row.end_date, row.leave_type)), 0);
+  payload.total_hours = payload.total_hours || Number(totalHours.toFixed(2));
+  payload.total_days = payload.total_days || Number(totalDays.toFixed(2));
+  payload.reference = payload.reference || `Absensi ${start.toISOString().slice(0, 7)} (${workRows.length} data kerja), Cuti/Izin ${leaveRows.length} data`;
+  payload.relations = stringifyArray([
+    ...parseJsonArray(payload.relations),
+    `Absensi Kerja: ${workRows.length} data`,
+    `Total Jam Kerja: ${payload.total_hours}`,
+    `Total Hari Kerja: ${payload.total_days}`,
+    `Cuti/Izin Disetujui: ${Number(leaveDays.toFixed(2))} hari`,
+    `Sakit: ${Number(sickDays.toFixed(2))} hari`,
+    `Izin/Cuti: ${Number(permissionDays.toFixed(2))} hari`,
+    `Lembur Disetujui: ${Number(overtimeHours.toFixed(2))} jam`,
+  ]);
+};
+
+const buildMetrics = async (module, partnerId, params = {}) => {
   const config = getConfig(module);
-  const where = { partner_id: partnerId, active: true };
+  const where = scopedEmployeeWhere(
+    module,
+    { partner_id: partnerId, active: true },
+    params.actorEmail,
+    params.actorRole,
+  );
   const total = await config.model.count({ where });
 
   if (module === 'supplier') {
@@ -1252,6 +1550,13 @@ const buildMetrics = async (module, partnerId) => {
   ];
 };
 
+const scopedEmployeeWhere = (module, where, actorEmail, actorRole) => {
+  if (!shouldScopeToEmployee(module, actorRole)) return where;
+  const email = normalizeText(actorEmail);
+  if (!email) return { ...where, employee_email: '__NO_EMPLOYEE_EMAIL__' };
+  return { ...where, employee_email: email };
+};
+
 const rupiah = (value) => `Rp${Number(value || 0).toLocaleString('id-ID')}`;
 const APPROVAL_THRESHOLD = 5000000;
 
@@ -1318,13 +1623,17 @@ const approvalRuleFor = (module, payload = {}) => {
     };
   }
 
-  if (module === 'attendance' && status === 'Pulang Cepat') {
+  if (module === 'attendance' && ['Pulang Cepat', 'Koreksi'].includes(status)) {
     return {
-      action: 'Approval Pulang Cepat',
+      action: status === 'Pulang Cepat'
+        ? 'Approval Pulang Cepat'
+        : 'Approval Koreksi Absensi',
       approverRole: 'Supervisor',
-      riskLevel: 'Low',
+      riskLevel: status === 'Koreksi' ? 'Medium' : 'Low',
       threshold: 0,
-      reason: 'Pulang cepat perlu catatan dan approval supervisor atau owner.',
+      reason: status === 'Pulang Cepat'
+        ? 'Pulang cepat perlu catatan dan approval supervisor atau owner.'
+        : 'Koreksi absensi perlu approval agar audit kehadiran tetap rapi.',
     };
   }
 
@@ -1911,6 +2220,17 @@ const decideApproval = async ({ partnerId, id, status, note, actor, actorRole })
       approved_by: actor,
       approved_at: new Date(),
     }, { where: { id: updated.reference_id, partner_id: partnerId } });
+    if (updated.module === 'leaverequest') {
+      const leaveRequest = await referenceConfig.model.findOne({
+        where: { id: updated.reference_id, partner_id: partnerId },
+      });
+      await syncLeaveRequestToAttendance({
+        partnerId,
+        leaveRequest,
+        status,
+        actor,
+      });
+    }
   }
   await writeAuditLog({
     partnerId,
@@ -1960,7 +2280,12 @@ module.exports = {
     const config = getConfig(module);
     const page = parseInt(params.page || 1);
     const limit = parseInt(params.limit || 20);
-    const where = buildFilter(module, partnerId, params);
+    const where = scopedEmployeeWhere(
+      module,
+      buildFilter(module, partnerId, params),
+      params.actorEmail,
+      params.actorRole,
+    );
 
     const rows = await config.model.findAndCountAll({
       where,
@@ -1980,9 +2305,15 @@ module.exports = {
     };
   },
 
-  getDetail: async (module, partnerId, id) => {
+  getDetail: async (module, partnerId, id, actorEmail, actorRole = 'Staff') => {
     const config = getConfig(module);
-    const row = await config.model.findOne({ where: { id, partner_id: partnerId, active: true } });
+    const where = scopedEmployeeWhere(
+      module,
+      { id, partner_id: partnerId, active: true },
+      actorEmail,
+      actorRole,
+    );
+    const row = await config.model.findOne({ where });
     return row
       ? { success: true, message: `Detail ${config.label} berhasil dimuat`, data: normalize(module, row) }
       : { success: false, message: `${config.label} tidak ditemukan`, data: {} };
@@ -1997,6 +2328,15 @@ module.exports = {
     if (module === 'employeerole') {
       await prepareEmployeeRolePayload({ partnerId, payload, actor: createdBy });
     }
+    if (module === 'leaverequest') {
+      prepareLeaveRequestPayload(payload);
+    }
+    if (module === 'overtime') {
+      prepareOvertimePayload(payload);
+    }
+    if (module === 'payslip') {
+      await enrichPayslipFromAttendance({ partnerId, payload });
+    }
 
     const title = payload[config.titleField];
     if (!title || title.trim() === '') {
@@ -2006,7 +2346,15 @@ module.exports = {
       return { success: false, message: 'Alasan koreksi stok wajib diisi', data: {} };
     }
 
-    if (module === 'attendance' && ['Terlambat', 'Izin', 'Sakit', 'Pulang Cepat'].includes(payload.status) && !payload.note) {
+    if (module === 'attendance' && ['Izin', 'Sakit', 'Cuti'].includes(payload.status) && !String(payload.reference || '').startsWith('LEAVE-')) {
+      return {
+        success: false,
+        message: 'Izin, sakit, atau cuti diajukan melalui menu Cuti / Izin agar approval, absensi, dan slip gaji tetap terhubung.',
+        data: {},
+      };
+    }
+
+    if (module === 'attendance' && ['Terlambat', 'Pulang Cepat'].includes(payload.status) && !payload.note) {
       return {
         success: false,
         message: `Catatan wajib diisi untuk status ${payload.status}.`,
@@ -2030,6 +2378,24 @@ module.exports = {
       });
 
       if (!openAttendance) {
+        const completedAttendance = await config.model.findOne({
+          where: {
+            partner_id: partnerId,
+            active: true,
+            employee_email: employeeEmail,
+            check_in: { [Op.ne]: null },
+            check_out: { [Op.ne]: null },
+            work_date: { [Op.gte]: start, [Op.lt]: end },
+          },
+          order: [['check_out', 'DESC']],
+        });
+        if (completedAttendance) {
+          return {
+            success: false,
+            message: 'Absensi hari ini sudah lengkap. Check In berikutnya bisa dilakukan besok.',
+            data: normalize(module, completedAttendance),
+          };
+        }
         return {
           success: false,
           message: 'Check In hari ini belum ditemukan.',
@@ -2038,21 +2404,49 @@ module.exports = {
       }
 
       const beforeData = { ...openAttendance.dataValues };
-      await config.model.update({
+      const duration = calculateAttendanceDuration(openAttendance.check_in, payload.check_out);
+      const policy = await getWorkPolicy(partnerId);
+      const checkOutDate = payload.check_out instanceof Date ? payload.check_out : new Date(payload.check_out);
+      const checkOutMinutes = checkOutDate.getHours() * 60 + checkOutDate.getMinutes();
+      if (payload.status === 'Pulang' && checkOutMinutes < (policy.checkout_minutes % 1440)) {
+        payload.status = 'Pulang Cepat';
+      }
+      if (payload.status === 'Pulang Cepat' && !payload.note) {
+        return {
+          success: false,
+          message: `Catatan wajib diisi untuk Pulang Cepat. Batas pulang kerja hari ini ${policy.checkout_time}.`,
+          data: {},
+        };
+      }
+      payload.total_days = duration.total_days;
+      payload.total_hours = duration.total_hours;
+      const updatedAttendancePayload = {
         status: payload.status || 'Pulang',
         check_out: payload.check_out,
+        total_days: duration.total_days,
+        total_hours: duration.total_hours,
         location: payload.location || openAttendance.location,
         latitude: payload.latitude || openAttendance.latitude,
         longitude: payload.longitude || openAttendance.longitude,
         map_url: payload.map_url || openAttendance.map_url,
         note: payload.note || openAttendance.note,
         details: null,
-        flow_flags: stringifyArray(baseFlowFlags({ ...openAttendance.dataValues, ...payload })),
+        flow_flags: stringifyArray(baseFlowFlags({
+          ...openAttendance.dataValues,
+          ...payload,
+          total_days: duration.total_days,
+          total_hours: duration.total_hours,
+          reference: `Jam masuk ${policy.start_time}, batas pulang ${policy.checkout_time}, durasi ${policy.work_hours} jam, istirahat ${policy.break_minutes} menit`,
+        })),
         approval_status: payload.status === 'Pulang Cepat'
           ? 'Menunggu Approval'
           : (openAttendance.approval_status === 'Menunggu Approval' ? openAttendance.approval_status : 'Tercatat Otomatis'),
         updated_by: createdBy,
-      }, { where: { id: openAttendance.id, partner_id: partnerId } });
+      };
+      await config.model.update(
+        sanitizePayload(config.model, updatedAttendancePayload),
+        { where: { id: openAttendance.id, partner_id: partnerId } },
+      );
 
       let updated = await config.model.findOne({ where: { id: openAttendance.id, partner_id: partnerId } });
       const approval = await maybeCreateApproval({ module, partnerId, payload, row: updated, actor: createdBy });
@@ -2084,6 +2478,15 @@ module.exports = {
     }
 
     if (module === 'attendance' && payload.check_in && !payload.check_out) {
+      const policy = await getWorkPolicy(partnerId);
+      const checkInDate = payload.check_in instanceof Date ? payload.check_in : new Date(payload.check_in);
+      const checkInMinutes = checkInDate.getHours() * 60 + checkInDate.getMinutes();
+      if (checkInMinutes > policy.start_minutes) {
+        payload.status = 'Terlambat';
+      } else if (payload.status === 'Terlambat' && checkInMinutes <= policy.start_minutes) {
+        payload.status = 'Hadir';
+      }
+      payload.reference = payload.reference || `Jam masuk ${policy.start_time}, batas pulang ${policy.checkout_time}, durasi ${policy.work_hours} jam, istirahat ${policy.break_minutes} menit`;
       payload.approval_status = payload.approval_status || 'Tercatat Otomatis';
       const { start, end } = dayRange(payload.work_date || payload.check_in);
       const employeeEmail = payload.employee_email || createdBy;
@@ -2104,6 +2507,26 @@ module.exports = {
           success: true,
           message: 'Check In hari ini sudah tercatat',
           data: normalize(module, openAttendance),
+        };
+      }
+
+      const completedAttendance = await config.model.findOne({
+        where: {
+          partner_id: partnerId,
+          active: true,
+          employee_email: employeeEmail,
+          check_in: { [Op.ne]: null },
+          check_out: { [Op.ne]: null },
+          work_date: { [Op.gte]: start, [Op.lt]: end },
+        },
+        order: [['check_out', 'DESC']],
+      });
+
+      if (completedAttendance) {
+        return {
+          success: false,
+          message: 'Absensi hari ini sudah lengkap. Check In berikutnya bisa dilakukan besok.',
+          data: normalize(module, completedAttendance),
         };
       }
     }
@@ -2133,6 +2556,15 @@ module.exports = {
     }
     await autoCreateStockLedger({ module, partnerId, payload, row, actor: createdBy });
     await autoCreateCashFlow({ module, partnerId, payload, row, actor: createdBy });
+    if (module === 'leaverequest' && ['Disetujui', 'Ditolak', 'Dibatalkan'].includes(payload.approval_status || payload.status)) {
+      const freshLeave = await config.model.findOne({ where: { id: row.id, partner_id: partnerId } });
+      await syncLeaveRequestToAttendance({
+        partnerId,
+        leaveRequest: freshLeave || row,
+        status: payload.approval_status || payload.status,
+        actor: createdBy,
+      });
+    }
     if (module === 'employeerole') {
       const invite = await sendEmployeeRoleInvite({ partnerId, payload, row, actor: createdBy });
       const freshRow = await config.model.findOne({ where: { id: row.id, partner_id: partnerId } });
@@ -2154,11 +2586,50 @@ module.exports = {
     }
 
     const beforeData = { ...current.dataValues };
-    const payload = payloadByModule(module, { ...current.dataValues, ...body });
+    const isEmployeeTaskSelfProgress =
+      module === 'employeetask' && !isErpManagerRole(actorRole);
+    if (isEmployeeTaskSelfProgress) {
+      const invalidFields = Object.keys(body || {}).filter(
+        (key) => !employeeTaskProgressFields.has(key)
+      );
+      if (invalidFields.length) {
+        return {
+          success: false,
+          message: 'Karyawan hanya bisa mengubah progres tugas miliknya.',
+          data: {},
+        };
+      }
+
+      const assignedEmail = normalizeText(current.employee_email);
+      const actorEmail = normalizeText(updatedBy);
+      if (!assignedEmail || !actorEmail || assignedEmail !== actorEmail) {
+        return {
+          success: false,
+          message: 'Tugas ini bukan milik akun yang sedang login.',
+          data: {},
+        };
+      }
+    }
+
+    const mergedBody = isEmployeeTaskSelfProgress
+      ? {
+          ...current.dataValues,
+          status: pickFirst(body.status, body.Status, current.status),
+          note: pickFirst(body.note, body.Note, current.note),
+          description: pickFirst(body.description, body.note, body.Note, current.description),
+        }
+      : { ...current.dataValues, ...body };
+    const payload = payloadByModule(module, mergedBody);
     payload.id = id;
     payload.updated_by = updatedBy;
     if (module === 'employeerole') {
       await prepareEmployeeRolePayload({ partnerId, payload, actor: updatedBy });
+    }
+    if (module === 'leaverequest') {
+      prepareLeaveRequestPayload(payload);
+    }
+    if (module === 'overtime') {
+      prepareOvertimePayload(payload);
     }
     if (module === 'stockledger' && !payload.reason && !payload.note) {
       return { success: false, message: 'Alasan koreksi stok wajib diisi', data: {} };
@@ -2191,6 +2662,15 @@ module.exports = {
       payload.approval_id = approval.id;
     }
     await autoCreateCashFlow({ module, partnerId, payload, row: updated, actor: updatedBy });
+    if (module === 'leaverequest' && ['Disetujui', 'Ditolak', 'Dibatalkan'].includes(payload.approval_status || payload.status)) {
+      const freshLeave = await config.model.findOne({ where: { id: updated.id, partner_id: partnerId } });
+      await syncLeaveRequestToAttendance({
+        partnerId,
+        leaveRequest: freshLeave || updated,
+        status: payload.approval_status || payload.status,
+        actor: updatedBy,
+      });
+    }
     if (module === 'employeerole' && (body.resendInvite || (body.email && String(body.email).toLowerCase() !== String(beforeData.email || '').toLowerCase()))) {
       const invite = await sendEmployeeRoleInvite({ partnerId, payload, row: updated, actor: updatedBy });
       const freshRow = await config.model.findOne({ where: { id: updated.id, partner_id: partnerId } });
@@ -2224,9 +2704,9 @@ module.exports = {
       : { success: false, message: `${config.label} tidak ditemukan`, data: {} };
   },
 
-  getMetrics: async (module, partnerId) => {
+  getMetrics: async (module, partnerId, actorEmail, actorRole = 'Staff') => {
     const config = getConfig(module);
-    const metrics = await buildMetrics(module, partnerId);
+    const metrics = await buildMetrics(module, partnerId, { actorEmail, actorRole });
     return { success: true, message: `Ringkasan ${config.label} berhasil dimuat`, data: metrics };
   },
 

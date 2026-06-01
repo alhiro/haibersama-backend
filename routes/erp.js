@@ -47,19 +47,19 @@ erpRouter.post("/:module/scan", headerAuth.isErpAuthenticated, headerAuth.requir
   controller.scan(req, res);
 });
 
-erpRouter.post("/:module/add", headerAuth.isErpAuthenticated, headerAuth.requireErpModuleAccess(), (req, res, next) => {
+erpRouter.post("/:module/add", headerAuth.isErpAuthenticated, headerAuth.requireErpModuleAccess(), headerAuth.requireErpModuleWriteAccess(), (req, res, next) => {
   controller.create(req, res);
 });
 
-erpRouter.post("/:module/update", headerAuth.isErpAuthenticated, headerAuth.requireErpModuleAccess(), (req, res, next) => {
+erpRouter.post("/:module/update", headerAuth.isErpAuthenticated, headerAuth.requireErpModuleAccess(), headerAuth.requireErpModuleWriteAccess(), (req, res, next) => {
   controller.update(req, res);
 });
 
-erpRouter.patch("/:module/update", headerAuth.isErpAuthenticated, headerAuth.requireErpModuleAccess(), (req, res, next) => {
+erpRouter.patch("/:module/update", headerAuth.isErpAuthenticated, headerAuth.requireErpModuleAccess(), headerAuth.requireErpModuleWriteAccess(), (req, res, next) => {
   controller.update(req, res);
 });
 
-erpRouter.delete("/:module/delete", headerAuth.isErpAuthenticated, headerAuth.requireErpModuleAccess(), (req, res, next) => {
+erpRouter.delete("/:module/delete", headerAuth.isErpAuthenticated, headerAuth.requireErpModuleAccess(), headerAuth.requireErpModuleWriteAccess(), (req, res, next) => {
   controller.delete(req, res);
 });
 
